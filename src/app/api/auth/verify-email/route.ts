@@ -1,0 +1,46 @@
+/**
+ * GET /api/auth/verify-email?token=... — تأكيد البريد من رابط الرسالة.
+ * رمز أحادي الاستخدام محدود المدة؛ عند النجاح يُفعَّل الحساب ويوجَّه لصفحة النتيجة.
+ */
+import { NextResponse, type NextRequest } from "next/server";
+import { db } from "@/lib/db";
+import { consumeToken } from "@/lib/auth/tokens";
+import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
+
+export async function GET(req: NextRequest) {
+  const token = req.nextUrl.searchParams.get("token") ?? "";
+  const locale = req.nextUrl.searchParams.get("locale") === "en" ? "en" : "ar";
+
+  const userId = await consumeToken(token, "email_verify");
+  if (!userId) {
+    return NextResponse.redirect(new URL(`/${locale}/auth/verified?status=invalid`, req.url));
+  }
+
+  const user = await db.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    return NextResponse.redirect(new URL(`/${locale}/auth/verified?status=invalid`, req.url));
+  }
+
+  const alreadyVerified = Boolean(user.emailVerifiedAt);
+  if (!alreadyVerified) {
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifiedAt: new Date(),
+        status: user.status === "pending_verification" ? "active" : user.status,
+      },
+    });
+  }
+
+  await audit({
+    actorId: userId,
+    actorEmail: user.email,
+    action: AUDIT_ACTIONS.userEmailVerified,
+    entityType: "user",
+    entityId: userId,
+  });
+
+  return NextResponse.redirect(
+    new URL(`/${locale}/auth/verified?status=${alreadyVerified ? "already" : "ok"}`, req.url)
+  );
+}

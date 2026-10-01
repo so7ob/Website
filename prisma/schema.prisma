@@ -1,6 +1,6 @@
 // مخطط قاعدة البيانات — سُحُب التقنية | so7ob
 // SQLite للتشغيل المحلي والانطلاق السريع؛ يمكن ترحيله لقاعدة أقوى عند النشر
-// بتغيير provider وDATABASE_URL فقط.
+// (انظر README — الترحيل الفعلي واجب عند تغيير provider، لا يكفي تغيير الرابط).
 
 generator client {
   provider = "prisma-client-js"
@@ -11,16 +11,146 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// طلب مشروع مُرسل من نموذج «ناقش مشروعك / اطلب عرض سعر».
-// يُخزَّن هنا اللازم للرد على الطلب فقط، دون أي بيانات حساسة إضافية.
+// ═══════════════════════════════════════════════════════════════════
+// المصادقة والحسابات
+// ═══════════════════════════════════════════════════════════════════
+
+model Role {
+  key          String   @id // super_admin | ops_manager | support | content_editor | client
+  nameAr       String
+  nameEn       String
+  descriptionAr String?
+  descriptionEn String?
+  permissions  String   @default("[]") // JSON: مصفوفة مفاتيح الصلاحيات
+  isSystem     Boolean  @default(true) // الأدوار النظامية لا تُحذف
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users User[]
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  phone             String?
+  company           String?
+  locale            String    @default("ar")
+  roleKey           String    @default("client")
+  status            String    @default("pending_verification") // pending_verification | active | suspended
+  emailVerifiedAt   DateTime?
+  sessionsRevokedAt DateTime? // إبطال كل الجلسات الأقدم من هذا الوقت
+  lastLoginAt       DateTime?
+  failedLoginCount  Int       @default(0) // حماية محاولات الدخول
+  lockedUntil       DateTime? // قفل مؤقت بعد محاولات فاشلة متكررة
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  role               Role               @relation(fields: [roleKey], references: [key])
+  authSessions      AuthSession[]
+  authTokens         AuthToken[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  invitesSent        UserInvite[]       @relation("Inviter")
+  inviteAccepted     UserInvite?        @relation("Invitee")
+  clientRequests     ProjectRequest[]   @relation("ClientRequests")
+  assignedRequests   ProjectRequest[]   @relation("AssignedRequests")
+  requestMessages    RequestMessage[]
+  requestClaims      RequestClaim[]
+  inquiries          Inquiry[]          @relation("InquiryClients")
+  assignedInquiries  Inquiry[]          @relation("InquiryAssignees")
+  inquiryMessages    InquiryMessage[]
+  attachments        Attachment[]
+  mediaItems         MediaItem[]
+  pageVersions       PageVersion[]
+  requestDrafts      RequestDraft[]
+  settingsUpdated    SiteSetting[]
+
+  @@index([roleKey, status])
+  @@index([status, createdAt])
+}
+
+// جلسة مصادقة مسجلة — تعمل مع استراتيجية JWT عبر بصمة (userId + iat)
+model AuthSession {
+  id         String    @id @default(cuid())
+  userId     String
+  fingerprint String   @unique // sha256(userId + ":" + tokenIat)
+  userAgent  String?
+  ipHash     String?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  revokedReason String? // suspended | user_logout_all | admin_revoke | expired
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+// رموز أحادية الاستخدام محدودة المدة: تحقق بريد، استعادة كلمة مرور، ربط طلب
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  type      String // email_verify | password_reset | request_claim
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+// دعوات المستخدمين والموظفين
+model UserInvite {
+  id          String    @id @default(cuid())
+  email       String
+  roleKey     String    @default("client")
+  tokenHash   String    @unique
+  invitedById String?
+  acceptedUserId String? @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  invitedBy User? @relation("Inviter", fields: [invitedById], references: [id])
+  invitee   User? @relation("Invitee", fields: [acceptedUserId], references: [id])
+
+  @@index([email])
+}
+
+// صندوق صادر البريد (سجل — لا يحاكي الإرسال الفعلي عند غياب SMTP)
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  bodyText  String
+  bodyHtml  String?
+  status    String   @default("dev_logged") // sent | dev_logged | failed
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([to, createdAt])
+  @@index([status, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// الطلبات والاستفسارات والمحادثات
+// ═══════════════════════════════════════════════════════════════════
+
+// طلب مشروع — الحقول الأصلية محفوظة كما هي (توافق مع البيانات القائمة)
+// الحالات: new | in_review | awaiting_info | in_progress | responded | closed | cancelled
 model ProjectRequest {
   id               String    @id @default(cuid())
-  refCode          String    @unique // رمز مرجعي يُعرض على المرسل مثل S7-XXXXXX
+  refCode          String    @unique
   requestType      String // discussion | quote
   serviceType      String // web | mobile | systems | ux | automation | maintenance | unsure
   description      String
   budget           String // tier1..tier4 | unspecified
-  currency         String? // SAR | AED | EGP | KWD | QAR | USD | EUR (مطلوب ما لم تكن الميزانية unspecified)
+  currency         String?
   timeline         String // flexible | asap | 1-3m | 3-6m | 6m+
   name             String
   company          String?
@@ -28,15 +158,321 @@ model ProjectRequest {
   phone            String?
   preferredContact String // email | phone | any
   referenceUrl     String?
-  locale           String    @default("ar") // لغة النموذج عند الإرسال
-  descriptionHash  String // بصمة SHA-256 للوصف — لكشف التكرار دون تخزين نسخ إضافية
-  clientIpHash     String? // بصمة SHA-256 لعنوان IP لأغراض منع الإساءة فقط (دون تخزين العنوان)
+  locale           String    @default("ar")
+  descriptionHash  String
+  clientIpHash     String?
   userAgent        String?
-  status           String    @default("new") // new | in_review | responded | closed
-  notifiedAt       DateTime? // وقت نجاح إشعار المسؤول إن كان مهيأً
+  status           String    @default("new")
+  notifiedAt       DateTime?
   createdAt        DateTime  @default(now())
+
+  // ——— حقول المنصة التفاعلية ———
+  clientId          String?
+  assigneeId        String?
+  priority          String    @default("normal") // low | normal | high | urgent
+  resolutionNote    String? // سبب الإغلاق/الإلغاء
+  closedAt          DateTime?
+  archivedAt        DateTime?
+  lastActivityAt    DateTime  @default(now())
+  lastClientReplyAt DateTime?
+  lastStaffReplyAt  DateTime?
+  clientReadAt      DateTime? // آخر قراءة العميل للمحادثة
+  staffReadAt       DateTime? // آخر قراءة للموظف
+  updatedAt         DateTime  @updatedAt
+
+  client        User?                @relation("ClientRequests", fields: [clientId], references: [id])
+  assignee      User?                @relation("AssignedRequests", fields: [assigneeId], references: [id])
+  messages      RequestMessage[]
+  attachments   Attachment[]
+  statusHistory RequestStatusEvent[]
+  claim         RequestClaim?
 
   @@index([email, createdAt])
   @@index([clientIpHash, createdAt])
   @@index([status, createdAt])
+  @@index([clientId, createdAt])
+  @@index([assigneeId, status])
+  @@index([archivedAt])
+}
+
+// رسالة محادثة على طلب — message للعميل، internal_note داخلي لا يظهر للعميل
+model RequestMessage {
+  id        String    @id @default(cuid())
+  requestId String
+  authorId  String?
+  authorType String   @default("client") // client | staff | system
+  kind      String    @default("message") // message | internal_note | system
+  body      String
+  editedAt  DateTime? // أي تعديل ظاهر قابل للتتبع — لا تعديل صامت
+  createdAt DateTime  @default(now())
+
+  request     ProjectRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author      User?         @relation(fields: [authorId], references: [id])
+  // المرفقات تُقرأ عبر Attachment.messageId (مرجع منطقي غير علائقي)
+
+  @@index([requestId, createdAt])
+}
+
+model RequestStatusEvent {
+  id          String   @id @default(cuid())
+  requestId   String
+  fromStatus  String?
+  toStatus    String
+  changedById String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  request ProjectRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
+}
+
+// ربط طلب قديم بحساب — يتطلب تحققًا بالبريد (لا يكفي تطابق البريد)
+model RequestClaim {
+  id        String    @id @default(cuid())
+  requestId String    @unique
+  userId    String
+  status    String    @default("pending") // pending | verified
+  createdAt DateTime  @default(now())
+  verifiedAt DateTime?
+
+  request ProjectRequest @relation(fields: [requestId], references: [id])
+  user    User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// مسودة طلب مرتبطة بالمستخدم (بديل LocalStorage للحسابات المسجلة)
+model RequestDraft {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  data      String   @default("{}") // JSON لحقول النموذج
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// استفسار عام — دورة عمل أخف من الطلب
+model Inquiry {
+  id            String   @id @default(cuid())
+  refCode       String   @unique // IQ-XXXXXXX
+  subject       String
+  name          String
+  email         String
+  category      String   @default("general") // general | services | pricing | support | other
+  status        String   @default("new") // new | in_review | awaiting_info | responded | closed
+  priority      String   @default("normal")
+  locale        String   @default("ar")
+  clientId      String?
+  assigneeId    String?
+  closedAt      DateTime?
+  archivedAt    DateTime?
+  lastActivityAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  client       User?            @relation("InquiryClients", fields: [clientId], references: [id])
+  assignee     User?            @relation("InquiryAssignees", fields: [assigneeId], references: [id])
+  messages     InquiryMessage[]
+  attachments  Attachment[]
+
+  @@index([email, createdAt])
+  @@index([status, createdAt])
+  @@index([clientId])
+}
+
+model InquiryMessage {
+  id         String   @id @default(cuid())
+  inquiryId  String
+  authorId   String?
+  authorType String   @default("client")
+  kind       String   @default("message") // message | internal_note | system
+  body       String
+  editedAt   DateTime?
+  createdAt  DateTime @default(now())
+
+  inquiry     Inquiry      @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  author      User?        @relation(fields: [authorId], references: [id])
+
+  @@index([inquiryId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// المرفقات والوسائط
+// ═══════════════════════════════════════════════════════════════════
+
+// مرفق خاص بطلب/استفسار — يُخدم عبر API بصلاحية، لا يوضع في مجلد عام
+model Attachment {
+  id         String   @id @default(cuid())
+  filename   String // الاسم الأصلي للعرض
+  storedName String   @unique // اسم تخزين عشوائي آمن
+  mimeType   String
+  size       Int
+  kind       String   @default("request_attachment") // request_attachment | inquiry_attachment
+  uploaderId String?
+  requestId  String?
+  inquiryId  String?
+  messageId  String? // MessageId من أي نوع — يُربط منطقيًا
+  createdAt  DateTime @default(now())
+
+  uploader User?           @relation(fields: [uploaderId], references: [id])
+  request  ProjectRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  inquiry  Inquiry?        @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([inquiryId])
+}
+
+// وسائط الموقع العامة (مكتبة الصور) — تُخدم عبر /api/media/[id]
+model MediaItem {
+  id          String   @id @default(cuid())
+  filename    String
+  storedName  String   @unique
+  mimeType    String
+  size        Int
+  altText     String?
+  title       String?
+  folder      String   @default("general")
+  uploadedById String?
+  createdAt   DateTime @default(now())
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id])
+
+  @@index([folder, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// الإشعارات والتدقيق
+// ═══════════════════════════════════════════════════════════════════
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // new_request | request_assigned | reply_received | info_requested | status_changed | content_published | account
+  payload   String    @default("{}") // JSON بمعاملات الترجمة
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String? // للأفعال غير المسجلة
+  action     String // user.login | user.suspend | request.assign | page.publish ...
+  entityType String
+  entityId   String?
+  details    String? // JSON
+  ipHash     String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// نظام إدارة المحتوى — الصفحات والإصدارات والقوائم والإعدادات
+// ═══════════════════════════════════════════════════════════════════
+
+// الصفحات: مسودة منفصلة عن المنشور؛ الحقول *Blocks مخزنة JSON نصيًا
+model Page {
+  id             String    @id @default(cuid())
+  slug           String    @unique // "" للرئيسية | about | services ...
+  isHome         Boolean   @default(false)
+  order          Int       @default(0) // ترتيب الظهور في القوائم
+  visibility     String    @default("public") // public | authenticated | role
+  allowedRoles   String    @default("[]") // JSON مصفوفة أدوار عند visibility=role
+  status         String    @default("draft") // draft | in_review | published | archived
+
+  // عنوان إداري
+  titleAr        String
+  titleEn        String
+
+  // SEO لكل لغة
+  seoTitleAr     String?
+  seoTitleEn     String?
+  seoDescAr      String?
+  seoDescEn      String?
+  ogMediaId      String?
+
+  // المسودة (لا تظهر للزوار)
+  draftBlocksAr  String    @default("[]")
+  draftBlocksEn  String    @default("[]")
+  draftUpdatedAt DateTime?
+  draftUpdatedById String?
+
+  // المنشور (مصدر عرض الزوار)
+  publishedBlocksAr String?
+  publishedBlocksEn String?
+  publishedAt    DateTime?
+  publishedById  String?
+
+  // بذرة الاستيراد الأولي — إعادة التشغيل لا تكرر ولا تكتب فوق تعديلات المحرر
+  sourceKey      String? // home | about | ...
+  seedVersion    Int       @default(0)
+  editorTouchedAt DateTime?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  versions  PageVersion[]
+
+  @@index([status, order])
+}
+
+// إصدارات محفوظة عند كل نشر — قابلة للمقارنة والاستعادة
+model PageVersion {
+  id        String   @id @default(cuid())
+  pageId    String
+  locale    String // ar | en
+  version   Int
+  blocks    String // JSON
+  authorId  String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  page   Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id])
+
+  @@unique([pageId, locale, version])
+}
+
+// تحويلات المسارات عند تغيير slug لصفحة منشورة
+model PageRedirect {
+  id        String   @id @default(cuid())
+  fromSlug  String   @unique
+  toSlug    String
+  createdAt DateTime @default(now())
+}
+
+// عناصر القوائم (الترويسة/التذييل)
+model MenuItem {
+  id        String   @id @default(cuid())
+  location  String // header | footer
+  labelAr   String
+  labelEn   String
+  url       String? // رابط مخصص خارجي أو داخلي
+  pageSlug  String? // ربط بصفحة من إدارة المحتوى
+  order     Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([location, order])
+}
+
+// إعدادات الموقع (بيانات التواصل، الروابط الاجتماعية...)
+model SiteSetting {
+  key          String   @id
+  value        String // JSON أو نص بسيط
+  updatedById  String?
+  updatedAt    DateTime @updatedAt
+
+  updatedBy User? @relation(fields: [updatedById], references: [id])
 }
