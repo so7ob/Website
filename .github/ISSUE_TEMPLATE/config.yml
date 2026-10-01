@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: سؤال عام أو استفسار
+    url: https://github.com/so7ob/Website/discussions
+    about: استخدم المناقشات للأسئلة العامة قبل فتح Issue.

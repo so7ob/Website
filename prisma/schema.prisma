@@ -1,0 +1,42 @@
+// مخطط قاعدة البيانات — سُحُب التقنية | so7ob
+// SQLite للتشغيل المحلي والانطلاق السريع؛ يمكن ترحيله لقاعدة أقوى عند النشر
+// بتغيير provider وDATABASE_URL فقط.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// طلب مشروع مُرسل من نموذج «ناقش مشروعك / اطلب عرض سعر».
+// يُخزَّن هنا اللازم للرد على الطلب فقط، دون أي بيانات حساسة إضافية.
+model ProjectRequest {
+  id               String    @id @default(cuid())
+  refCode          String    @unique // رمز مرجعي يُعرض على المرسل مثل S7-XXXXXX
+  requestType      String // discussion | quote
+  serviceType      String // web | mobile | systems | ux | automation | maintenance | unsure
+  description      String
+  budget           String // tier1..tier4 | unspecified
+  currency         String? // SAR | AED | EGP | KWD | QAR | USD | EUR (مطلوب ما لم تكن الميزانية unspecified)
+  timeline         String // flexible | asap | 1-3m | 3-6m | 6m+
+  name             String
+  company          String?
+  email            String
+  phone            String?
+  preferredContact String // email | phone | any
+  referenceUrl     String?
+  locale           String    @default("ar") // لغة النموذج عند الإرسال
+  descriptionHash  String // بصمة SHA-256 للوصف — لكشف التكرار دون تخزين نسخ إضافية
+  clientIpHash     String? // بصمة SHA-256 لعنوان IP لأغراض منع الإساءة فقط (دون تخزين العنوان)
+  userAgent        String?
+  status           String    @default("new") // new | in_review | responded | closed
+  notifiedAt       DateTime? // وقت نجاح إشعار المسؤول إن كان مهيأً
+  createdAt        DateTime  @default(now())
+
+  @@index([email, createdAt])
+  @@index([clientIpHash, createdAt])
+  @@index([status, createdAt])
+}
