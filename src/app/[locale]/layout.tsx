@@ -13,15 +13,14 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { ar } from "@/content/ar";
 import { en } from "@/content/en";
+import { getPortalContent } from "@/content/portal";
 import { locales, localeMeta, type Locale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
+import { getMenu, getSettings } from "@/lib/site-data";
+import { getAuthUser, isStaff } from "@/lib/auth/session";
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
-
-/** لا لغات أخرى خارج القائمة المعتمدة — المسار غير المعروف يذهب إلى 404 */
-export const dynamicParams = false;
+/** الصفحات تُدار من قاعدة البيانات — لا توليد ساكن للجذر اللغوي */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -56,7 +55,16 @@ export default async function LocaleRootLayout({
   if (!locales.includes(raw as Locale)) notFound();
   const locale = raw as Locale;
   const content = locale === "en" ? en : ar;
+  const portal = getPortalContent(locale);
   const dir = localeMeta[locale].dir;
+
+  // بيانات القوائم والإعدادات من قاعدة البيانات + حالة الجلسة
+  const [headerItems, footerItems, settings, user] = await Promise.all([
+    getMenu("header", locale),
+    getMenu("footer", locale),
+    getSettings(),
+    getAuthUser(),
+  ]);
 
   return (
     <html lang={locale} dir={dir}>
@@ -67,11 +75,22 @@ export default async function LocaleRootLayout({
         >
           {content.common.skipToContent}
         </a>
-        <SiteHeader locale={locale} content={content} />
+        <SiteHeader
+          locale={locale}
+          content={content}
+          items={headerItems}
+          auth={{
+            loggedIn: Boolean(user),
+            isStaff: isStaff(user),
+            accountLabel: portal.account.nav.dashboard,
+            adminLabel: portal.admin.nav.dashboard,
+            loginLabel: portal.auth.loginTitle,
+          }}
+        />
         <main id="main-content" className="flex-1 overflow-x-clip">
           {children}
         </main>
-        <SiteFooter locale={locale} content={content} />
+        <SiteFooter locale={locale} content={content} settings={settings} items={footerItems} />
       </body>
     </html>
   );
