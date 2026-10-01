@@ -21,6 +21,19 @@ const DRAFT_KEY = "so7ob-request-draft";
 
 type FormState = Omit<ProjectRequestInput, "startedAt">;
 
+export interface ProjectRequestFormProps {
+  locale: Locale;
+  content: SiteContent;
+  /** قيم مبدئية (مسودة الخادم مثلًا) — تُطبق مرة واحدة عند التحميل */
+  initialValues?: Partial<ProjectRequestInput>;
+  /** يُستدعى بعد نجاح الحفظ في الخادم مع الرقم المرجعي */
+  onSubmitted?: (refCode: string) => void;
+  /** يُستدعى عند تغيّير القيم (بمهلة قصيرة) — للحفظ التلقائي الخارجي */
+  onValuesChange?: (values: Partial<ProjectRequestInput>) => void;
+  /** تخطي مسودة localStorage (قراءة وكتابة) — للحسابات المسجلة التي تستخدم مسودات الخادم */
+  suppressLocalDraft?: boolean;
+}
+
 const EMPTY: FormState = {
   requestType: "discussion",
   serviceType: "unsure",
@@ -41,11 +54,25 @@ const EMPTY: FormState = {
 /**
  * نموذج طلب المشروع — تحقق في الواجهة بالمنطق المشترك نفسه المستخدم في الخادم،
  * حفظ مسودة محلي، منع الإرسال المتكرر، ولا يُعرض نجاح إلا بعد تأكيد الحفظ من الخادم.
+ * الخصائص الإضافية اختيارية كليًا: غيابها يحافظ على السلوك العام كما هو.
  */
-export function ProjectRequestForm({ locale, content }: { locale: Locale; content: SiteContent }) {
+export function ProjectRequestForm({
+  locale,
+  content,
+  initialValues,
+  onSubmitted,
+  onValuesChange,
+  suppressLocalDraft = false,
+}: ProjectRequestFormProps) {
   const t = content.form;
   const params = useSearchParams();
   const mountedAt = useRef(Date.now());
+
+  // مرجع دائم لأحدث نسخة من المستمع — يفصل هوية الدالة عن دورة أثر التغيير
+  const valuesChangeListener = useRef(onValuesChange);
+  useEffect(() => {
+    valuesChangeListener.current = onValuesChange;
+  }, [onValuesChange]);
 
   const [data, setData] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -66,8 +93,17 @@ export function ProjectRequestForm({ locale, content }: { locale: Locale; conten
     }));
   }, [params, locale]);
 
-  // استعادة المسودة المحلية
+  // القيم المبدئية (مسودة الخادم) — مرة واحدة فقط، وبعد معاملات الرابط
+  const initialApplied = useRef(false);
   useEffect(() => {
+    if (initialApplied.current || !initialValues) return;
+    initialApplied.current = true;
+    setData((d) => ({ ...d, ...initialValues, website: "", locale }));
+  }, [initialValues, locale]);
+
+  // استعادة المسودة المحلية — تُتخطى للحسابات المسجلة (مسودات الخادم بديلًا)
+  useEffect(() => {
+    if (suppressLocalDraft) return;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
@@ -78,19 +114,23 @@ export function ProjectRequestForm({ locale, content }: { locale: Locale; conten
     } catch {
       /* تجاهل مسودة تالفة */
     }
-  }, [locale]);
+  }, [locale, suppressLocalDraft]);
 
-  // حفظ المسودة عند التغيير
+  // حفظ المسودة عند التغيير (محلية إن لم تُكبت) + إبلاغ المستمع الخارجي
   useEffect(() => {
     const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...data, website: "" }));
-      } catch {
-        /* لا مساحة للتخزين */
+      const snapshot = { ...data, website: "" } as Partial<ProjectRequestInput>;
+      if (!suppressLocalDraft) {
+        try {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot));
+        } catch {
+          /* لا مساحة للتخزين */
+        }
       }
+      valuesChangeListener.current?.(snapshot);
     }, 400);
     return () => clearTimeout(timer);
-  }, [data]);
+  }, [data, suppressLocalDraft]);
 
   const currencyNeeded = data.budget !== "unspecified";
   const errorFor = (field: keyof FormState) => (errors[field] ? t.errors[errors[field] as keyof typeof t.errors] : undefined);
@@ -126,11 +166,14 @@ export function ProjectRequestForm({ locale, content }: { locale: Locale; conten
       const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
       if (res.ok && body.ok && typeof body.ref === "string") {
-        try {
-          localStorage.removeItem(DRAFT_KEY);
-        } catch {}
+        if (!suppressLocalDraft) {
+          try {
+            localStorage.removeItem(DRAFT_KEY);
+          } catch {}
+        }
         setRefCode(body.ref);
         setStatus("success");
+        onSubmitted?.(body.ref);
         document.getElementById("form-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }

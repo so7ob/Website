@@ -1,3 +1,5 @@
+"use client";
+
 import type { Block } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";

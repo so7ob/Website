@@ -1,3 +1,5 @@
+"use client";
+
 import { Eye, Target } from "lucide-react";
 import { Section } from "@/components/site/section";
 import { type z } from "zod";

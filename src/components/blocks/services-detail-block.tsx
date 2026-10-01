@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Check, CircleAlert } from "lucide-react";
 import { Section } from "@/components/site/section";

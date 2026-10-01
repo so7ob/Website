@@ -1,3 +1,5 @@
+"use client";
+
 import { Section } from "@/components/site/section";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";

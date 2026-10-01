@@ -65,27 +65,26 @@ export async function POST(req: NextRequest) {
   const existing = await db.page.findUnique({ where: { slug } });
   if (existing) return json({ ok: false, code: "slug_taken" }, 409);
 
-  // قوالب البدء
+  // قوالب البدء — كتل صالحة وفق مخططات التحقق
   let blocksAr = "[]";
   let blocksEn = "[]";
   if (body.template === "blank-section") {
-    const template = JSON.stringify([
-      {
-        id: `b-${Date.now().toString(36)}`,
-        type: "pageHeader",
-        props: { kicker: titleAr || titleEn, title: titleAr || titleEn, intro: [], quickLinks: [] },
-      },
-      { id: `b-t-${Date.now().toString(36)}`, type: "richText", props: { paragraphs: [] , align: "start"} },
-    ]);
-    blocksAr = template;
-    blocksEn = JSON.stringify([
-      {
-        id: `b-e-${Date.now().toString(36)}`,
-        type: "pageHeader",
-        props: { kicker: titleEn || titleAr, title: titleEn || titleAr, intro: [], quickLinks: [] },
-      },
-      { id: `b-te-${Date.now().toString(36)}`, type: "richText", props: { paragraphs: [], align: "start" } },
-    ]);
+    const stamp = Date.now().toString(36);
+    const make = (kicker: string, title: string, intro: string) =>
+      JSON.stringify([
+        {
+          id: `b-ph-${stamp}`,
+          type: "pageHeader",
+          props: { kicker, title, intro: intro ? [intro] : [], quickLinks: [] },
+        },
+        {
+          id: `b-rt-${stamp}`,
+          type: "richText",
+          props: { paragraphs: [intro || title], align: "start" },
+        },
+      ]);
+    blocksAr = make(titleAr || titleEn, titleAr || titleEn, "");
+    blocksEn = make(titleEn || titleAr, titleEn || titleAr, "");
   }
 
   // تحقق مبدئي للقالب

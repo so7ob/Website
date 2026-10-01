@@ -1,3 +1,5 @@
+"use client";
+
 import { Suspense } from "react";
 import { MailCheck, MessagesSquare, ClipboardList } from "lucide-react";
 import { Section } from "@/components/site/section";

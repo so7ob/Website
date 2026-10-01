@@ -1,3 +1,5 @@
+"use client";
+
 import { Section, SectionHeading } from "@/components/site/section";
 import { ServiceIcon } from "@/components/site/service-icon";
 import { localePath, type Locale } from "@/lib/i18n";

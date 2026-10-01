@@ -1,3 +1,5 @@
+"use client";
+
 import { Section, SectionHeading } from "@/components/site/section";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { localePath, type Locale } from "@/lib/i18n";

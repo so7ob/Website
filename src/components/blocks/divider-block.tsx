@@ -1,3 +1,5 @@
+"use client";
+
 import { BlockContainer } from "./block-container";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";

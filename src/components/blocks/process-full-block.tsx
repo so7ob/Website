@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { UserCheck, PackageCheck, GitPullRequestArrow } from "lucide-react";
 import { Section } from "@/components/site/section";

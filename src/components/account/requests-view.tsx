@@ -1,0 +1,355 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, Link2, Loader2, MessageCircle, Plus, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import type { Locale } from "@/lib/i18n";
+import type { PortalContent } from "@/content/portal/types";
+import { apiFetch } from "./api";
+import { DevLink } from "./dev-link";
+import { formatRelative, formatDateOnly } from "./format";
+import { StatusBadge } from "./status-badge";
+import type { RequestListResponse } from "./types";
+
+const STATUS_KEYS = ["new", "in_review", "awaiting_info", "in_progress", "responded", "closed", "cancelled"] as const;
+
+type ClaimBanner = { kind: "ok" | "invalid" | "login_required"; ref?: string };
+
+/** قائمة طلبات العميل: تصفية بالحالة + جدول + ربط طلب سابق + لوائح نتائج الربط */
+export function RequestsView({
+  locale,
+  t,
+  authErrors,
+  awaitingLabel,
+  allLabel,
+}: {
+  locale: Locale;
+  t: PortalContent["account"]["requests"];
+  authErrors: PortalContent["auth"]["errors"];
+  awaitingLabel: string;
+  allLabel: string;
+}) {
+  const params = useSearchParams();
+
+  const [status, setStatus] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<RequestListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  // حوار ربط طلب سابق — يُفتح آليًا من لوحة الحساب (?claim=open)
+  const [claimOpen, setClaimOpen] = useState(() => params.get("claim") === "open");
+  const [claimRef, setClaimRef] = useState("");
+  const [claimSending, setClaimSending] = useState(false);
+  const [claimResult, setClaimResult] = useState<{ sent: boolean; devVerifyUrl?: string } | null>(null);
+
+  // لوائح ?claim=ok|invalid|login_required
+  const banner = useMemo<ClaimBanner | null>(() => {
+    const value = params.get("claim");
+    if (value === "ok" || value === "invalid" || value === "login_required") {
+      return { kind: value, ref: params.get("ref") ?? undefined };
+    }
+    return null;
+  }, [params]);
+
+  const load = useCallback(async (filterStatus: string, pageNumber: number) => {
+    const query = new URLSearchParams({ page: String(pageNumber) });
+    if (filterStatus !== "all") query.set("status", filterStatus);
+    const result = await apiFetch<RequestListResponse>(`/api/account/requests?${query.toString()}`);
+    if (result.data.ok) {
+      setData(result.data);
+    } else {
+      setFailed(true);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      await load(status, page);
+    })();
+  }, [status, page, load]);
+
+  function onStatusChange(value: string) {
+    setStatus(value);
+    setPage(1);
+    setLoading(true);
+    setFailed(false);
+  }
+
+  async function submitClaim(ev: React.FormEvent<HTMLFormElement>) {
+    ev.preventDefault();
+    if (claimSending) return;
+    const refCode = claimRef.trim().toUpperCase();
+    if (!refCode) {
+      toast.error(t.claimBody);
+      return;
+    }
+    setClaimSending(true);
+    const result = await apiFetch<{ ok?: boolean; devVerifyUrl?: string }>("/api/account/requests/claim", {
+      method: "POST",
+      body: JSON.stringify({ refCode }),
+    });
+    setClaimSending(false);
+    if (result.status === 429) {
+      toast.error(authErrors.rateLimited);
+      return;
+    }
+    if (result.status === 0) {
+      toast.error(authErrors.generic);
+      return;
+    }
+    setClaimResult({ sent: true, devVerifyUrl: result.data.devVerifyUrl });
+  }
+
+  function resetClaim() {
+    setClaimOpen(false);
+    setClaimRef("");
+    setClaimResult(null);
+  }
+
+  const requests = data?.requests ?? [];
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / Math.max(1, data.pageSize))) : 1;
+  const detailHref = (id: string) => `/${locale}/account/requests/${id}`;
+
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t.subtitle}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            className="h-11 rounded-full px-5 font-semibold"
+            onClick={() => {
+              resetClaim();
+              setClaimOpen(true);
+            }}
+          >
+            <Link2 className="h-4 w-4" aria-hidden="true" />
+            {t.claimTitle}
+          </Button>
+          <Button
+            asChild
+            className="h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
+          >
+            <Link href={`/${locale}/account/requests/new`}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {t.create}
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      {banner && (
+        <div
+          role="status"
+          className={`flex flex-wrap items-center gap-3 rounded-2xl border p-4 text-sm font-medium ${
+            banner.kind === "ok"
+              ? "border-green-200 bg-green-50 text-green-900"
+              : banner.kind === "invalid"
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+          }`}
+        >
+          {banner.kind === "ok" ? t.claimVerifyOk : banner.kind === "invalid" ? authErrors.invalid : authErrors.generic}
+          {banner.ref && (
+            <span className="rounded-full bg-white/70 px-2.5 py-0.5 font-mono text-xs font-bold" dir="ltr">
+              {banner.ref}
+            </span>
+          )}
+        </div>
+      )}
+
+      <Tabs value={status} onValueChange={onStatusChange}>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="h-auto w-max flex-wrap gap-1 bg-muted/60 p-1">
+            <TabsTrigger value="all" className="min-h-9 rounded-lg px-3 text-sm font-medium">
+              {allLabel}
+            </TabsTrigger>
+            {STATUS_KEYS.map((key) => (
+              <TabsTrigger key={key} value={key} className="min-h-9 rounded-lg px-3 text-sm font-medium">
+                {t.statuses[key] ?? key}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+      </Tabs>
+
+      <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
+        {loading ? (
+          <div className="space-y-3" aria-busy="true" aria-label={t.title}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-16" />
+              </div>
+            ))}
+          </div>
+        ) : failed ? (
+          <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+            {authErrors.generic}
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="py-10 text-center">
+            <p className="text-lg font-bold text-navy">{t.empty}</p>
+            <p className="mx-auto mt-2 max-w-md leading-8 text-muted-foreground">{t.emptyBody}</p>
+            <Button
+              asChild
+              className="mt-6 h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
+            >
+              <Link href={`/${locale}/account/requests/new`}>{t.create}</Link>
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[44rem] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <th scope="col" className="px-3 py-3 text-start font-semibold">{t.refCode}</th>
+                    <th scope="col" className="px-3 py-3 text-start font-semibold">{t.service}</th>
+                    <th scope="col" className="px-3 py-3 text-start font-semibold">{t.status}</th>
+                    <th scope="col" className="px-3 py-3 text-start font-semibold">{t.created}</th>
+                    <th scope="col" className="px-3 py-3 text-start font-semibold">{t.lastActivity}</th>
+                    <th scope="col" className="px-3 py-3 text-end font-semibold">{t.viewDetails}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((r) => (
+                    <tr key={r.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40">
+                      <td className="px-3 py-3.5 font-mono font-semibold text-navy">
+                        <Link href={detailHref(r.id)} className="underline decoration-transparent underline-offset-4 hover:decoration-brand">
+                          {r.refCode}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3.5 text-muted-foreground">
+                        <span>{t.services[r.serviceType] ?? r.serviceType}</span>
+                        {r.messageCount > 0 && (
+                          <span className="ms-2 inline-flex items-center gap-1 text-xs text-muted-foreground/80">
+                            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="tabular-nums">{r.messageCount}</span>
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StatusBadge status={r.status} label={t.statuses[r.status] ?? r.status} />
+                          {r.awaitingClientReply && (
+                            <span
+                              title={awaitingLabel}
+                              aria-label={awaitingLabel}
+                              className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"
+                            />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5 whitespace-nowrap text-muted-foreground">{formatDateOnly(r.createdAt, locale)}</td>
+                      <td className="px-3 py-3.5 whitespace-nowrap text-muted-foreground">{formatRelative(r.lastActivityAt, locale)}</td>
+                      <td className="px-3 py-3.5 text-end">
+                        <Link
+                          href={detailHref(r.id)}
+                          className="font-semibold text-brand underline decoration-brand/40 underline-offset-4 hover:text-brand-strong"
+                        >
+                          {t.viewDetails}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  aria-label="←"
+                >
+                  {locale === "ar" ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
+                </Button>
+                <span className="px-2 text-sm font-semibold tabular-nums text-muted-foreground" aria-live="polite">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  aria-label="→"
+                >
+                  {locale === "ar" ? <ChevronLeft className="h-4 w-4" aria-hidden="true" /> : <ChevronRight className="h-4 w-4" aria-hidden="true" />}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* حوار ربط طلب سابق */}
+      <Dialog open={claimOpen} onOpenChange={(open) => (open ? setClaimOpen(true) : resetClaim())}>
+        <DialogContent className="max-w-md rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-navy">{t.claimTitle}</DialogTitle>
+            <DialogDescription className="leading-7 text-muted-foreground">{t.claimBody}</DialogDescription>
+          </DialogHeader>
+
+          {claimResult?.sent ? (
+            <div className="space-y-4">
+              <p role="status" className="rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-900">
+                {t.claimSent}
+              </p>
+              {claimResult.devVerifyUrl && <DevLink url={claimResult.devVerifyUrl} hint={t.claimVerifyTitle} />}
+              <Button onClick={resetClaim} className="h-11 w-full rounded-full bg-primary font-bold text-primary-foreground hover:bg-brand-strong">
+                {t.cancelEdit}
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={submitClaim} noValidate className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="claim-ref" className="text-sm font-semibold text-navy">
+                  {t.refCode}
+                </Label>
+                <Input
+                  id="claim-ref"
+                  value={claimRef}
+                  onChange={(e) => setClaimRef(e.target.value)}
+                  dir="ltr"
+                  className="min-h-11 font-mono uppercase text-start"
+                  maxLength={30}
+                  autoComplete="off"
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={claimSending}
+                className="h-11 w-full rounded-full bg-primary font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
+              >
+                {claimSending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+                {t.claimButton}
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
