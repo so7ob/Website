@@ -20,8 +20,24 @@ function resolveSlug(slug: string[] | undefined): string {
 }
 
 async function getPage(slug: string) {
+  // نختار الحقول المنشورة فقط — لا تصل المسودة لأي مسار إرسال للزائر
   return db.page.findFirst({
     where: { slug, status: "published" },
+    select: {
+      id: true,
+      slug: true,
+      status: true,
+      visibility: true,
+      allowedRoles: true,
+      titleAr: true,
+      titleEn: true,
+      seoTitleAr: true,
+      seoTitleEn: true,
+      seoDescAr: true,
+      seoDescEn: true,
+      publishedBlocksAr: true,
+      publishedBlocksEn: true,
+    },
   });
 }
 

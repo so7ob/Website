@@ -124,3 +124,25 @@ Work Log:
 
 Stage Summary:
 - محرر كامل ثنائي اللغة RTL/LTR فوق الكتل الحية مع مكتبة (27) وخصائص عامة من سجل حقول مطابق للمخططات وسحب وإفلات وتراجع وحفظ تلقائي بكشف تعارض ونشر/إصدارات/معاينة أجهزة ومنتقي وسائط — التفاصيل في agent-ctx/9-a-page-editor.md
+
+---
+Task ID: 10-13
+Agent: main (Z.ai Code)
+Task: Integration, E2E QA via agent-browser, fixes, docs, tests, PR
+
+Work Log:
+- Integrated all agent work (7-a auth/account, 8-a admin panel, 9-a page editor)
+- Fixed blank-section template invalid blocks; relaxed publish to require one non-empty locale (unpublished translation = 404, not blocked publish)
+- CRITICAL FIX: draft leak in RSC flight payload (React dev instrumentation serialized full page row) → getPage now selects published fields only
+- E2E QA via agent-browser: register→verify(dev link)→login→dashboard→new request (server draft autosave PUT 200, POST 201)→client reply 201→admin login→reply+internal note+status change PATCH 200→client sees reply+status, internal note ABSENT (0 matches)→ suspension revokes session (401)→client blocked from admin APIs (403/404)
+- Editor E2E: created page 'extra-services' from editor (3 blocks) → publish 200 → live for visitors at /ar/extra-services (no code changes); edited FAQ title → publish → live update; draft-only edit NOT visible; version restore 200 works
+- Mobile 375px no overflow; EN LTR works; sticky footer verified; server restart preserves data
+- Added tests: blocks validation (11), permissions+transitions (14), portal parity (3) → 67 total passing
+- Updated README (platform guide), AGENTS.md (content separation rules), .env.example (auth+mail vars)
+- Cleaned agent test leftovers; kept synthetic demo data (1 client + 1 request + 1 editor page)
+
+Stage Summary:
+- Platform complete: auth+RBAC, client portal, admin panel, page editor, messaging w/ attachments, notifications, audit, media, menus, settings
+- All checks: lint ✓, typecheck ✓, 67/67 tests ✓, git diff --check ✓
+- Demo admin: admin@so7ob.local / AdminS7ob2026! (local dev only)
+- Known: single-instance rate limits (documented); editor device-hiding follows viewport (documented)

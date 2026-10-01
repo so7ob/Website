@@ -18,11 +18,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!page) return json({ ok: false, code: "not_found" }, 404);
 
   // تحقق الخادم قبل النشر — مصدر الحقيقة النهائي
-  for (const blocks of [page.draftBlocksAr, page.draftBlocksEn]) {
+  // يكفي امتلاء لغة واحدة؛ اللغة الفارغة تُنشر null فلا تظهر للزوار (404) —
+  // «لا تُعرض ترجمة غير منشورة كأنها متاحة»
+  let anyNonEmpty = false;
+  const validated: { ar: string | null; en: string | null } = { ar: null, en: null };
+  for (const [locale, blocks] of [
+    ["ar", page.draftBlocksAr],
+    ["en", page.draftBlocksEn],
+  ] as const) {
     const check = validateBlocks(blocks);
     if (!check.ok) return json({ ok: false, code: "invalid_blocks", error: check.error }, 400);
-    if (check.blocks.length === 0) return json({ ok: false, code: "empty_page" }, 400);
+    if (check.blocks.length > 0) {
+      anyNonEmpty = true;
+      validated[locale] = blocks;
+    }
   }
+  if (!anyNonEmpty) return json({ ok: false, code: "empty_page" }, 400);
 
   // آخر رقم إصدار لكل لغة
   const [maxAr, maxEn] = await Promise.all([
@@ -35,8 +46,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     db.page.update({
       where: { id },
       data: {
-        publishedBlocksAr: page.draftBlocksAr,
-        publishedBlocksEn: page.draftBlocksEn,
+        publishedBlocksAr: validated.ar,
+        publishedBlocksEn: validated.en,
         publishedAt: now,
         publishedById: guard.user.id,
         status: "published",
