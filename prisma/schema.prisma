@@ -58,6 +58,7 @@ model User {
   assignedRequests   ProjectRequest[]   @relation("AssignedRequests")
   requestMessages    RequestMessage[]
   requestClaims      RequestClaim[]
+  statusEvents       RequestStatusEvent[]
   inquiries          Inquiry[]          @relation("InquiryClients")
   assignedInquiries  Inquiry[]          @relation("InquiryAssignees")
   inquiryMessages    InquiryMessage[]
@@ -223,6 +224,7 @@ model RequestStatusEvent {
   createdAt   DateTime @default(now())
 
   request ProjectRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  changedBy User?        @relation(fields: [changedById], references: [id])
 
   @@index([requestId, createdAt])
 }

@@ -45,3 +45,20 @@ Stage Summary:
 - bunx eslint src/components/blocks: clean (0 problems)
 - No files modified outside src/components/blocks/; types.ts untouched; no test files
 - Next: seed content task (5-b) + /[locale]/[slug] page route consuming PageRenderer
+
+---
+Task ID: 5-b,6
+Agent: main (Z.ai Code)
+Task: Content seed + DB page serving + full account/admin APIs
+
+Work Log:
+- Content seed src/db/seed-content.ts: 7 pages → blocks (re-runnable, skips editorTouched), menus, settings; ran successfully
+- /[locale]/[[...slug]] catch-all serving published blocks w/ visibility gates + slug redirects + dynamic SEO; layout dynamic w/ DB menus + auth-aware header
+- Portal translations src/content/portal/{types,ar,en}.ts
+- requests-service.ts: status transitions map, client/staff scoping, message dedupe, notifications
+- APIs: account (requests list/detail/reply/cancel/edit, claim+verify, drafts, notifications, profile), admin (dashboard, users+invite, requests+bulk, inquiries+messages, pages CRUD+publish+versions+restore, media, menus, settings, audit, outbox), attachments upload/download w/ permission checks, public inquiries POST, invite accept, media serving
+- requests POST links authed users via session; audit + staff notifications wired
+
+Stage Summary:
+- All backend APIs ready; auth pages/portals/admin UI remain
+- Migrations: 20261001211740_platform_v2, auth_lockout, status_event_relation

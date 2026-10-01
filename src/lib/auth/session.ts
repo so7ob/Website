@@ -80,9 +80,14 @@ export function hasSessionCookie(req: NextRequest): boolean {
   );
 }
 
-/** بادئة استجابة خطأ موحدة */
+/** بادئة استجابة موحدة */
 export function apiError(status: number, code: string, extra?: Record<string, unknown>): NextResponse {
   return NextResponse.json({ ok: false, code, ...extra }, { status });
+}
+
+/** استجابة json موحدة { ok: true/false } */
+export function json(data: unknown, status = 200): NextResponse {
+  return NextResponse.json(data, { status });
 }
 
 export { can, isStaff };

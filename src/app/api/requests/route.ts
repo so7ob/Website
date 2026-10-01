@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { validateProjectRequest, isBotLike, type ProjectRequestInput } from "@/lib/validation";
 import { checkRateLimit, fingerprint, isDuplicate, memoryStore } from "@/lib/ratelimit";
 import { buildNotifyPayload, sendNotify } from "@/lib/notify";
+import { getAuthUser } from "@/lib/auth/session";
+import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
+import { notifyNewRequest } from "@/lib/requests-service";
 
 /**
  * POST /api/requests — استقبال طلب مشروع.
@@ -27,6 +30,9 @@ function clientIpHash(request: NextRequest): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  // المستخدم المسجل: يُربط الطلب بحسابه من الجلسة — لا من حقول المتصفح
+  const authUser = await getAuthUser();
+
   let raw: unknown;
   try {
     raw = await request.json();
@@ -81,12 +87,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, code: "storage" }, { status: 500 });
   }
 
-  // 5) الحفظ الدائم
+  // 5) الحفظ الدائم — المسجل يُربط بهويته من الجلسة ويُوثق البريد منها
   const code = refCode();
   try {
     await db.projectRequest.create({
       data: {
         refCode: code,
+        ...(authUser ? { clientId: authUser.id, name: authUser.name, email: authUser.email } : {}),
         requestType: data.requestType,
         serviceType: data.serviceType,
         description: data.description,
@@ -108,6 +115,24 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[requests] save failed", error);
     return NextResponse.json({ ok: false, code: "storage" }, { status: 500 });
+  }
+
+  // 5.5) تدقيق + إشعارات المنصة (الطاقم) — فشلها لا يمس نجاح الحفظ
+  const ipForAudit = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  await audit({
+    actorId: authUser?.id ?? null,
+    actorEmail: email,
+    action: AUDIT_ACTIONS.requestSubmitted,
+    entityType: "request",
+    entityId: code,
+    details: { ref: code, authenticated: Boolean(authUser) },
+    ip: ipForAudit,
+  });
+  try {
+    const created = await db.projectRequest.findUnique({ where: { refCode: code }, select: { id: true } });
+    if (created) await notifyNewRequest(code, authUser?.name ?? data.name, created.id);
+  } catch (e) {
+    console.error("[requests] platform notify failed", e);
   }
 
   // 6) إشعار المسؤول — اختياري وفشله لا يؤثر على نجاح الحفظ
