@@ -30,10 +30,16 @@ interface StatDef {
   value: number;
   label: string;
   hint?: string;
+  /** رابط عميق اختياري — البطاقة تصبح رابطًا إلى قائمة مفلترة */
+  href?: string;
   /** تلوين بصري فقط: شريحة الأيقونة + شريط التمييز العلوي */
   chip: string;
   bar: string;
 }
+
+/** فئات بطاقات المؤشرات — البطاقة نفسها بلا تغيير بصري، والرابط يضيف حلقة تركيز فقط */
+const STAT_CARD_CLASS =
+  "relative overflow-hidden rounded-2xl border border-border bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10";
 
 /** مدى الرسم البياني — القيم المسموحة لـ ?range= */
 const RANGE_DAYS = [7, 30, 90] as const;
@@ -198,13 +204,67 @@ export default async function AdminDashboardPage({
   const maxStatus = Math.max(1, ...byStatus.map((s) => s.count));
 
   const stats: StatDef[] = [
-    { icon: Users, value: totalUsers, label: t.totalUsers, hint: `${activeUsers} · ${t.activeUsers}`, chip: "bg-accent text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop" },
-    { icon: Clock, value: pendingUsers, label: t.pendingUsers, chip: "bg-purple-100 text-purple-800", bar: "bg-gradient-to-r from-purple-400 to-purple-500" },
-    { icon: Inbox, value: openRequests, label: t.openRequests, hint: `${rangeTotal} · ${rangeDays === 7 ? t.last7days : rangeLabel}`, chip: "bg-skydrop/20 text-brand-strong", bar: "bg-gradient-to-r from-navy to-skydrop" },
-    { icon: Hourglass, value: awaitingInfo, label: t.awaitingInfo, chip: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300" },
-    { icon: Timer, value: overdueReplies, label: t.overdueReplies, hint: t.overdueHint, chip: "bg-rose-100 text-rose-800", bar: "bg-gradient-to-r from-rose-300 to-rose-500" },
-    { icon: MessageSquareText, value: openInquiries, label: t.openInquiries, chip: "bg-emerald-100 text-emerald-800", bar: "bg-gradient-to-r from-emerald-400 to-emerald-300" },
-    { icon: FileText, value: publishedPages, label: t.publishedPages, hint: `${draftPages} · ${t.draftPages}`, chip: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand-strong to-brand" },
+    {
+      icon: Users,
+      value: totalUsers,
+      label: t.totalUsers,
+      hint: `${activeUsers} · ${t.activeUsers}`,
+      href: `/${locale}/admin/users`,
+      chip: "bg-accent text-brand-strong",
+      bar: "bg-gradient-to-r from-brand to-skydrop",
+    },
+    {
+      icon: Clock,
+      value: pendingUsers,
+      label: t.pendingUsers,
+      href: `/${locale}/admin/users?status=pending_verification`,
+      chip: "bg-purple-100 text-purple-800",
+      bar: "bg-gradient-to-r from-purple-400 to-purple-500",
+    },
+    {
+      icon: Inbox,
+      value: openRequests,
+      label: t.openRequests,
+      hint: `${rangeTotal} · ${rangeDays === 7 ? t.last7days : rangeLabel}`,
+      href: `/${locale}/admin/requests`,
+      chip: "bg-skydrop/20 text-brand-strong",
+      bar: "bg-gradient-to-r from-navy to-skydrop",
+    },
+    {
+      icon: Hourglass,
+      value: awaitingInfo,
+      label: t.awaitingInfo,
+      href: `/${locale}/admin/requests?status=awaiting_info`,
+      chip: "bg-amber-100 text-amber-800",
+      bar: "bg-gradient-to-r from-amber-400 to-amber-300",
+    },
+    {
+      icon: Timer,
+      value: overdueReplies,
+      label: t.overdueReplies,
+      hint: t.overdueHint,
+      href: `/${locale}/admin/requests?overdue=1`,
+      chip: "bg-rose-100 text-rose-800",
+      bar: "bg-gradient-to-r from-rose-300 to-rose-500",
+    },
+    {
+      icon: MessageSquareText,
+      value: openInquiries,
+      label: t.openInquiries,
+      // «open» مرشّح مركّب في واجهة الاستفسارات: الحالات غير المغلقة وغير المؤرشفة —
+      // يطابق هذا المؤشر تمامًا (أُضيف في تكامل الجولة 19)
+      href: `/${locale}/admin/inquiries?status=open`,
+      chip: "bg-emerald-100 text-emerald-800",
+      bar: "bg-gradient-to-r from-emerald-400 to-emerald-300",
+    },
+    {
+      icon: FileText,
+      value: publishedPages,
+      label: t.publishedPages,
+      hint: `${draftPages} · ${t.draftPages}`,
+      chip: "bg-brand-soft text-brand-strong",
+      bar: "bg-gradient-to-r from-brand-strong to-brand",
+    },
   ];
 
   return (
@@ -233,24 +293,38 @@ export default async function AdminDashboardPage({
         </div>
       </div>
 
-      {/* بطاقات المؤشرات — 7 بطاقات: صف 4+3 على الشاشات الواسعة */}
+      {/* بطاقات المؤشرات — 7 بطاقات: صف 4+3 على الشاشات الواسعة؛
+          ذات الرابط تفتح القائمة المفلترة المقابلة (روابط اللوحة العميقة) */}
       <section aria-label={t.title} className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="relative overflow-hidden rounded-2xl border border-border bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10"
-          >
-            <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-1", stat.bar)} />
-            <div className="flex items-center justify-between gap-2">
-              <span className={cn("flex size-9 items-center justify-center rounded-xl", stat.chip)}>
-                <stat.icon className="size-4.5" aria-hidden="true" />
-              </span>
-              <p className="text-2xl font-bold tabular-nums text-navy">{stat.value}</p>
+        {stats.map((stat) => {
+          const card = (
+            <>
+              <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-1", stat.bar)} />
+              <div className="flex items-center justify-between gap-2">
+                <span className={cn("flex size-9 items-center justify-center rounded-xl", stat.chip)}>
+                  <stat.icon className="size-4.5" aria-hidden="true" />
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-navy">{stat.value}</p>
+              </div>
+              <p className="mt-2 text-xs font-medium text-muted-foreground">{stat.label}</p>
+              {stat.hint ? <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground/70">{stat.hint}</p> : null}
+            </>
+          );
+          return stat.href ? (
+            <Link
+              key={stat.label}
+              href={stat.href}
+              aria-label={`${stat.label}: ${stat.value}`}
+              className={cn(STAT_CARD_CLASS, "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40")}
+            >
+              {card}
+            </Link>
+          ) : (
+            <div key={stat.label} className={STAT_CARD_CLASS}>
+              {card}
             </div>
-            <p className="mt-2 text-xs font-medium text-muted-foreground">{stat.label}</p>
-            {stat.hint ? <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground/70">{stat.hint}</p> : null}
-          </div>
-        ))}
+          );
+        })}
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -260,25 +334,31 @@ export default async function AdminDashboardPage({
           {byStatus.every((s) => s.count === 0) ? (
             <EmptyState icon={Inbox} title={t.noData} className="py-8" />
           ) : (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-1">
               {byStatus.map((row) => (
-                <li key={row.status} className="flex items-center gap-3">
-                  <p className="w-28 shrink-0 truncate text-xs text-muted-foreground">
-                    {requestLabels.statuses[row.status] ?? row.status}
-                  </p>
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      title={`${requestLabels.statuses[row.status] ?? row.status}: ${row.count}`}
-                      className={cn(
-                        "animate-shimmer h-full rounded-full transition-all duration-500",
-                        STATUS_BAR[row.status] ?? "bg-gradient-to-r from-brand to-brand-strong"
-                      )}
-                      style={{ width: `${Math.max(row.count > 0 ? 4 : 0, Math.round((row.count / maxStatus) * 100))}%` }}
-                    />
-                  </div>
-                  <span className="inline-flex min-w-8 shrink-0 items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold tabular-nums text-navy">
-                    {row.count}
-                  </span>
+                <li key={row.status}>
+                  <Link
+                    href={`/${locale}/admin/requests?status=${row.status}`}
+                    aria-label={`${requestLabels.statuses[row.status] ?? row.status}: ${row.count}`}
+                    className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted/40"
+                  >
+                    <p className="w-28 shrink-0 truncate text-xs text-muted-foreground">
+                      {requestLabels.statuses[row.status] ?? row.status}
+                    </p>
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        title={`${requestLabels.statuses[row.status] ?? row.status}: ${row.count}`}
+                        className={cn(
+                          "animate-shimmer h-full rounded-full transition-all duration-500",
+                          STATUS_BAR[row.status] ?? "bg-gradient-to-r from-brand to-brand-strong"
+                        )}
+                        style={{ width: `${Math.max(row.count > 0 ? 4 : 0, Math.round((row.count / maxStatus) * 100))}%` }}
+                      />
+                    </div>
+                    <span className="inline-flex min-w-8 shrink-0 items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold tabular-nums text-navy">
+                      {row.count}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>

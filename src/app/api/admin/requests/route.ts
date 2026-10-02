@@ -6,6 +6,36 @@ import { db } from "@/lib/db";
 import { guardApi, json } from "@/lib/auth/session";
 import { REQUEST_STATUSES } from "@/lib/requests-service";
 
+/** الحالات المفتوحة — الردود المتأخرة تخص الطلبات غير المغلبة/الملغاة فقط */
+const OVERDUE_OPEN_STATUSES = ["new", "in_review", "awaiting_info", "in_progress", "responded"];
+
+/** إجراء Prisma لا يقارن عمودين في المرشِّح (lastClientReplyAt > lastStaffReplyAt)،
+ *  فنحدّد المرشّحين المحتملين (مفتوحة، غير مؤرشفة، آخر كلام للعميل قبل 24 ساعة+
+ *  أو لا ردود إطلاقًا) ثم نطابق المنطق الدقيق في الذاكرة — نفس دلالات مؤشر اللوحة. */
+async function findOverdueRequestIds(): Promise<string[]> {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const candidates = await db.projectRequest.findMany({
+    where: {
+      status: { in: OVERDUE_OPEN_STATUSES },
+      archivedAt: null,
+      OR: [
+        { lastClientReplyAt: { not: null, lt: cutoff } },
+        { lastClientReplyAt: null, lastStaffReplyAt: null, createdAt: { lt: cutoff } },
+      ],
+    },
+    select: { id: true, lastClientReplyAt: true, lastStaffReplyAt: true },
+  });
+  const ids: string[] = [];
+  for (const c of candidates) {
+    const isOverdue =
+      c.lastClientReplyAt === null
+        ? c.lastStaffReplyAt === null
+        : c.lastStaffReplyAt === null || c.lastClientReplyAt > c.lastStaffReplyAt;
+    if (isOverdue) ids.push(c.id);
+  }
+  return ids;
+}
+
 export async function GET(req: NextRequest) {
   const guard = await guardApi(req, "requests.view.all");
   if (!guard.ok) return guard.response;
@@ -18,11 +48,17 @@ export async function GET(req: NextRequest) {
   const assignee = url.searchParams.get("assignee") ?? "";
   const archived = url.searchParams.get("archived") === "1";
   const from = url.searchParams.get("from") ?? "";
+  const overdue = url.searchParams.get("overdue") === "1";
   const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
   const pageSize = 20;
 
+  // تصفية الردود المتأخرة — تجمع مع بقية المرشّحات (حالة/خدمة/أولوية/مسؤول)
+  // ومجموعة فارغة تعني صفر نتائج طبيعيًا.
+  const overdueIds = overdue ? await findOverdueRequestIds() : [];
+
   const where = {
     archivedAt: archived ? { not: null } : null,
+    ...(overdue ? { id: { in: overdueIds } } : {}),
     ...(status && REQUEST_STATUSES.includes(status as never) ? { status } : {}),
     ...(service ? { serviceType: service } : {}),
     ...(priority ? { priority } : {}),

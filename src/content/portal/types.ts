@@ -279,6 +279,7 @@ export interface PortalContent {
       filterPriority: string;
       filterService: string;
       filterAssignee: string;
+      filterOverdue: string;
       filterAll: string;
       unassigned: string;
       assign: string;

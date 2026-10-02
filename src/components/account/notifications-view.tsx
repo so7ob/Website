@@ -30,7 +30,7 @@ const TYPE_META: Record<string, { icon: React.ComponentType<{ className?: string
   request_assigned: { icon: UserCheck, chip: "bg-navy/10 text-navy" },
   reply_received: { icon: MessageSquare, chip: "bg-emerald-100 text-emerald-800" },
   info_requested: { icon: Info, chip: "bg-amber-100 text-amber-800" },
-  status_changed: { icon: Bell, chip: "bg-amber-100 text-amber-800" },
+  status_changed: { icon: Bell, chip: "bg-violet-100 text-violet-800" },
   content_published: { icon: FileText, chip: "bg-emerald-100 text-emerald-800" },
   account: { icon: User, chip: "bg-navy/10 text-navy" },
 };
@@ -185,12 +185,12 @@ export function NotificationsView({
                     aria-label={typeLabel}
                     className={cn(
                       "flex w-full items-start gap-4 rounded-xl border-s-2 border-s-transparent p-4 text-start transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand",
-                      unreadRow && "border-s-brand bg-accent/30"
+                      unreadRow && "border-s-brand bg-accent/40"
                     )}
                   >
                     <span
                       className={cn(
-                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full",
+                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl",
                         meta.chip
                       )}
                     >

@@ -69,16 +69,18 @@ interface UsersClientProps {
   me: Me;
   locale: Locale;
   initialQ: string;
+  /** حالة مبدئية من رابط الصفحة (مثل ?status=pending_verification من اللوحة) */
+  initialStatus?: string;
 }
 
-export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
+export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClientProps) {
   const t = getPortalContent(locale);
   const tu = t.admin.users;
 
   const [q, setQ] = useState(initialQ);
   const debouncedQ = useDebounced(q);
   const [role, setRole] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState(initialStatus ?? "all");
   const [sort, setSort] = useState<SortCol>("createdAt");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);

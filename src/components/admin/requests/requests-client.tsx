@@ -21,6 +21,7 @@ import {
   RotateCcw,
   BookMarked,
   Download,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,10 @@ import { cn } from "@/lib/utils";
 interface RequestsClientProps {
   me: Me;
   locale: Locale;
+  /** حالة مبدئية من رابط الصفحة (مثل ?status=awaiting_info من اللوحة) */
+  initialStatus?: string;
+  /** تفعيل مبدئي لمرشّح الردود المتأخرة (?overdue=1 من اللوحة) */
+  initialOverdue?: boolean;
 }
 
 /** شارة عمر الانتظار — منذ آخر رسالة عميل: محايدة تحت 24 ساعة، تحذير كهرماني بعدها */
@@ -84,17 +89,18 @@ function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["
   );
 }
 
-export function RequestsClient({ me, locale }: RequestsClientProps) {
+export function RequestsClient({ me, locale, initialStatus, initialOverdue }: RequestsClientProps) {
   const t = getPortalContent(locale);
   const tr = t.admin.requests;
 
   const [q, setQ] = useState("");
   const debouncedQ = useDebounced(q);
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState(initialStatus ?? "all");
   const [priority, setPriority] = useState("all");
   const [service, setService] = useState("all");
   const [assignee, setAssignee] = useState("all");
   const [archived, setArchived] = useState(false);
+  const [overdue, setOverdue] = useState(Boolean(initialOverdue));
   const [page, setPage] = useState(1);
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -123,6 +129,7 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
           service: service !== "all" ? service : "",
           assignee: assignee !== "all" ? assignee : "",
           archived,
+          overdue: overdue ? "1" : "",
           page,
         });
         const res = await apiGet<RequestsResponse>(`/api/admin/requests${query}`);
@@ -136,7 +143,7 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
         if (!signal.aborted) setLoading(false);
       }
     },
-    [debouncedQ, status, priority, service, assignee, archived, page, t.auth.errors]
+    [debouncedQ, status, priority, service, assignee, archived, overdue, page, t.auth.errors]
   );
 
   useEffect(() => {
@@ -207,6 +214,7 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
       service: service !== "all" ? service : "",
       assignee: assignee !== "all" ? assignee : "",
       archived,
+      overdue: overdue ? "1" : "",
     });
     window.open(`/api/admin/requests/export${query}`, "_blank");
     toast.success(tr.exportOk);
@@ -302,6 +310,24 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
             {tr.archived}
           </Label>
         </div>
+        {/* مرشّح الردود المتأخرة — زر حبة بنبرة وردية عند التفعيل (لغة مؤشر اللوحة) */}
+        <button
+          type="button"
+          aria-pressed={overdue}
+          onClick={() => {
+            setOverdue((v) => !v);
+            setPage(1);
+          }}
+          className={cn(
+            "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors",
+            overdue
+              ? "border-rose-300 bg-rose-100 text-rose-800"
+              : "border-border bg-white text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <Timer className="size-4" aria-hidden="true" />
+          {tr.filterOverdue}
+        </button>
       </div>
 
       {/* شريط التحديد الجماعي */}

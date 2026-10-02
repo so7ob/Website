@@ -304,6 +304,7 @@ export const portalAr: PortalContent = {
       filterPriority: "الأولوية",
       filterService: "الخدمة",
       filterAssignee: "المسؤول",
+      filterOverdue: "متأخر الرد +24 ساعة",
       filterAll: "الكل",
       unassigned: "غير معيّن",
       assign: "تعيين",

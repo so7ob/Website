@@ -159,15 +159,25 @@ export function MediaClient({ me, locale }: MediaClientProps) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">{tmed.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{tmed.subtitle}</p>
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <Images className="size-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h1 className="text-2xl font-bold text-navy">{tmed.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{tmed.subtitle}</p>
+        </div>
       </div>
 
       {/* بطاقة الرفع */}
       {mayUpload ? (
         <section className="rounded-2xl border border-dashed border-border bg-white p-5 transition-colors hover:border-brand hover:bg-accent/30">
-          <h2 className="text-sm font-semibold text-navy">{tmed.upload}</h2>
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+              <Upload className="size-5" aria-hidden="true" />
+            </span>
+            <h2 className="text-base font-semibold text-navy">{tmed.upload}</h2>
+          </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
             <div className="space-y-2">
               <Label htmlFor="media-file">{tmed.filename}</Label>
@@ -186,7 +196,7 @@ export function MediaClient({ me, locale }: MediaClientProps) {
                 value={altDraft}
                 onChange={(e) => setAltDraft(e.target.value)}
                 maxLength={300}
-                className="min-h-11"
+                className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             </div>
             <Button onClick={upload} disabled={uploading} className="min-h-11 rounded-full">
@@ -220,7 +230,7 @@ export function MediaClient({ me, locale }: MediaClientProps) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {media.map((item) => (
-            <article key={item.id} className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-sm">
+            <article key={item.id} className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-all hover:border-brand/40 hover:shadow-sm">
               <div className="relative m-3 mb-0 aspect-video overflow-hidden rounded-xl border border-border bg-muted">
                 <img
                   src={item.url}
@@ -259,7 +269,7 @@ export function MediaClient({ me, locale }: MediaClientProps) {
                 </div>
               </div>
               <div className="flex flex-1 flex-col gap-2 p-3">
-                <p className="truncate text-sm font-medium text-navy ltr-isolate" title={item.filename}>
+                <p className="truncate font-mono text-xs font-medium text-navy ltr-isolate" title={item.filename}>
                   {item.filename}
                 </p>
                 <p className="text-xs tabular-nums text-muted-foreground">
@@ -273,7 +283,7 @@ export function MediaClient({ me, locale }: MediaClientProps) {
                     placeholder={tmed.alt}
                     aria-label={`${tmed.alt} — ${item.filename}`}
                     maxLength={300}
-                    className={cn("min-h-10 text-xs", savingAltId === item.id && "opacity-60")}
+                    className={cn("min-h-10 text-xs focus-visible:ring-2 focus-visible:ring-ring/40", savingAltId === item.id && "opacity-60")}
                   />
                 ) : (
                   <p className="text-xs text-muted-foreground">{item.altText ?? tmed.alt}</p>

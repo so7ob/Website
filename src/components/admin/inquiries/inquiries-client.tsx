@@ -25,15 +25,17 @@ import type { InquiriesResponse, Me } from "../types";
 interface InquiriesClientProps {
   me: Me;
   locale: Locale;
+  /** حالة مبدئية من رابط الصفحة (مثل ?status=new من اللوحة) */
+  initialStatus?: string;
 }
 
-export function InquiriesClient({ me, locale }: InquiriesClientProps) {
+export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientProps) {
   const t = getPortalContent(locale);
   const ti = t.admin.inquiries;
 
   const [q, setQ] = useState("");
   const debouncedQ = useDebounced(q);
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState(initialStatus ?? "all");
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
   const [reloadToken, setReloadToken] = useState(0);
@@ -123,6 +125,8 @@ export function InquiriesClient({ me, locale }: InquiriesClientProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t.admin.requests.filterAll} — {t.admin.requests.filterStatus}</SelectItem>
+            {/* مرشّح مركّب يطابق مؤشر «الاستفسارات المفتوحة» في اللوحة (رابط عميق ?status=open) */}
+            <SelectItem value="open">{t.admin.dashboard.openInquiries}</SelectItem>
             {statusKeys.map((s) => (
               <SelectItem key={s} value={s}>{ti.statuses[s]}</SelectItem>
             ))}

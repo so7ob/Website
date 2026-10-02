@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { guardApi, json } from "@/lib/auth/session";
 
 const INQUIRY_STATUSES = ["new", "in_review", "awaiting_info", "responded", "closed"];
+// «open» مرشّح مركّب من مؤشر اللوحة: كل الحالات غير المغلقة وغير المؤرشفة
+const OPEN_INQUIRY_STATUSES = ["new", "in_review", "awaiting_info", "responded"];
 
 export async function GET(req: NextRequest) {
   const guard = await guardApi(req, "inquiries.view.all");
@@ -19,7 +21,12 @@ export async function GET(req: NextRequest) {
   const pageSize = 20;
 
   const where = {
-    ...(status && INQUIRY_STATUSES.includes(status) ? { status } : {}),
+    // status=open → مرشّح مركّب يطابق مؤشر «الاستفسارات المفتوحة» في اللوحة
+    ...(status === "open"
+      ? { status: { in: OPEN_INQUIRY_STATUSES }, archivedAt: null }
+      : status && INQUIRY_STATUSES.includes(status)
+        ? { status }
+        : {}),
     ...(category ? { category } : {}),
     ...(query ? { OR: [{ subject: { contains: query } }, { email: { contains: query } }, { name: { contains: query } }, { refCode: { contains: query.toUpperCase() } }] } : {}),
   };

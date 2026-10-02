@@ -188,7 +188,7 @@ export function RequestDetailView({
   if (phase === "error" || !request) {
     return (
       <div className="rounded-2xl border border-border bg-white p-8 text-center sm:p-12" role="alert">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-700">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-800">
           <ShieldX className="h-7 w-7" aria-hidden="true" />
         </span>
         <p className="mt-4 font-semibold text-navy">{errorCode === "forbidden" || errorCode === "not_found" ? authErrors.invalid : authErrors.generic}</p>
@@ -214,7 +214,9 @@ export function RequestDetailView({
         <h1 className="font-mono text-xl font-bold text-navy" dir="ltr">
           {request.refCode}
         </h1>
-        <StatusBadge status={request.status} label={statusLabel} className="text-sm" />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={request.status} label={statusLabel} className="text-sm" />
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -309,7 +311,7 @@ export function RequestDetailView({
                   rows={4}
                   maxLength={8000}
                   aria-label={d.replyPlaceholder}
-                  className="min-h-24 resize-y leading-8"
+                  className="min-h-24 resize-y leading-8 focus-visible:ring-2 focus-visible:ring-ring/40"
                   disabled={sending}
                 />
                 <div className="flex flex-wrap items-center gap-3">
@@ -463,6 +465,7 @@ export function RequestDetailView({
               maxLength={500}
               aria-label={d.closedNote}
               placeholder={d.closedNote}
+              className="focus-visible:ring-2 focus-visible:ring-ring/40"
             />
             <Button
               onClick={confirmCancel}
@@ -481,9 +484,9 @@ export function RequestDetailView({
 
 function InfoRow({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-3 last:border-0 last:pb-0">
+    <div className="flex items-start justify-between gap-3">
       <dt className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-end text-sm font-medium text-foreground">
+      <dd className="min-w-0 border-s-2 border-border/60 ps-3 text-sm font-medium text-navy">
         {icon && <span className="me-1 inline-flex align-middle text-muted-foreground">{icon}</span>}
         {value}
       </dd>

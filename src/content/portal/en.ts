@@ -304,6 +304,7 @@ export const portalEn: PortalContent = {
       filterPriority: "Priority",
       filterService: "Service",
       filterAssignee: "Assignee",
+      filterOverdue: "Overdue 24h+",
       filterAll: "All",
       unassigned: "Unassigned",
       assign: "Assign",
