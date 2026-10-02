@@ -102,6 +102,10 @@ export interface PortalContent {
       draftRestored: string;
       draftSaved: string;
       draftCleared: string;
+      search: string;
+      searchPlaceholder: string;
+      noResults: string;
+      clearSearch: string;
     };
     detail: {
       conversation: string;
@@ -242,6 +246,20 @@ export interface PortalContent {
       lastAdminError: string;
       sendReset: string;
       resetSent: string;
+      viewProfile: string;
+      detail: {
+        title: string;
+        back: string;
+        accountInfo: string;
+        totalRequests: string;
+        openRequests: string;
+        userRequests: string;
+        activityLog: string;
+        sessionsCount: string;
+        noRequests: string;
+        suspendedAt: string;
+        lastSeen: string;
+      };
     };
     requests: {
       title: string;
@@ -296,6 +314,8 @@ export interface PortalContent {
       sentReply: string;
       sentNote: string;
       clientView: string;
+      export: string;
+      exportOk: string;
     };
     inquiries: {
       title: string;
@@ -472,6 +492,26 @@ export interface PortalContent {
       devLogged: string;
       failed: string;
       date: string;
+      empty: string;
+      emptyBody: string;
+    };
+    savedReplies: {
+      title: string;
+      subtitle: string;
+      manage: string;
+      name: string;
+      namePlaceholder: string;
+      content: string;
+      contentPlaceholder: string;
+      add: string;
+      edit: string;
+      delete: string;
+      save: string;
+      saved: string;
+      deleted: string;
+      confirmDelete: string;
+      useReply: string;
+      insert: string;
       empty: string;
       emptyBody: string;
     };

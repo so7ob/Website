@@ -19,6 +19,8 @@ import {
   Inbox,
   Loader2,
   RotateCcw,
+  BookMarked,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +56,7 @@ import {
   fmtRelative,
 } from "@/components/admin/helpers";
 import type { Me, RequestRow, RequestsResponse, StaffOption } from "../types";
+import { SavedRepliesDialog } from "./saved-replies-dialog";
 import { cn } from "@/lib/utils";
 
 interface RequestsClientProps {
@@ -83,6 +86,10 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
 
   const mayAssign = can(me, "requests.assign");
   const mayArchive = can(me, "requests.archive");
+  const mayExport = can(me, "requests.export");
+  const maySavedReplies = can(me, "requests.reply");
+
+  const [repliesOpen, setRepliesOpen] = useState(false);
 
   const load = useCallback(
     async (signal: AbortSignal) => {
@@ -171,12 +178,43 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
   const priorityKeys = useMemo(() => Object.keys(tr.priorities), [tr.priorities]);
   const serviceKeys = useMemo(() => Object.keys(tr.services), [tr.services]);
 
+  // تصدير CSV بنفس تصفية العرض الحالية — رابط نسبي فيرسل الكوكيز تلقائيًا
+  const exportCsv = () => {
+    const query = buildQuery({
+      q: debouncedQ,
+      status: status !== "all" ? status : "",
+      priority: priority !== "all" ? priority : "",
+      service: service !== "all" ? service : "",
+      assignee: assignee !== "all" ? assignee : "",
+      archived,
+    });
+    window.open(`/api/admin/requests/export${query}`, "_blank");
+    toast.success(tr.exportOk);
+  };
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">{tr.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{tr.subtitle}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-navy">{tr.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{tr.subtitle}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {maySavedReplies ? (
+            <Button variant="outline" onClick={() => setRepliesOpen(true)} className="min-h-11 rounded-full">
+              <BookMarked className="size-4" aria-hidden="true" />
+              {t.admin.savedReplies.manage}
+            </Button>
+          ) : null}
+          {mayExport ? (
+            <Button variant="outline" onClick={exportCsv} className="min-h-11 rounded-full">
+              <Download className="size-4" aria-hidden="true" />
+              {tr.export}
+            </Button>
+          ) : null}
+        </div>
       </div>
+      <SavedRepliesDialog locale={locale} open={repliesOpen} onOpenChange={setRepliesOpen} />
 
       {/* أدوات التصفية */}
       <div className="flex flex-wrap items-center gap-3">

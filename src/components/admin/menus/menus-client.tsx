@@ -53,12 +53,16 @@ export function MenusClient({ me, locale }: MenusClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  /** "/" = الصفحة الرئيسية (slug فارغ في قاعدة البيانات) — قيمة وسيطة للواجهة فقط */
+  const slugToValue = (slug: string | null) => (slug === null || slug === undefined ? null : slug || "/");
+  const valueToSlug = (v: string) => v;
+
   const toEditable = (rows: MenuItemRow[]): EditableItem[] =>
     rows.map((row) => ({
       labelAr: row.labelAr,
       labelEn: row.labelEn,
       url: row.url ?? "",
-      pageSlug: row.pageSlug,
+      pageSlug: slugToValue(row.pageSlug),
       enabled: row.enabled,
       linkType: row.pageSlug !== null ? "page" : "url",
     }));
@@ -249,15 +253,15 @@ export function MenusClient({ me, locale }: MenusClientProps) {
                 <div className="mt-2 space-y-1.5">
                   <Label htmlFor={`page-slug-${index}`} className="text-xs text-muted-foreground">{tm.pageLink}</Label>
                   <Select
-                    value={item.pageSlug ?? ""}
-                    onValueChange={(v) => updateItem(index, { pageSlug: v })}
+                    value={item.pageSlug ?? undefined}
+                    onValueChange={(v) => updateItem(index, { pageSlug: valueToSlug(v) })}
                   >
                     <SelectTrigger id={`page-slug-${index}`} className="min-h-11">
                       <SelectValue placeholder={tm.pagesPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
                       {pages.map((page) => (
-                        <SelectItem key={page.slug || "home"} value={page.slug}>
+                        <SelectItem key={page.slug || "home"} value={page.slug || "/"}>
                           {pageTitle(page)}
                         </SelectItem>
                       ))}

@@ -162,3 +162,77 @@ Stage Summary:
 - PR #4 open: https://github.com/so7ob/Website/pull/4 (feature/3-interactive-platform, 5 commits)
 - Local main == feature tip (not pushed — PR is the review path per AGENTS.md)
 - Platform fully operational and stable
+
+---
+Task ID: 15-qa
+Agent: main (Z.ai Code)
+Task: Status assessment + agent-browser QA round + critical fixes before feature work
+
+Work Log:
+- Verified all checks green: lint ✓, typecheck ✓, 67/67 tests ✓, dev server stable
+- Full browser QA: public AR/EN, admin login (all 9 admin pages), client portal (7 pages), request detail, page editor (toolbar/blocks/select), mobile 375px no-overflow (public + account)
+- BUG FIXED (crash): /ar/admin/menus threw client-side exception — Radix SelectItem rejects value="" (home page slug). Fix: "/" sentinel in UI (menus-client.tsx slugToValue/valueToSlug + Select value/pageSlug ?? undefined), server PUT maps "/" → "" (canonical DB value for home)
+- BUG FIXED (data corruption): admin menus PUT converted pageSlug "" → null, silently turning home links into dead "#" links; round-trip now verified via browser (select home → save → DB stores "" → public header renders /ar → reload shows home selected) then demo data reverted to seeded state
+- FIXED warning: added data-scroll-behavior="smooth" to <html> in [locale]/layout.tsx (Next.js route-transition smooth-scroll handling)
+- ENVIRONMENT: dev server OOM-killed twice during rapid cold-compile QA burst (next-server 2.7GB RSS, 4GB sandbox limit) — restarted detached via setsid; warm Turbopack cache keeps it ~1.3GB; navigate sequentially during QA
+- ADDED translation keys (types/ar/en, parity tests still 67/67): account.requests.search*; admin.requests.export/exportOk; admin.users.viewProfile + users.detail section; admin.savedReplies section (for Task 15-b features)
+
+Stage Summary:
+- Platform fully stable; 3 fixes landed; translations staged for feature round
+- Next: parallel subagents 15-a (styling polish) + 15-b (features: CSV export, user detail page, saved replies, client request search)
+
+---
+Task ID: 15-a
+Agent: frontend-styling-expert
+Task: Portal/admin styling polish round (visual-only, no logic/data/translation changes)
+
+Work Log:
+- src/app/globals.css: added @keyframes shimmer + .animate-shimmer utility (gradient sweep on ::after, animation:none to neutralize Skeleton's animate-pulse via later-in-layer cascade, RTL sweep direction reversed, frozen by existing prefers-reduced-motion block)
+- src/app/[locale]/admin/page.tsx (stays server, all Prisma queries untouched): stat cards get per-stat tinted icon chip + h-1 gradient top bar + hover lift (-translate-y-0.5 + shadow-lg) + p-5; status bars now rounded-full bg-muted track with per-status gradient fills (same color families as StatusBadge) + animate-shimmer glint + count chip (rounded-full bg-muted); week columns bg-gradient-to-t from-navy to-skydrop with hover:brightness-125 + title tooltip; recent lists rows hover:bg-muted/50 with transition-colors
+- src/app/[locale]/account/page.tsx: same stat-card treatment (gradient top bar per tone, hover lift, overflow-hidden rounded-2xl); recent table rows get transition-colors + hover:bg-muted/50
+- src/components/admin/badges.tsx: refactored tones to {chip,dot} — tinted bg + family-matched border + size-1.5 dot indicator, rounded-full (twMerge overrides base rounded-md); identical props signatures and color semantics; ActionBadge rounded-full + bg-muted/50
+- src/components/admin/empty-state.tsx: dashed-border card (border-dashed bg-muted/20 rounded-2xl) + size-12 icon circle with ring-8 ring-accent/50 halo; props signature IDENTICAL
+- src/components/admin/admin-shell.tsx: active nav item gets start-edge skydrop pill (absolute inset-y-2 start-0 w-1, logical property), inactive hover:bg-white/5 + duration-200; sidebar bg gradient from-navy to-navy-soft (desktop aside + mobile Sheet); brand chip gradient from-skydrop/25; topbar user chip: shadow-sm + backdrop-blur + gradient avatar (from-brand to-navy) with ps-1.5/pe-3 flush avatar
+- src/app/[locale]/auth/layout.tsx: decorative layer (aria-hidden, pointer-events-none, -z-10, overflow-hidden): top wash from-accent/70 via-brand/10 + 3 blur-3xl circles in brand/skydrop behind card
+- src/app/[locale]/auth/_components/auth-card.tsx: shadow-lg shadow-navy/10 + ring-1 ring-brand/5 + border-border/80
+- Loading skeletons (className-only): admin/loading.tsx + account requests-view/security-view/notifications-view/request-detail-view Skeletons now animate-shimmer
+- Verified statically: bunx tsc --noEmit = 0 errors; bunx eslint (13 touched files) = 0 problems; git diff --check clean; no forbidden files touched (menus/requests/users/conversation/api/prisma/content untouched — concurrent 15-b changes visible in git status are theirs)
+
+Stage Summary:
+- Admin/account dashboards now have tinted, gradient-accented, hover-lifting stat cards; status bars chart with animated gradient fills + count chips; brand-gradient week columns; refined dot-indicator badges; dashed empty states; navy-gradient sidebar with start-edge active accent; softer auth background with brand blur glows; skeletons shimmer instead of pulse — all RTL-safe (logical properties), reduced-motion-respecting, 44px targets preserved
+
+---
+Task ID: 15-b
+Agent: general-purpose
+Task: New features — saved replies, CSV export, user detail page, client request search
+Work Log:
+- Feature 1 (Saved replies): prisma model SavedReply + migration 20261002000931_saved_replies (+savedReplies back-relation on User); AUDIT_ACTIONS savedReplyCreated/Updated/Deleted; API /api/admin/saved-replies (GET requests.view.all ordered updatedAt desc; POST requests.reply, name≤80/content≤2000, createdBy=guard.user.id) + /api/admin/saved-replies/[id] (PATCH/DELETE requests.reply, team-shared — no ownership check); UI saved-replies-dialog.tsx (list+inline edit+delete confirm+create form, all labels t.admin.savedReplies.*), trigger button t.admin.savedReplies.manage in requests-client header gated by can(me,"requests.reply"); conversation.tsx ReplyComposer gained optional savedReplies prop → SavedReplyPicker Popover (t.admin.savedReplies.useReply/insert/empty) fetches via apiGet on each open and inserts content with \n\n separation — passed only from admin request-detail-client (mayReply && !clientView), client portal has its own composer so clients never see it
+- Feature 2 (CSV export): /api/admin/requests/export GET permission requests.export, mirrors list route where-building (q/status/service/priority/assignee/archived, NO pagination, take 5000, orderBy lastActivityAt desc); text/csv; charset=utf-8 + \uFEFF BOM, Content-Disposition so7ob-requests-YYYY-MM-DD.csv; 15 columns refCode,status,priority,service,clientName,clientEmail,assigneeEmail,budget,currency,timeline,contactPref,createdAt,lastMessageAt(=lastActivityAt),closedReason(=resolutionNote),archived(1/0); proper CSV escaping (quote on , " \n, doubled quotes); audit requestsExported (count+filters); export button t.admin.requests.export in requests-client header gated requests.export, window.open same-origin relative URL + toast exportOk
+- Feature 3 (User detail): GET /api/admin/users/[id] permission users.view — safe fields only (no passwordHash/tokens), stats totalRequests + openRequests (status NOT IN closed/cancelled), last 20 requests (with assignee name), sessions {activeCount (revokedAt null + unexpired), last5 [createdAt,lastSeenAt,userAgent,ipHash] — no fingerprint/token}, auditLog last 10 by actorId; suspendedAt derived from latest user.suspended audit event; page /[locale]/admin/users/[id] (requireMe users.view) + user-detail-client.tsx: back link, role+status badges (reused badges.tsx as-is), accountInfo card (email/phone/company/locale/verified/createdAt/lastLogin/lastSeen/suspendedAt), 3 stat cards, userRequests table with refCode deep-link → /[locale]/admin/requests/[id], activityLog with ActionBadge; users table: name is now a link + dropdown item t.admin.users.viewProfile (Eye icon); types UserDetail*/SavedReply* added to admin types.ts
+- Feature 4 (Client request search): /api/account/requests GET accepts q (min 2 chars) — scoped search on top of ownership (never widens): refCode contains (uppercased, SQLite ASCII-case-insensitive) OR serviceType equals q if in service enum OR status equals q if in REQUEST_STATUSES; requests-view.tsx: search Input (t.account.requests.searchPlaceholder, debounced 300ms via new components/account/use-debounded.ts duplicate of admin hook), X clear button (t.account.requests.clearSearch), request-sequence guard against stale responses, distinct noResults empty state when list empty AND q≥2 chars (regular empty state otherwise)
+- Runtime smoke (dev server had STALE prisma client after migrate — restarted it detached, now healthy): saved-replies CRUD 201/200/200/200 + invalid 400; export 200 with correct headers/BOM/data rows; user detail 200 full shape; account search all cases OK (refCode prefix, lowercase, service match, status match, no-match 0, 1-char no-filter, status+q combined); pages /ar+/en admin users/[id], requests, account requests all 200; temp test user+request created then fully cleaned via prisma; audit entries verified
+- Verification: bunx tsc --noEmit 0 errors (whole project incl. concurrent 15-a WIP); eslint 0 problems on all touched folders; bun run test 67/67; git diff --check clean
+Stage Summary:
+- All 4 features working end-to-end (API verified live, pages render AR/EN); dev server restarted at 00:18 to load regenerated Prisma client (old process had pre-migration client cached — any future migrate requires dev restart)
+- Browser-test suggestions: saved-replies manage dialog (create/edit/delete + picker insert in request conversation), CSV export opens file with Arabic names intact in Excel (BOM), users list → name link/dropdown → detail page incl. RTL/LTR, client portal search field (debounce, X clear, no-results state vs regular empty)
+
+---
+Task ID: 15
+Agent: main (Z.ai Code)
+Task: QA-driven bug fixes + styling polish round + 4 new features (15-a/15-b integration)
+
+Work Log:
+- Browser QA of ALL new work by both subagents, all verified working:
+  1. Saved replies: manage dialog on requests page (created test reply), composer picker "رد محفوظ" on request detail inserts content into textarea (verified value); clients never see it (separate composer); test reply cleaned from DB after
+  2. CSV export: button gated by requests.export; response 200 text/csv; charset=utf-8; BOM verified at byte level (EF BB BF); filename so7ob-requests-2026-10-02.csv; Arabic data intact
+  3. User detail page /ar/admin/users/[id]: stat cards (1 total/1 open/2 sessions), requests table with deep links, account info, activity log; reachable via user name link + dropdown in users list
+  4. Client request search: debounce filters server-side (refCode prefix "S7-4V" → row stays), "zzzz" → distinct no-results state "لا نتائج مطابقة لبحثك", X clear restores list
+- Styling verified via VLM screenshots (admin dashboard, account dashboard, login): professional, RTL-correct, no major visual bugs; minor notes only (chart label contrast)
+- Full checks after integration: lint ✓, tsc --noEmit ✓, 67/67 tests ✓, git diff --check ✓
+- ENVIRONMENT: dev server OOM-killed 3× during QA bursts (4GB sandbox; next-server grows with each cold-compiled route ~2.5GB+). Mitigation: restart detached via setsid; navigate sequentially; warm cache ~1.3-1.8GB. NOTE for future rounds: after prisma migrate, dev server MUST be restarted (stale client)
+- Cleaned QA artifacts (qa-shots/, tool-results/, scripts/check-menus.ts) and test data
+
+Stage Summary:
+- Round complete: 3 bug fixes (menus crash + home-slug corruption + scroll-behavior), 14 files styling polish, 4 new features (saved replies + CSV export + user detail + client search), migration 20261002000931_saved_replies applied
+- Known/accepted: single-instance rate limits; dev-server memory ceiling in sandbox (not a production issue); VLM minor a11y notes (chart label contrast, red asterisk contrast on login)
+- Next candidates: request deep-linking from user detail is list-filter based; announcements/banner block for editor; notification real-time push; CSV export for inquiries

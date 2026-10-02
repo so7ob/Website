@@ -66,6 +66,7 @@ model User {
   mediaItems         MediaItem[]
   pageVersions       PageVersion[]
   requestDrafts      RequestDraft[]
+  savedReplies       SavedReply[]
   settingsUpdated    SiteSetting[]
 
   @@index([roleKey, status])
@@ -242,6 +243,20 @@ model RequestClaim {
   user    User          @relation(fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+// ردود محفوظة — قوالب نصية يتشاركها الطاقم في محادثات الطلبات
+model SavedReply {
+  id        String   @id @default(cuid())
+  name      String // اسم القالب (1-80)
+  content   String // نص الرد (1-2000)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([updatedAt])
 }
 
 // مسودة طلب مرتبطة بالمستخدم (بديل LocalStorage للحسابات المسجلة)

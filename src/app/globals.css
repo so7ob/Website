@@ -129,6 +129,44 @@
   }
 }
 
+/* مسح متدرج للهياكل العظمية (Skeleton) — بديل أرقى للنبض.
+   نستخدم animation: none لإلغاء animate-pulse القادم من مكوّن الهيكل
+   (كتلنا لاحقة في نفس طبقة utilities فتتغلب في الترتيب). */
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@layer utilities {
+  .animate-shimmer {
+    position: relative;
+    overflow: hidden;
+    /* إلغاء animate-pulse إن بقيت من مكوّن الهيكل (كتلنا لاحقة في نفس الطبقة) */
+    animation: none;
+  }
+  .animate-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(255 255 255 / 0.7) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+  /* اتجاه المسح يتبع اتجاه القراءة */
+  html[dir="rtl"] .animate-shimmer::after {
+    animation-direction: reverse;
+  }
+}
+
 /* احترام إعداد تقليل الحركة */
 @media (prefers-reduced-motion: reduce) {
   html {

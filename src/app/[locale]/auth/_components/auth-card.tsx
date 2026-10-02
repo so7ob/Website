@@ -11,7 +11,7 @@ export function AuthCard({
   footer?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+    <section className="rounded-2xl border border-border/80 bg-white p-6 shadow-lg shadow-navy/10 ring-1 ring-brand/5 sm:p-8">
       <h1 className="text-xl font-bold text-navy sm:text-2xl">{title}</h1>
       {subtitle && <p className="mt-2 text-sm leading-7 text-muted-foreground">{subtitle}</p>}
       {children}

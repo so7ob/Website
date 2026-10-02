@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Link2, Loader2, MessageCircle, Plus, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, Link2, Loader2, MessageCircle, Plus, Search, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { apiFetch } from "./api";
 import { DevLink } from "./dev-link";
 import { formatRelative, formatDateOnly } from "./format";
 import { StatusBadge } from "./status-badge";
+import { useDebounced } from "./use-debounced";
 import type { RequestListResponse } from "./types";
 
 const STATUS_KEYS = ["new", "in_review", "awaiting_info", "in_progress", "responded", "closed", "cancelled"] as const;
@@ -40,10 +41,14 @@ export function RequestsView({
   const params = useSearchParams();
 
   const [status, setStatus] = useState<string>("all");
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounced(q);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<RequestListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  // تسلسل الطلبات: تجاهل الاستجابات القديمة عند تغير البحث/التصفية بسرعة
+  const seqRef = useRef(0);
 
   // حوار ربط طلب سابق — يُفتح آليًا من لوحة الحساب (?claim=open)
   const [claimOpen, setClaimOpen] = useState(() => params.get("claim") === "open");
@@ -60,12 +65,17 @@ export function RequestsView({
     return null;
   }, [params]);
 
-  const load = useCallback(async (filterStatus: string, pageNumber: number) => {
+  const load = useCallback(async (filterStatus: string, pageNumber: number, search: string) => {
+    const seq = ++seqRef.current;
+    setLoading(true);
     const query = new URLSearchParams({ page: String(pageNumber) });
     if (filterStatus !== "all") query.set("status", filterStatus);
+    if (search) query.set("q", search);
     const result = await apiFetch<RequestListResponse>(`/api/account/requests?${query.toString()}`);
+    if (seq !== seqRef.current) return; // استجابة متأخرة عن طلب أحدث
     if (result.data.ok) {
       setData(result.data);
+      setFailed(false);
     } else {
       setFailed(true);
     }
@@ -74,15 +84,19 @@ export function RequestsView({
 
   useEffect(() => {
     void (async () => {
-      await load(status, page);
+      await load(status, page, debouncedQ);
     })();
-  }, [status, page, load]);
+  }, [status, page, debouncedQ, load]);
 
   function onStatusChange(value: string) {
     setStatus(value);
     setPage(1);
-    setLoading(true);
     setFailed(false);
+  }
+
+  function onSearchChange(value: string) {
+    setQ(value);
+    setPage(1);
   }
 
   async function submitClaim(ev: React.FormEvent<HTMLFormElement>) {
@@ -119,6 +133,8 @@ export function RequestsView({
   const requests = data?.requests ?? [];
   const totalPages = data ? Math.max(1, Math.ceil(data.total / Math.max(1, data.pageSize))) : 1;
   const detailHref = (id: string) => `/${locale}/account/requests/${id}`;
+  // البحث يُفعّل من حرفين — يطابق شرط الواجهة الخادمية
+  const searchActive = debouncedQ.trim().length >= 2;
 
   return (
     <div className="space-y-6">
@@ -186,15 +202,40 @@ export function RequestsView({
         </div>
       </Tabs>
 
+      {/* حقل البحث — مؤجل ٣٠٠ مللي ويمسح بزر مستقل */}
+      <div className="flex justify-start">
+        <div className="relative w-full max-w-xs">
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            value={q}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={t.searchPlaceholder}
+            aria-label={t.search}
+            maxLength={100}
+            className="h-11 ps-9 pe-9"
+          />
+          {q ? (
+            <button
+              type="button"
+              onClick={() => onSearchChange("")}
+              aria-label={t.clearSearch}
+              className="absolute end-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-navy"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
         {loading ? (
           <div className="space-y-3" aria-busy="true" aria-label={t.title}>
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-4">
-                <Skeleton className="h-5 w-24" />
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-5 w-24" />
-                <Skeleton className="ms-auto h-5 w-16" />
+                <Skeleton className="animate-shimmer h-5 w-24" />
+                <Skeleton className="animate-shimmer h-5 w-20" />
+                <Skeleton className="animate-shimmer h-5 w-24" />
+                <Skeleton className="animate-shimmer ms-auto h-5 w-16" />
               </div>
             ))}
           </div>
@@ -203,16 +244,25 @@ export function RequestsView({
             {authErrors.generic}
           </div>
         ) : requests.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-lg font-bold text-navy">{t.empty}</p>
-            <p className="mx-auto mt-2 max-w-md leading-8 text-muted-foreground">{t.emptyBody}</p>
-            <Button
-              asChild
-              className="mt-6 h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
-            >
-              <Link href={`/${locale}/account/requests/new`}>{t.create}</Link>
-            </Button>
-          </div>
+          searchActive ? (
+            <div className="py-10 text-center">
+              <p className="text-lg font-bold text-navy">{t.noResults}</p>
+              <p className="mx-auto mt-2 max-w-md font-mono text-sm text-muted-foreground" dir="ltr">
+                {debouncedQ.trim()}
+              </p>
+            </div>
+          ) : (
+            <div className="py-10 text-center">
+              <p className="text-lg font-bold text-navy">{t.empty}</p>
+              <p className="mx-auto mt-2 max-w-md leading-8 text-muted-foreground">{t.emptyBody}</p>
+              <Button
+                asChild
+                className="mt-6 h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
+              >
+                <Link href={`/${locale}/account/requests/new`}>{t.create}</Link>
+              </Button>
+            </div>
+          )
         ) : (
           <>
             <div className="overflow-x-auto">

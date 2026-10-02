@@ -6,6 +6,7 @@
  * إرسال استعادة كلمة المرور. العرض فقط إذنًا — القرار دائمًا في الخادم.
  */
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   Search,
@@ -23,6 +24,7 @@ import {
   Users,
   Loader2,
   RotateCcw,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -340,7 +342,12 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
                   <TableRow key={user.id} className="transition-colors hover:bg-muted/40">
                     <TableCell>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-navy">{user.name}</p>
+                        <Link
+                          href={`/${locale}/admin/users/${user.id}`}
+                          className="block truncate text-sm font-semibold text-navy transition-colors hover:text-brand"
+                        >
+                          {user.name}
+                        </Link>
                         <p className="truncate text-xs text-muted-foreground ltr-isolate">{user.email}</p>
                       </div>
                     </TableCell>
@@ -374,6 +381,12 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
                         <DropdownMenuContent align="end" className="w-56">
                           <DropdownMenuLabel className="truncate">{user.name}</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <Link href={`/${locale}/admin/users/${user.id}`}>
+                              <Eye className="size-4" aria-hidden="true" />
+                              {tu.viewProfile}
+                            </Link>
+                          </DropdownMenuItem>
                           {mayEdit ? (
                             <DropdownMenuItem
                               onClick={() => {

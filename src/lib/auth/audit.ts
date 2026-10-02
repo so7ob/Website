@@ -62,6 +62,11 @@ export const AUDIT_ACTIONS = {
   requestArchived: "request.archived",
   requestRestored: "request.restored",
   requestClaimed: "request.claimed",
+  requestsExported: "requests.exported",
+  // الردود المحفوظة
+  savedReplyCreated: "saved_reply.created",
+  savedReplyUpdated: "saved_reply.updated",
+  savedReplyDeleted: "saved_reply.deleted",
   // الاستفسارات
   inquirySubmitted: "inquiry.submitted",
   inquiryReplied: "inquiry.replied",

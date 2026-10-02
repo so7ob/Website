@@ -106,10 +106,13 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
-                active ? "bg-white/10 text-skydrop" : "text-white/75 hover:bg-white/10 hover:text-white"
+                "relative flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors duration-200",
+                active ? "bg-white/10 text-skydrop" : "text-white/75 hover:bg-white/5 hover:text-white"
               )}
             >
+              {active ? (
+                <span aria-hidden="true" className="absolute inset-y-2 start-0 w-1 rounded-full bg-skydrop" />
+              ) : null}
               <item.icon className="size-4 shrink-0" aria-hidden="true" />
               <span className="truncate">{item.label}</span>
             </Link>
@@ -124,7 +127,7 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
       <Link
         href={`/${locale}`}
         onClick={onNavigate}
-        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/75 transition-colors duration-200 hover:bg-white/5 hover:text-white"
       >
         <Home className="size-4 shrink-0" aria-hidden="true" />
         <span className="truncate">{t.backSite}</span>
@@ -132,7 +135,7 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
       <Link
         href={`/${locale}/auth/logout`}
         onClick={onNavigate}
-        className="mt-1 flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+        className="mt-1 flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/75 transition-colors duration-200 hover:bg-white/5 hover:text-white"
       >
         <LogOut className="size-4 shrink-0" aria-hidden="true" />
         <span className="truncate">{t.logout}</span>
@@ -155,9 +158,12 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
       <style>{`body:has(#admin-shell) > header, body:has(#admin-shell) > footer { display: none !important; }`}</style>
 
       {/* الشريط الجانبي — سطح المكتب */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-navy text-white lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-gradient-to-b from-navy to-navy-soft text-white lg:flex">
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-skydrop" aria-hidden="true">
+          <span
+            className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-skydrop/25 to-white/5 text-base font-bold text-skydrop"
+            aria-hidden="true"
+          >
             {brandInitial}
           </span>
           <p className="truncate text-sm font-bold tracking-tight">{siteName}</p>
@@ -175,10 +181,13 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
                 <Menu className="h-5 w-5" aria-hidden="true" />
               </Button>
             </SheetTrigger>
-            <SheetContent side={sheetSide} className="w-72 gap-0 bg-navy p-0 text-white">
+            <SheetContent side={sheetSide} className="w-72 gap-0 bg-gradient-to-b from-navy to-navy-soft p-0 text-white">
               <SheetHeader className="border-b border-white/10 p-0">
                 <SheetTitle className="flex h-16 items-center gap-3 px-5 text-white">
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-skydrop" aria-hidden="true">
+                  <span
+                    className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-skydrop/25 to-white/5 text-base font-bold text-skydrop"
+                    aria-hidden="true"
+                  >
                     {brandInitial}
                   </span>
                   <span className="truncate text-sm font-bold">{siteName}</span>
@@ -197,8 +206,11 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
                 {localeMeta[locale].otherLabel}
               </Link>
             </Button>
-            <div className="hidden items-center gap-2.5 rounded-full border border-border bg-white px-3 py-1.5 sm:flex">
-              <span className="flex size-7 items-center justify-center rounded-full bg-accent text-xs font-bold text-brand-strong" aria-hidden="true">
+            <div className="hidden items-center gap-2.5 rounded-full border border-border bg-white/90 py-1.5 pe-3 ps-1.5 shadow-sm backdrop-blur sm:flex">
+              <span
+                className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-brand to-navy text-xs font-bold text-white"
+                aria-hidden="true"
+              >
                 {me.name.trim().slice(0, 1).toUpperCase() || "·"}
               </span>
               <p className="max-w-40 truncate text-sm font-medium text-navy">{me.name}</p>

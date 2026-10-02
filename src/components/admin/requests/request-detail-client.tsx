@@ -386,6 +386,15 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
               sending={sending}
               onSend={sendMessage}
               onAttach={clientView ? undefined : attachFile}
+              savedReplies={
+                mayReply && !clientView
+                  ? {
+                      trigger: t.admin.savedReplies.useReply,
+                      insert: t.admin.savedReplies.insert,
+                      empty: t.admin.savedReplies.empty,
+                    }
+                  : undefined
+              }
               labels={{
                 reply: tr.reply,
                 internalNote: tr.internalNote,

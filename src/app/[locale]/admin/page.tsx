@@ -29,7 +29,21 @@ interface StatDef {
   value: number;
   label: string;
   hint?: string;
+  /** تلوين بصري فقط: شريحة الأيقونة + شريط التمييز العلوي */
+  chip: string;
+  bar: string;
 }
+
+/** تدرجات أشرطة الحالة — نفس عائلات ألوان شارات الحالة */
+const STATUS_BAR: Record<string, string> = {
+  new: "bg-gradient-to-r from-skydrop to-brand",
+  in_review: "bg-gradient-to-r from-slate-400 to-slate-500",
+  awaiting_info: "bg-gradient-to-r from-amber-300 to-amber-500",
+  in_progress: "bg-gradient-to-r from-brand to-brand-strong",
+  responded: "bg-gradient-to-r from-emerald-400 to-emerald-500",
+  closed: "bg-gradient-to-r from-slate-300 to-slate-400",
+  cancelled: "bg-gradient-to-r from-rose-300 to-rose-500",
+};
 
 export default async function AdminDashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -98,12 +112,12 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
   const maxStatus = Math.max(1, ...byStatus.map((s) => s.count));
 
   const stats: StatDef[] = [
-    { icon: Users, value: totalUsers, label: t.totalUsers, hint: `${activeUsers} · ${t.activeUsers}` },
-    { icon: Clock, value: pendingUsers, label: t.pendingUsers },
-    { icon: Inbox, value: openRequests, label: t.openRequests, hint: `${weekTotal} · ${t.last7days}` },
-    { icon: Hourglass, value: awaitingInfo, label: t.awaitingInfo },
-    { icon: MessageSquareText, value: openInquiries, label: t.openInquiries },
-    { icon: FileText, value: publishedPages, label: t.publishedPages, hint: `${draftPages} · ${t.draftPages}` },
+    { icon: Users, value: totalUsers, label: t.totalUsers, hint: `${activeUsers} · ${t.activeUsers}`, chip: "bg-accent text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop" },
+    { icon: Clock, value: pendingUsers, label: t.pendingUsers, chip: "bg-purple-100 text-purple-800", bar: "bg-gradient-to-r from-purple-400 to-purple-500" },
+    { icon: Inbox, value: openRequests, label: t.openRequests, hint: `${weekTotal} · ${t.last7days}`, chip: "bg-skydrop/20 text-brand-strong", bar: "bg-gradient-to-r from-navy to-skydrop" },
+    { icon: Hourglass, value: awaitingInfo, label: t.awaitingInfo, chip: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300" },
+    { icon: MessageSquareText, value: openInquiries, label: t.openInquiries, chip: "bg-emerald-100 text-emerald-800", bar: "bg-gradient-to-r from-emerald-400 to-emerald-300" },
+    { icon: FileText, value: publishedPages, label: t.publishedPages, hint: `${draftPages} · ${t.draftPages}`, chip: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand-strong to-brand" },
   ];
 
   return (
@@ -115,9 +129,13 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
       {/* بطاقات المؤشرات */}
       <section aria-label={t.title} className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-border bg-white p-4 transition-shadow hover:shadow-sm">
+          <div
+            key={stat.label}
+            className="relative overflow-hidden rounded-2xl border border-border bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10"
+          >
+            <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-1", stat.bar)} />
             <div className="flex items-center justify-between gap-2">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-accent text-brand-strong">
+              <span className={cn("flex size-9 items-center justify-center rounded-xl", stat.chip)}>
                 <stat.icon className="size-4.5" aria-hidden="true" />
               </span>
               <p className="text-2xl font-bold tabular-nums text-navy">{stat.value}</p>
@@ -143,11 +161,17 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
                   </p>
                   <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-primary transition-all"
+                      title={`${requestLabels.statuses[row.status] ?? row.status}: ${row.count}`}
+                      className={cn(
+                        "animate-shimmer h-full rounded-full transition-all duration-500",
+                        STATUS_BAR[row.status] ?? "bg-gradient-to-r from-brand to-brand-strong"
+                      )}
                       style={{ width: `${Math.max(row.count > 0 ? 4 : 0, Math.round((row.count / maxStatus) * 100))}%` }}
                     />
                   </div>
-                  <p className="w-8 shrink-0 text-end text-xs font-semibold tabular-nums text-navy">{row.count}</p>
+                  <span className="inline-flex min-w-8 shrink-0 items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold tabular-nums text-navy">
+                    {row.count}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -167,9 +191,10 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
                     {day.count > 0 ? day.count : ""}
                   </p>
                   <div
+                    title={fmtDate(day.date, locale)}
                     className={cn(
-                      "w-full max-w-10 rounded-t-lg bg-brand/70 transition-colors hover:bg-brand",
-                      day.count === 0 && "bg-muted"
+                      "w-full max-w-10 rounded-t-lg transition duration-200 hover:brightness-125",
+                      day.count === 0 ? "bg-muted hover:brightness-100" : "bg-gradient-to-t from-navy to-skydrop"
                     )}
                     style={{ height: `${Math.max(4, Math.round((day.count / maxDay) * 64))}px` }}
                   />
@@ -199,7 +224,7 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
           ) : (
             <ul className="divide-y divide-border">
               {recentRequests.map((r) => (
-                <li key={r.id} className="transition-colors hover:bg-muted/40">
+                <li key={r.id} className="transition-colors hover:bg-muted/50">
                   <Link href={`/${locale}/admin/requests/${r.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-5 py-3">
                     <p className="font-mono text-sm font-bold text-navy ltr-isolate">{r.refCode}</p>
                     <p className="min-w-0 flex-1 truncate text-sm text-foreground">{r.name}</p>
@@ -235,7 +260,7 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
           ) : (
             <ul className="divide-y divide-border">
               {recentAudit.map((log) => (
-                <li key={log.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3">
+                <li key={log.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3 transition-colors hover:bg-muted/50">
                   <ActionBadge action={log.action} />
                   <p className="min-w-0 flex-1 truncate text-sm text-foreground">
                     {log.actor?.name ?? log.actorEmail ?? "—"}

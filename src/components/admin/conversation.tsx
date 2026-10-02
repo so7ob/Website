@@ -4,14 +4,16 @@
  * عناصر المحادثة المشتركة بين الطلبات والاستفسارات:
  * فقاعة رسالة (عميل/طاقم/ملاحظة داخلية/نظامية) + ملحن الرد بتبويبين.
  */
-import { useRef, useState } from "react";
-import { Lock, Paperclip, Send, Loader2, MessageSquareText } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { BookMarked, Lock, Paperclip, Send, Loader2, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Locale } from "@/lib/i18n";
 import { fmtDateTime } from "./helpers";
-import type { MessageRow } from "./types";
+import type { MessageRow, SavedReplyRow, SavedRepliesResponse } from "./types";
+import { apiGet } from "./helpers";
 import { cn } from "@/lib/utils";
 
 export interface MessageLabels {
@@ -104,6 +106,13 @@ export interface ComposerLabels {
   attachFile?: string;
 }
 
+/** تسميات منتقي الردود المحفوظة — يُمرر فقط لوضع الطاقم (لا يظهر للعملاء أبدًا) */
+export interface SavedReplyPickerLabels {
+  trigger: string;
+  insert: string;
+  empty: string;
+}
+
 interface ReplyComposerProps {
   canReply: boolean;
   canNote: boolean;
@@ -111,10 +120,79 @@ interface ReplyComposerProps {
   labels: ComposerLabels;
   onSend: (kind: "message" | "internal_note", body: string) => Promise<void>;
   onAttach?: (file: File) => Promise<void>;
+  /** يُمرر من صفحات الطاقم فقط لعرض منتقي الردود المحفوظة */
+  savedReplies?: SavedReplyPickerLabels;
+}
+
+/** منتقي رد محفوظ — قائمة تنبثق وتُدرج النص في الملحن */
+function SavedReplyPicker({ labels, onPick }: { labels: SavedReplyPickerLabels; onPick: (content: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [replies, setReplies] = useState<SavedReplyRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // يُجلب عند كل فتح ليعكس تعديلات حوارية الإدارة فورًا — فشله غير حرج
+  const fetchReplies = useCallback(async (signal: AbortSignal) => {
+    setLoading(true);
+    try {
+      const res = await apiGet<SavedRepliesResponse>("/api/admin/saved-replies");
+      if (!signal.aborted) setReplies(res.replies);
+    } catch {
+      if (!signal.aborted) setReplies([]);
+    } finally {
+      if (!signal.aborted) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    void fetchReplies(controller.signal);
+    return () => controller.abort();
+  }, [open, fetchReplies]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" className="min-h-11 rounded-full">
+          <BookMarked className="size-4" aria-hidden="true" />
+          {labels.trigger}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80 p-2">
+        <div className="max-h-64 space-y-1 overflow-y-auto pe-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden="true" />
+            </div>
+          ) : replies.length === 0 ? (
+            <p className="px-2 py-4 text-center text-xs text-muted-foreground">{labels.empty}</p>
+          ) : (
+            replies.map((reply) => (
+              <button
+                key={reply.id}
+                type="button"
+                onClick={() => {
+                  onPick(reply.content);
+                  setOpen(false);
+                }}
+                className="w-full rounded-xl px-2.5 py-2 text-start transition-colors hover:bg-accent/60 focus:bg-accent/60 focus:outline-none"
+              >
+                <span className="block truncate text-sm font-medium text-navy">{reply.name}</span>
+                <span className="mt-0.5 block line-clamp-1 whitespace-pre-wrap break-words text-xs text-muted-foreground">
+                  {reply.content}
+                </span>
+                <span className="sr-only">{labels.insert}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 /** ملحن الرد: تبويب رد على العميل / ملاحظة داخلية + إرفاق + إرسال */
-export function ReplyComposer({ canReply, canNote, sending, labels, onSend, onAttach }: ReplyComposerProps) {
+export function ReplyComposer({ canReply, canNote, sending, labels, onSend, onAttach, savedReplies }: ReplyComposerProps) {
   const [tab, setTab] = useState<"message" | "internal_note">(canReply ? "message" : "internal_note");
   const [body, setBody] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -139,6 +217,11 @@ export function ReplyComposer({ canReply, canNote, sending, labels, onSend, onAt
       setAttaching(false);
       if (fileRef.current) fileRef.current.value = "";
     }
+  };
+
+  // إدراج قالب محفوظ — يُلحق بالنص القائم بفاصل سطرين
+  const insertReply = (content: string) => {
+    setBody((prev) => (prev.trim() ? `${prev}\n\n${content}` : content));
   };
 
   return (
@@ -184,6 +267,9 @@ export function ReplyComposer({ canReply, canNote, sending, labels, onSend, onAt
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        {savedReplies && currentTab === "message" ? (
+          <SavedReplyPicker labels={savedReplies} onPick={insertReply} />
+        ) : null}
         {onAttach ? (
           <>
             <input

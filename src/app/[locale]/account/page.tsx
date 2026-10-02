@@ -61,10 +61,10 @@ export default async function AccountDashboardPage({ params }: { params: Promise
   const isEmpty = requests.length === 0;
 
   const stats = [
-    { label: t.openRequests, value: openRequests, icon: FolderOpen, tone: "bg-brand-soft text-brand-strong" },
-    { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800" },
-    { label: t.unreadNotifications, value: unreadNotifications, icon: Bell, tone: "bg-violet-100 text-violet-800" },
-    { label: t.totalRequests, value: requests.length, icon: Layers, tone: "bg-muted text-muted-foreground" },
+    { label: t.openRequests, value: openRequests, icon: FolderOpen, tone: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop" },
+    { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300" },
+    { label: t.unreadNotifications, value: unreadNotifications, icon: Bell, tone: "bg-violet-100 text-violet-800", bar: "bg-gradient-to-r from-violet-400 to-purple-400" },
+    { label: t.totalRequests, value: requests.length, icon: Layers, tone: "bg-muted text-muted-foreground", bar: "bg-gradient-to-r from-navy/60 to-slate-400" },
   ];
 
   return (
@@ -91,7 +91,11 @@ export default async function AccountDashboardPage({ params }: { params: Promise
         {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="rounded-2xl border border-border bg-white p-4 sm:p-6">
+            <div
+              key={s.label}
+              className="relative overflow-hidden rounded-2xl border border-border bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10 sm:p-6"
+            >
+              <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${s.bar}`} />
               <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${s.tone}`}>
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
@@ -145,7 +149,7 @@ export default async function AccountDashboardPage({ params }: { params: Promise
               </thead>
               <tbody>
                 {recent.map((r) => (
-                  <tr key={r.id} className="border-b border-border/60 last:border-0 hover:bg-muted/40">
+                  <tr key={r.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50">
                     <td className="px-3 py-3.5 font-mono font-semibold text-navy">{r.refCode}</td>
                     <td className="px-3 py-3.5 text-muted-foreground">{labels.services[r.serviceType] ?? r.serviceType}</td>
                     <td className="px-3 py-3.5">

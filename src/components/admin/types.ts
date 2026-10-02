@@ -37,6 +37,68 @@ export interface UsersResponse {
   pageSize: number;
 }
 
+// ——— ملف المستخدم الموسّع ———
+export interface UserDetailInfo {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+  company: string | null;
+  locale: string;
+  roleKey: string;
+  status: string;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt: string | null;
+  suspendedAt: string | null;
+  lastSeen: string | null;
+}
+export interface UserDetailRequestRow {
+  id: string;
+  refCode: string;
+  status: string;
+  serviceType: string;
+  createdAt: string;
+  lastActivityAt: string;
+  assigneeName: string | null;
+}
+export interface UserSessionRow {
+  createdAt: string;
+  lastSeenAt: string;
+  userAgent: string | null;
+  ipHash: string | null;
+}
+export interface UserAuditRow {
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  createdAt: string;
+}
+export interface UserDetailResponse {
+  ok: boolean;
+  user: UserDetailInfo;
+  stats: { totalRequests: number; openRequests: number };
+  requests: UserDetailRequestRow[];
+  sessions: { activeCount: number; last5: UserSessionRow[] };
+  auditLog: UserAuditRow[];
+}
+
+// ——— الردود المحفوظة ———
+export interface SavedReplyRow {
+  id: string;
+  name: string;
+  content: string;
+  createdBy: string;
+  creatorName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface SavedRepliesResponse {
+  ok: boolean;
+  replies: SavedReplyRow[];
+}
+
 // ——— الطلبات ———
 export interface StaffOption {
   id: string;

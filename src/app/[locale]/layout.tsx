@@ -67,7 +67,7 @@ export default async function LocaleRootLayout({
   ]);
 
   return (
-    <html lang={locale} dir={dir}>
+    <html lang={locale} dir={dir} data-scroll-behavior="smooth">
       <body className="flex min-h-screen flex-col">
         <a
           href="#main-content"

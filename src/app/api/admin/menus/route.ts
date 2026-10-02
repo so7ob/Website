@@ -53,7 +53,10 @@ export async function PUT(req: NextRequest) {
       labelAr: String(item.labelAr ?? "").slice(0, 120),
       labelEn: String(item.labelEn ?? "").slice(0, 120),
       url: typeof item.url === "string" && item.url.startsWith("/") ? item.url.slice(0, 200) : (typeof item.url === "string" && /^https?:\/\//.test(item.url) ? item.url.slice(0, 200) : null),
-      pageSlug: typeof item.pageSlug === "string" ? item.pageSlug.slice(0, 60) || null : null,
+      // "/" = الصفحة الرئيسية في الواجهة → تُخزَّن بslug فارغ (متوافق مع العرض العام)
+      pageSlug: typeof item.pageSlug === "string"
+        ? (item.pageSlug === "/" ? "" : item.pageSlug.slice(0, 60) || null)
+        : null,
       enabled: item.enabled !== false,
       order: index,
     }))
