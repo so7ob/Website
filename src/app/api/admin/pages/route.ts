@@ -6,8 +6,9 @@ import { type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { guardApi, json } from "@/lib/auth/session";
 import { isValidSlug } from "@/lib/blocks/types";
-import { validateBlocks } from "@/lib/blocks/types";
+import { validateContent } from "@/lib/blocks/validate";
 import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
+import { parsePageSettings, serializePageSettings, hasUnpublishedChanges } from "@/lib/page-settings";
 
 export async function GET(req: NextRequest) {
   const guard = await guardApi(req, "pages.view");
@@ -27,7 +28,9 @@ export async function GET(req: NextRequest) {
       id: true, slug: true, isHome: true, order: true, status: true, visibility: true,
       titleAr: true, titleEn: true,
       draftUpdatedAt: true, publishedAt: true, updatedAt: true,
+      draftRevision: true, publishedRevision: true, draftSettings: true, publishedSettings: true,
       editorTouchedAt: true, sourceKey: true,
+      scheduledPublishAt: true,
       _count: { select: { versions: true } },
     },
   });
@@ -36,8 +39,7 @@ export async function GET(req: NextRequest) {
     ok: true,
     pages: pages.map((p) => ({
       ...p,
-      hasUnpublishedChanges:
-        p.status === "published" && p.draftUpdatedAt !== null && p.publishedAt !== null && p.draftUpdatedAt > p.publishedAt,
+      hasUnpublishedChanges: hasUnpublishedChanges(p),
       versionCount: p._count.versions,
       _count: undefined,
     })),
@@ -65,46 +67,65 @@ export async function POST(req: NextRequest) {
   const existing = await db.page.findUnique({ where: { slug } });
   if (existing) return json({ ok: false, code: "slug_taken" }, 409);
 
-  // قوالب البدء — كتل صالحة وفق مخططات التحقق
-  let blocksAr = "[]";
-  let blocksEn = "[]";
+  // قوالب البدء — مغلف شجرة v1 صالح وفق مخططات التحقق
+  let blocksAr = JSON.stringify({ schemaVersion: 1, blocks: [] });
+  let blocksEn = JSON.stringify({ schemaVersion: 1, blocks: [] });
   if (body.template === "blank-section") {
     const stamp = Date.now().toString(36);
     const make = (kicker: string, title: string, intro: string) =>
-      JSON.stringify([
-        {
-          id: `b-ph-${stamp}`,
-          type: "pageHeader",
-          props: { kicker, title, intro: intro ? [intro] : [], quickLinks: [] },
-        },
-        {
-          id: `b-rt-${stamp}`,
-          type: "richText",
-          props: { paragraphs: [intro || title], align: "start" },
-        },
-      ]);
+      JSON.stringify({
+        schemaVersion: 1,
+        blocks: [
+          {
+            id: `b-ph-${stamp}`,
+            type: "pageHeader",
+            props: { kicker, title, intro: intro ? [intro] : [], quickLinks: [] },
+          },
+          {
+            id: `b-rt-${stamp}`,
+            type: "richText",
+            props: { paragraphs: [intro || title], align: "start" },
+          },
+        ],
+      });
     blocksAr = make(titleAr || titleEn, titleAr || titleEn, "");
     blocksEn = make(titleEn || titleAr, titleEn || titleAr, "");
   }
 
   // تحقق مبدئي للقالب
-  const check = validateBlocks(blocksAr);
+  const check = validateContent(blocksAr);
   if (!check.ok) return json({ ok: false, code: "invalid_blocks", error: check.error }, 400);
 
   const maxOrder = await db.page.aggregate({ _max: { order: true } });
+  const initialOrder = Math.max(-1, Math.min(999, (maxOrder._max.order ?? 0) + 1));
   const page = await db.page.create({
     data: {
       slug,
       titleAr: titleAr || titleEn,
       titleEn: titleEn || titleAr,
       status: "draft",
-      order: (maxOrder._max.order ?? 0) + 1,
+      order: initialOrder,
       draftBlocksAr: blocksAr,
       draftBlocksEn: blocksEn,
       draftUpdatedAt: new Date(),
       editorTouchedAt: new Date(), // صفحة منشأة يدويًا — البذرة لا تلمسها
-      seoTitleAr: titleAr || titleEn,
-      seoTitleEn: titleEn || titleAr,
+      draftSettings: serializePageSettings(
+        parsePageSettings(
+          null,
+          {
+            slug,
+            visibility: "public",
+            allowedRoles: "[]",
+            titleAr: titleAr || titleEn,
+            titleEn: titleEn || titleAr,
+            seoTitleAr: titleAr || titleEn,
+            seoTitleEn: titleEn || titleAr,
+            seoDescAr: null,
+            seoDescEn: null,
+            order: initialOrder,
+          }
+        )
+      ),
     },
   });
 

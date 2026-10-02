@@ -32,9 +32,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 function countBlocks(blocksJson: string): number {
   try {
-    const arr = JSON.parse(blocksJson);
-    return Array.isArray(arr) ? arr.length : 0;
+    const parsed = JSON.parse(blocksJson) as unknown;
+    // مغلف v1 أو مصفوفة v0
+    if (Array.isArray(parsed)) return parsed.length;
+    if (typeof parsed === "object" && parsed !== null && Array.isArray((parsed as { blocks?: unknown }).blocks)) {
+      return countTreeNodes((parsed as { blocks: unknown[] }).blocks);
+    }
+    return 0;
   } catch {
     return 0;
   }
+}
+
+/** عدد عقد الشجرة كليًا (حاويات + كتل) */
+function countTreeNodes(nodes: unknown[]): number {
+  let n = 0;
+  for (const node of nodes) {
+    if (typeof node !== "object" || node === null) continue;
+    n += 1;
+    const children = (node as { children?: unknown }).children;
+    if (Array.isArray(children)) n += countTreeNodes(children);
+  }
+  return n;
 }

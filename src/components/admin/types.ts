@@ -343,15 +343,30 @@ export interface MediaRow {
   size: number;
   altText: string | null;
   title: string | null;
+  folder: string;
   uploadedBy: string;
   createdAt: string;
+  usageCount: number;
 }
 export interface MediaResponse {
   ok: boolean;
   media: MediaRow[];
   total: number;
+  /** إجمالي الوسائط غير المستخدمة عبر كل المجلدات — يغذي شارة التصفية */
+  unusedTotal: number;
   page: number;
   pageSize: number;
+  folders: string[];
+}
+/** موضع استخدام وسيلة — يرد من حاجز الحذف (409) */
+export interface MediaUsageLocationView {
+  kind: "page_published" | "page_draft" | "page_og" | "template";
+  entityId: string;
+  titleAr: string;
+  titleEn: string;
+  locale: "ar" | "en" | null;
+  state: "draft" | "published" | null;
+  archived?: boolean;
 }
 export interface SettingsResponse {
   ok: boolean;

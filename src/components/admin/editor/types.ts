@@ -3,7 +3,7 @@
  * كل التواريخ نصوص ISO من JSON كما تصل من الخادم.
  */
 
-import type { Block } from "@/lib/blocks/types";
+import type { ContentNode } from "@/lib/blocks/tree";
 
 // ——— قائمة الصفحات ———
 
@@ -23,6 +23,7 @@ export interface PageRow {
   versionCount: number;
   sourceKey: string | null;
   editorTouchedAt: string | null;
+  scheduledPublishAt: string | null;
 }
 
 export interface PagesResponse {
@@ -46,16 +47,34 @@ export interface VersionBrief {
   author: { name: string } | null;
 }
 
+export interface PageSettingsView {
+  slug: string;
+  visibility: string;
+  allowedRoles: string[];
+  titleAr: string;
+  titleEn: string;
+  seoTitleAr: string | null;
+  seoTitleEn: string | null;
+  seoDescAr: string | null;
+  seoDescEn: string | null;
+  order: number;
+}
+
 export interface PageDetail {
   id: string;
   slug: string;
   isHome: boolean;
-  order: number;
   status: string;
   visibility: string;
   allowedRoles: string[];
   titleAr: string;
   titleEn: string;
+  draftSlug: string;
+  draftTitleAr: string;
+  draftTitleEn: string;
+  draftSettings: PageSettingsView;
+  publishedSettings: PageSettingsView | null;
+  order: number;
   seoTitleAr: string | null;
   seoTitleEn: string | null;
   seoDescAr: string | null;
@@ -66,7 +85,13 @@ export interface PageDetail {
   publishedBlocksEn: string | null;
   draftUpdatedAt: string | null;
   draftUpdatedById: string | null;
+  draftUpdatedByName: string | null;
+  draftRevision: number;
+  publishedRevision: number | null;
   publishedAt: string | null;
+  scheduledPublishAt: string | null;
+  scheduledRevision: number | null;
+  hasUnpublishedChanges: boolean;
   sourceKey: string | null;
   editorTouchedAt: string | null;
   versions: VersionBrief[];
@@ -79,18 +104,53 @@ export interface PageDetailResponse {
 
 export interface PatchPageResponse {
   ok: boolean;
-  page: { id: string; slug: string; draftUpdatedAt: string | null; status: string };
+  page: {
+    id: string;
+    slug: string;
+    status: string;
+    draftUpdatedAt: string | null;
+    draftRevision: number;
+    isHome?: boolean;
+    draftSettings?: PageSettingsView;
+  };
 }
 
 export interface ConflictBody {
   ok: false;
-  code: "conflict";
-  serverDraftUpdatedAt: string;
+  code: "conflict" | "revision_required";
+  serverRevision?: number;
+  serverDraftUpdatedAt?: string;
 }
 
 export interface PublishResponse {
   ok: boolean;
   publishedAt: string;
+  page: {
+    slug: string;
+    status: string;
+    draftRevision: number;
+    publishedRevision: number | null;
+    hasUnpublishedChanges: boolean;
+  };
+}
+
+/** استبعاد التعديلات غير المنشورة — المسودة تعود حرفيًا لآخر نسخة منشورة */
+export interface DiscardResponse {
+  ok: boolean;
+  page: {
+    slug: string;
+    draftRevision: number;
+    publishedRevision: number | null;
+    hasUnpublishedChanges: boolean;
+    draftUpdatedAt: string;
+  };
+}
+
+/** جدولة/إلغاء نشر — الموعد يرتبط بمراجعة المسودة الحالية */
+export interface ScheduleResponse {
+  ok: boolean;
+  scheduledPublishAt: string | null;
+  scheduledRevision?: number;
 }
 
 // ——— الإصدارات ———
@@ -113,6 +173,9 @@ export interface VersionsResponse {
 export interface RestoreResponse {
   ok: boolean;
   restoredVersion: number;
+  locales: string[];
+  draftRevision: number;
+  draftUpdatedAt: string;
 }
 
 // ——— الوسائط (أشكال مشتركة مع مكتبة الوسائط) ———
@@ -157,10 +220,15 @@ export function bi(label: Bi, locale: "ar" | "en"): string {
 /** إحداثيات كتلة داخل مسودة لغة محددة */
 export type DraftLocale = "ar" | "en";
 
-/** حالة المسودة لكلا اللغتين — أساس التاريخ والتراجع */
+/** حالة المسودة لكلا اللغتين — شجرة المحتوى v1 (أبناء الجذر)، أساس التاريخ والتراجع */
 export interface DraftState {
-  ar: Block[];
-  en: Block[];
+  ar: ContentNode[];
+  en: ContentNode[];
+}
+
+/** تغليف v1 جاهز للإرسال/الحفظ من شجرة المسودة — نفس شكل validateContent().json */
+export function envelopeJson(nodes: ContentNode[]): string {
+  return JSON.stringify({ schemaVersion: 1, blocks: nodes });
 }
 
 /** توليد معرف كتلة فريد: b-{type}-{random6} بأحرف a-z0-9 */

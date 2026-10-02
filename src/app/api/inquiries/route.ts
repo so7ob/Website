@@ -83,5 +83,22 @@ export async function POST(req: NextRequest) {
   const staff = await staffToNotifyForRequests();
   await notifyMany(staff.map((s) => ({ userId: s.id, type: "new_inquiry" as const, payload: { ref: code, subject }, link: `/${locale}/admin/inquiries` })));
 
-  return json({ ok: true, ref: code }, 201);
+  // رابط متابعة — يُعرض فورًا في شاشة النجاح؛ فشل الإصدار لا يمس نجاح الحفظ
+  let trackUrl: string | null = null;
+  try {
+    const { issueTrackLink } = await import("@/lib/track/service");
+    const { emailTrackLink } = await import("@/lib/track/notify");
+    const { getTrackPolicySettings } = await import("@/lib/track/policy");
+    const issued = await issueTrackLink("inquiry", inquiry.id, authUser?.id ?? null);
+    if (issued) {
+      trackUrl = `/${locale}/track?t=${encodeURIComponent(issued.token)}`;
+      // تسليم الرابط بالبريد — best-effort: فشله لا يمس نجاح الحفظ
+      const ttl = (await getTrackPolicySettings()).linkTtlDays;
+      await emailTrackLink({ scope: "inquiry", to: email, locale, token: issued.token, refCode: code, expiresInDays: ttl });
+    }
+  } catch (e) {
+    console.error("[inquiries] track-link issue failed", e);
+  }
+
+  return json({ ok: true, ref: code, trackUrl }, 201);
 }

@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = [
   "info_requested", // طلب معلومات إضافية
   "status_changed", // تغيير حالة مهمة
   "content_published", // نشر محتوى/تغييره
+  "content_schedule", // جدولة نشر أو نتيجتها (تنفيذ/إسقاط)
   "account", // شؤون الحساب
 ] as const;
 

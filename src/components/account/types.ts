@@ -209,11 +209,13 @@ export interface InquiryDetailResponse {
   inquiry?: InquiryDetail;
 }
 
-/** إنشاء استفسار — POST /api/account/inquiries (201 {ok,ref,id} — 429 rate_limited) */
+/** إنشاء استفسار — POST /api/account/inquiries (201 {ok,ref,id,trackUrl} — 429 rate_limited) */
 export interface CreateInquiryResponse {
   ok: boolean;
   ref?: string;
   id?: string;
+  /** مسار رابط المتابعة النسبي ("/ar/track?t=...") — null إذا لم يُصدر */
+  trackUrl?: string | null;
   code?: string;
   retryAfterSec?: number;
 }

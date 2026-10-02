@@ -5,6 +5,8 @@ import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
 import { BlockLink } from "./block-link";
+import { useRenderMode } from "./nested-context";
+import { EditableText } from "./inline-edit-context";
 
 export type ButtonLinkBlockProps = z.input<typeof blockSchemas.buttonLink>["props"];
 
@@ -20,10 +22,23 @@ const VARIANT_CLASSES: Record<string, string> = {
 /** زر/رابط واحد بثلاثة أنماط من هوية الموقع */
 export function ButtonLinkBlock({ props, locale }: { props: ButtonLinkBlockProps; locale: Locale }) {
   const variant = props.variant ?? "primary";
+  const mode = useRenderMode();
+  // وضع التحرير: span بلا تنقل — حتى لا يسرق النقر المتابعة أثناء جلسة التحرير المباشر
+  const classes = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.primary;
+
+  if (mode === "edit") {
+    return (
+      <BlockContainer>
+        <span className={classes}>
+          <EditableText field="label" value={props.label} as="span" primary className="outline-none" />
+        </span>
+      </BlockContainer>
+    );
+  }
 
   return (
     <BlockContainer>
-      <BlockLink href={props.href} locale={locale} className={VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.primary}>
+      <BlockLink href={props.href} locale={locale} className={classes}>
         {props.label}
       </BlockLink>
     </BlockContainer>

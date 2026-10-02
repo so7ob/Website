@@ -89,3 +89,35 @@ describe("isValidSlug", () => {
     expect(isValidSlug("javascript:alert")).toBe(false);
   });
 });
+
+// ——— التطبيع: validateBlocks يعيد البيانات المطّبعة لا الأصلية ———
+describe("validateBlocks normalization", () => {
+  it("يسقط المفاتيح غير المعروفة ويضبط القيم الافتراضية", async () => {
+    const { validateBlocks } = await import("@/lib/blocks/types");
+    const raw = JSON.stringify([
+      {
+        id: "b-spacer-n1",
+        type: "spacer",
+        props: { size: "md", hacked: "x" },
+        style: { background: "accent", paddingY: "lg", evil: true },
+        unknownTop: 1,
+      },
+    ]);
+    const result = validateBlocks(raw);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const block = result.blocks[0] as Record<string, unknown>;
+      expect(block.unknownTop).toBeUndefined();
+      const style = block.style as Record<string, unknown> | undefined;
+      expect(style?.evil).toBeUndefined();
+    }
+  });
+
+  it("يرفض نوعًا من سلسلة النموذج (constructor) بفحص الملكية المباشر", async () => {
+    const { validateBlocks } = await import("@/lib/blocks/types");
+    const raw = JSON.stringify([{ id: "x", type: "constructor", props: {} }]);
+    expect(validateBlocks(raw).ok).toBe(false);
+    const proto = JSON.stringify([{ id: "x", type: "hasOwnProperty", props: {} }]);
+    expect(validateBlocks(proto).ok).toBe(false);
+  });
+});

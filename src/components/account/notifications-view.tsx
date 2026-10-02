@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  CalendarClock,
   CheckCheck,
   ChevronLeft,
   ChevronRight,
@@ -34,6 +35,7 @@ const TYPE_META: Record<string, { icon: React.ComponentType<{ className?: string
   info_requested: { icon: Info, chip: "bg-amber-100 text-amber-800" },
   status_changed: { icon: Bell, chip: "bg-violet-100 text-violet-800" },
   content_published: { icon: FileText, chip: "bg-emerald-100 text-emerald-800" },
+  content_schedule: { icon: CalendarClock, chip: "bg-violet-100 text-violet-800" },
   account: { icon: User, chip: "bg-navy/10 text-navy" },
 };
 

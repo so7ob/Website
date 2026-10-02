@@ -1,0 +1,3 @@
+# Bun configuration — committed so sandbox resets cannot remove it again.
+[test]
+preload = ["./tests/jsdom-preload.ts"]

@@ -1,8 +1,10 @@
 "use client";
 
 /**
- * مكتبة الكتل (اللوحة اليسرى/الأولى) — كل الأنواع مجمعة حسب BLOCK_LIBRARY
- * مع أيقونة واسم بلغة الواجهة؛ النقر يضيف كتلة بعد المحدد أو في النهاية.
+ * مكتبة الكتل (اللوحة الأولى) — مدفوعة بـ BLOCK_REGISTRY (مصدر الحقيقة الموحّد):
+ * مجموعة «بنية الصفحة» أولًا (section/container/row/column) ثم مجموعات الكتل
+ * الورقية. الأنواع القديمة المُرحّلة (columns) مستثناة عبر LIBRARY_HIDDEN_TYPES.
+ * النقر يضيف عقدة جديدة (defaultNode) بعد المحدد أو داخل الحاوية المحددة.
  */
 import { type LucideIcon } from "lucide-react";
 import {
@@ -29,18 +31,29 @@ import {
   Images,
   MousePointerClick,
   Columns3,
+  Columns2,
   Table,
   Minus,
   MoveVertical,
+  Square,
+  Box,
+  Rows3,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getPortalContent } from "@/content/portal";
-import { BLOCK_LIBRARY, type BlockType } from "@/lib/blocks/types";
+import { BLOCK_REGISTRY, LIBRARY_HIDDEN_TYPES } from "@/lib/blocks/tree";
+import { type BlockType } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-/** أيقونة كل نوع من الكتل — مشتركة بين المكتبة ولوحة الإضافة السريعة */
+/** أيقونة كل نوع من العقد — مشتركة بين المكتبة ولوحة الإضافة السريعة وشجرة الطبقات */
 export const TYPE_ICONS: Record<BlockType, LucideIcon> = {
+  // بنية الصفحة
+  section: Square,
+  container: Box,
+  row: Rows3,
+  column: Columns3,
+  // كتل ورقية
   hero: Rocket,
   servicesGrid: LayoutGrid,
   featureGrid: Grid3x3,
@@ -64,20 +77,35 @@ export const TYPE_ICONS: Record<BlockType, LucideIcon> = {
   image: Image,
   gallery: Images,
   buttonLink: MousePointerClick,
-  columns: Columns3,
+  columns: Columns2, // قديمة — تُرحّل على التحميل ولا تُعرض في المكتبة
   simpleTable: Table,
   divider: Minus,
   spacer: MoveVertical,
 };
 
-const GROUP_ORDER = ["home", "pages", "generic", "layout"] as const;
+/** أنواع عقدة في مكتبة المحرر — من BLOCK_REGISTRY مع استثناء الأنواع المُرحّلة */
+export const LIBRARY_ENTRIES: { type: BlockType; group: string; ar: string; en: string }[] = (
+  Object.keys(BLOCK_REGISTRY) as BlockType[]
+)
+  .filter((type) => !LIBRARY_HIDDEN_TYPES.includes(type))
+  .map((type) => {
+    const def = BLOCK_REGISTRY[type];
+    return { type, group: def.group as string, ar: def.ar, en: def.en };
+  });
+
+const GROUP_ORDER = ["structure", "home", "pages", "generic", "layout"] as const;
 
 const GROUP_CHIPS: Record<(typeof GROUP_ORDER)[number], string> = {
+  structure: "bg-brand/15 text-navy",
   home: "bg-skydrop/20 text-brand-strong",
   pages: "bg-emerald-100 text-emerald-800",
   generic: "bg-amber-100 text-amber-800",
   layout: "bg-navy/10 text-navy",
 };
+
+function groupChip(group: string): string {
+  return GROUP_CHIPS[group as (typeof GROUP_ORDER)[number]] ?? "bg-muted text-muted-foreground";
+}
 
 interface BlockLibraryProps {
   locale: Locale;
@@ -92,7 +120,7 @@ export function BlockLibrary({ locale, onAdd, className }: BlockLibraryProps) {
     <ScrollArea className={cn("h-full", className)}>
       <div className="space-y-5 p-3">
         {GROUP_ORDER.map((group) => {
-          const items = BLOCK_LIBRARY.filter((entry) => entry.group === group);
+          const items = LIBRARY_ENTRIES.filter((entry) => entry.group === group);
           if (items.length === 0) return null;
           return (
             <section key={group} aria-labelledby={`lib-group-${group}`}>
@@ -113,7 +141,7 @@ export function BlockLibrary({ locale, onAdd, className }: BlockLibraryProps) {
                         <span
                           className={cn(
                             "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                            GROUP_CHIPS[group]
+                            groupChip(group)
                           )}
                         >
                           <Icon className="size-4" aria-hidden="true" strokeWidth={1.8} />

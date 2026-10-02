@@ -11,11 +11,14 @@ import type { Locale } from "@/lib/i18n";
 export class ApiError extends Error {
   status: number;
   code: string;
-  constructor(status: number, code: string) {
+  /** جسم الاستجابة الكامل عند توفره — يحمي حمولات غنية مثل قائمة استخدام الوسائط (409) */
+  body?: unknown;
+  constructor(status: number, code: string, body?: unknown) {
     super(code);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.body = body;
   }
 }
 
@@ -28,7 +31,7 @@ async function handle<T>(res: Response): Promise<T> {
   }
   if (!res.ok) {
     const code = (data as { code?: string } | null)?.code ?? "generic";
-    throw new ApiError(res.status, code);
+    throw new ApiError(res.status, code, data);
   }
   return data as T;
 }

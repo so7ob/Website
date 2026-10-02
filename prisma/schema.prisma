@@ -68,6 +68,7 @@ model User {
   requestDrafts      RequestDraft[]
   savedReplies       SavedReply[]
   settingsUpdated    SiteSetting[]
+  pageTemplates      PageTemplate[]
 
   @@index([roleKey, status])
   @@index([status, createdAt])
@@ -189,6 +190,7 @@ model ProjectRequest {
   attachments   Attachment[]
   statusHistory RequestStatusEvent[]
   claim         RequestClaim?
+  trackLinks    TrackLink[] @relation("TrackLinks")
 
   @@index([email, createdAt])
   @@index([clientIpHash, createdAt])
@@ -293,6 +295,7 @@ model Inquiry {
   assignee     User?            @relation("InquiryAssignees", fields: [assigneeId], references: [id])
   messages     InquiryMessage[]
   attachments  Attachment[]
+  trackLinks   TrackLink[] @relation("TrackLinks")
 
   @@index([email, createdAt])
   @@index([status, createdAt])
@@ -426,11 +429,29 @@ model Page {
   draftUpdatedAt DateTime?
   draftUpdatedById String?
 
+  // إعدادات المسودة العامة المؤثرة في الموقع — JSON منفصل عن المنشور:
+  // {slug, visibility, allowedRoles, titleAr, titleEn, seoTitleAr, seoTitleEn, seoDescAr, seoDescEn, order}
+  draftSettings  String    @default("{}")
+
+  // قفل تفاؤلي إلزامي: كل حفظ مسودة يتحقق من الرقم ويزيده ذريًا (409 عند التعارض)
+  draftRevision     Int     @default(0)
+  // مراجعة المسودة التي نُشرت آخر مرة — أساس مؤشر «تعديلات غير منشورة»
+  publishedRevision Int?
+
+  // لقطة الإعدادات المنشورة — مصدر ما يراه الزوار (العنوان الظاهر وSEO والظهور والأدوار والرابط والترتيب)
+  publishedSettings String?
+
   // المنشور (مصدر عرض الزوار)
   publishedBlocksAr String?
   publishedBlocksEn String?
   publishedAt    DateTime?
   publishedById  String?
+
+  // جدولة النشر — تُنفّذ آليًا في موعدها (instrumentation) بمرآة أمان النشر نفسها:
+  // المراجعة مرتبطة عند الجدولة؛ إذا تغيّرت المسودة قبل الموعد يُلغى النشر ويُشعر صاحبه.
+  scheduledPublishAt   DateTime?
+  scheduledRevision    Int?
+  scheduledPublishById String?
 
   // بذرة الاستيراد الأولي — إعادة التشغيل لا تكرر ولا تكتب فوق تعديلات المحرر
   sourceKey      String? // home | about | ...
@@ -443,6 +464,7 @@ model Page {
   versions  PageVersion[]
 
   @@index([status, order])
+  @@index([scheduledPublishAt])
 }
 
 // إصدارات محفوظة عند كل نشر — قابلة للمقارنة والاستعادة
@@ -460,6 +482,29 @@ model PageVersion {
   author User? @relation(fields: [authorId], references: [id])
 
   @@unique([pageId, locale, version])
+}
+
+// قوالب الصفحات — نماذج جاهزة تُطبّق على مسودة صفحة.
+// builtin: مدمجة تُزرع آليًا (لها key ثابت) ولا تُحذف؛ custom: أنشأها الطاقم من صفحة قائمة.
+// كل محتوى مغلف شجرة v1 ({schemaVersion:1, blocks}) يمر عبر validateContent قبل أي كتابة.
+model PageTemplate {
+  id          String   @id @default(cuid())
+  key         String?  @unique // القوالب المدمجة تحمل مفتاحًا ثابتًا؛ المخصصة بلا مفتاح
+  nameAr      String
+  nameEn      String
+  descAr      String?
+  descEn      String?
+  kind        String   @default("custom") // builtin | custom
+  blocksAr    String?  // محتوى القالب للعربية (JSON)
+  blocksEn    String?  // محتوى القالب للإنجليزية (JSON)
+  usageCount  Int      @default(0)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User? @relation(fields: [createdById], references: [id])
+
+  @@index([kind, updatedAt])
 }
 
 // تحويلات المسارات عند تغيير slug لصفحة منشورة
@@ -493,4 +538,32 @@ model SiteSetting {
   updatedAt    DateTime @updatedAt
 
   updatedBy User? @relation(fields: [updatedById], references: [id])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// روابط متابعة الطلبات والاستفسارات
+// ═══════════════════════════════════════════════════════════════════
+
+// رابط متابعة بطاقة (طلب/استفسار) — الرمز الخام لا يُخزن أبدًا، فقط بصمة sha256.
+// الرابط قابل للاستخدام المتكرر حتى انتهاء صلاحيته أو إلغائه (ليس لمرة واحدة).
+// قيد تطبيقي: يجب ضبط أحد requestId أو inquiryId بالضبط (يراقبه track/service).
+model TrackLink {
+  id            String    @id @default(cuid())
+  tokenHash     String    @unique // sha256 hex للرمز الخام (32 بايت عشوائي)
+  scope         String // request | inquiry
+  requestId     String?
+  inquiryId     String?
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokedReason String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  request ProjectRequest? @relation("TrackLinks", fields: [requestId], references: [id], onDelete: Cascade)
+  inquiry Inquiry?         @relation("TrackLinks", fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([inquiryId])
+  @@index([scope, expiresAt])
 }

@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, Upload } from "lucide-react";
+import { ImagePlus, Loader2, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,6 +47,8 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [altDraft, setAltDraft] = useState<Record<string, string>>({});
@@ -54,12 +56,23 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
   const canUpload = can(me, "media.upload");
   const canManage = can(me, "media.manage");
 
+  // بحث بترسيب — لا طلب لكل ضربة مفتاح
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const load = useCallback(
     async (signal: AbortSignal) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiGet<MediaListResponse>(`/api/admin/media?page=${page}`);
+        const qs = new URLSearchParams({ page: String(page) });
+        if (search) qs.set("search", search);
+        const res = await apiGet<MediaListResponse>(`/api/admin/media?${qs.toString()}`);
         if (!signal.aborted) setData(res);
       } catch (err) {
         if (!signal.aborted && err instanceof ApiError) setError(apiErrorMessage(err, t.auth.errors));
@@ -67,7 +80,7 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
         if (!signal.aborted) setLoading(false);
       }
     },
-    [page, t.auth.errors]
+    [page, search, t.auth.errors]
   );
 
   useEffect(() => {
@@ -155,6 +168,18 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
           </div>
         )}
 
+        {/* بحث داخل المنتقي — نفس واجهة المكتبة */}
+        <div className="relative">
+          <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={tm.searchPlaceholder}
+            aria-label={tm.search}
+            className="min-h-10 rounded-full ps-10 text-sm focus-visible:ring-2 focus-visible:ring-ring/40"
+          />
+        </div>
+
         {loading && !data && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -168,7 +193,7 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
         {data && data.media.length === 0 && !loading && (
           <div className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
             <ImagePlus className="size-8" aria-hidden="true" />
-            <p className="text-sm">{tm.empty}</p>
+            <p className="text-sm">{search ? tm.noResults : tm.empty}</p>
           </div>
         )}
 

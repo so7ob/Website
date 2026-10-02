@@ -53,7 +53,8 @@ describe("can — مصفوفة الصلاحيات", () => {
   it("كل صلاحيات الأدوار النظامية معرفة في السجل", () => {
     for (const role of SYSTEM_ROLES) {
       for (const permission of role.permissions) {
-        expect(PERMISSIONS).toHaveProperty(permission);
+        // فحص مفتاح حرفي لا مسار منقّط — مفاتيح الصلاحيات تحوي نقاطًا أصلًا
+        expect(Object.hasOwn(PERMISSIONS, permission)).toBe(true);
       }
     }
   });

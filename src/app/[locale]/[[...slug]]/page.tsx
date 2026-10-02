@@ -3,9 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getAuthUser } from "@/lib/auth/session";
 import { canAccessPage } from "@/lib/auth/resource-access";
+import { parsePageSettings } from "@/lib/page-settings";
 import { PageRenderer } from "@/components/blocks/page-renderer";
-import { locales, type Locale } from "@/lib/i18n";
-import type { Block } from "@/lib/blocks/types";
+import { loadContentForRender } from "@/lib/blocks/validate";
+import { locales, defaultLocale, type Locale } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,15 @@ function resolveSlug(slug: string[] | undefined): string {
   return slug.join("/").toLowerCase();
 }
 
+/**
+ * الصفحة المنشورة فقط: نقرأ لقطة الإعدادات المنشورة والكتل المنشورة.
+ * - لا نقرأ المسودة أبدًا في أي مسار زائر.
+ * - الحالة (مسودة/قيد المراجعة) لا تخفي نسخة منشورة قائمة — الأرشفة وحدها تخفي.
+ * - الصفحات القديمة قبل لقطة الإعدادات تُقرأ من الحقول المباشرة كاحتياط.
+ */
 async function getPage(slug: string) {
-  // نختار الحقول المنشورة فقط — لا تصل المسودة لأي مسار إرسال للزائر
   return db.page.findFirst({
-    where: { slug, status: "published" },
+    where: { slug, status: { not: "archived" } },
     select: {
       id: true,
       slug: true,
@@ -35,10 +41,27 @@ async function getPage(slug: string) {
       seoTitleEn: true,
       seoDescAr: true,
       seoDescEn: true,
+      publishedSettings: true,
       publishedBlocksAr: true,
       publishedBlocksEn: true,
     },
   });
+}
+
+/** هل النسخة المنشورة للغة موجودة؟ (404 للغة غير المنشورة) — يدعم المصفوفة القديمة ومغلف v1 */
+function localePublished(page: { publishedBlocksAr: string | null; publishedBlocksEn: string | null }, locale: Locale): boolean {
+  const json = locale === "ar" ? page.publishedBlocksAr : page.publishedBlocksEn;
+  if (!json) return false;
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    if (Array.isArray(parsed)) return parsed.length > 0;
+    if (typeof parsed === "object" && parsed !== null && Array.isArray((parsed as { blocks?: unknown }).blocks)) {
+      return ((parsed as { blocks: unknown[] }).blocks).length > 0;
+    }
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 /** صفحة CMS: تُخدم من قاعدة البيانات — نشر جديد يظهر بلا إعادة بناء */
@@ -47,29 +70,41 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!locales.includes(raw as Locale)) return {};
   const locale = raw as Locale;
   const page = await getPage(resolveSlug(slug));
-  if (!page) return {};
-  const viewer = page.visibility === "public" ? null : await getAuthUser();
-  if (!canAccessPage(viewer, page)) return { robots: { index: false, follow: false } };
+  if (!page || !localePublished(page, locale)) return {};
+  // إصلاح #16: الصفحات المقيدة لا تُفهرس — فحص وصول مستقل عن المحتوى
+  const metaViewer = page.visibility === "public" ? null : await getAuthUser();
+  if (!canAccessPage(metaViewer, page)) return { robots: { index: false, follow: false } };
 
+  const settings = parsePageSettings(page.publishedSettings, page, { ar: page.titleAr, en: page.titleEn });
   const isAr = locale === "ar";
-  const title = (isAr ? page.seoTitleAr : page.seoTitleEn) ?? (isAr ? page.titleAr : page.titleEn);
-  const description = (isAr ? page.seoDescAr : page.seoDescEn) ?? undefined;
+  const title = (isAr ? settings.seoTitleAr : settings.seoTitleEn) ?? ((isAr ? settings.titleAr : settings.titleEn) || undefined);
+  const description = (isAr ? settings.seoDescAr : settings.seoDescEn) ?? undefined;
   const path = page.slug ? `/${locale}/${page.slug}` : `/${locale}`;
-  const restricted = page.visibility !== "public";
+  const restricted = settings.visibility !== "public";
+
+  // hreflang شرطي — اللغات المتاحة منشورةً فقط (لا نعلن روابط تُرجع 404)
+  const availableLocales = locales.filter((l) => localePublished(page, l));
+  const languages: Record<string, string> = {};
+  for (const l of availableLocales) {
+    languages[l] = page.slug ? `/${l}/${page.slug}` : `/${l}`;
+  }
+  if (availableLocales.includes(defaultLocale)) {
+    languages["x-default"] = page.slug ? `/${defaultLocale}/${page.slug}` : `/${defaultLocale}`;
+  }
 
   return {
     title,
     description,
     alternates: {
       canonical: path,
-      languages: { ar: page.slug ? `/ar/${page.slug}` : "/ar", en: page.slug ? `/en/${page.slug}` : "/en", "x-default": "/ar" },
+      ...(Object.keys(languages).length > 1 ? { languages } : {}),
     },
     openGraph: {
       title,
       description,
       url: path,
       locale: isAr ? "ar_SA" : "en_US",
-      alternateLocale: [isAr ? "en_US" : "ar_SA"],
+      alternateLocale: availableLocales.filter((l) => l !== locale).map((l) => (l === "ar" ? "ar_SA" : "en_US")),
     },
     robots: restricted ? { index: false, follow: false } : { index: true, follow: true },
   };
@@ -92,24 +127,29 @@ export default async function CmsPage({ params }: Params) {
     notFound();
   }
 
-  // صلاحية الوصول للصفحة المقيدة
-  if (page.visibility !== "public") {
+  // اللغة غير المنشورة → 404 (حتى لو اللغة الأخرى منشورة)
+  if (!localePublished(page, locale)) notFound();
+
+  // الظهور والأدوار من لقطة الإعدادات المنشورة — لا تأثير فوري لتعديلات المسودة
+  const settings = parsePageSettings(page.publishedSettings, page, { ar: page.titleAr, en: page.titleEn });
+  if (settings.visibility !== "public") {
     const user = await getAuthUser();
     if (!user) {
       redirect(`/${locale}/auth/login?next=/${locale}${target ? `/${target}` : ""}`);
     }
+    // فحص مزدوج: لقطة الإعدادات المنشورة (فصل المسودة عن النشر) + canAccessPage (إصلاح #16 — دفاع متعمّق)
     if (!canAccessPage(user, page)) notFound();
+    if (settings.visibility === "role") {
+      // تجاوز الأدوار لمن لديه صلاحية موثقة فقط: المدير الأعلى
+      const allowed = user.roleKey === "super_admin" || settings.allowedRoles.includes(user.roleKey);
+      if (!allowed) notFound();
+    }
   }
 
   const blocksJson = locale === "ar" ? page.publishedBlocksAr : page.publishedBlocksEn;
-  let blocks: Block[] = [];
-  try {
-    blocks = JSON.parse(blocksJson ?? "[]");
-  } catch {
-    blocks = [];
-  }
+  // بوابة التحقق نفسها: ترحيل v0 → v1 + تطبيع + فحص الحدود — والخطأ صريح لا صفحة فارغة
+  const content = loadContentForRender(blocksJson);
+  if (!content.ok || content.tree.length === 0) notFound();
 
-  if (blocks.length === 0) notFound();
-
-  return <PageRenderer blocks={blocks} locale={locale} />;
+  return <PageRenderer nodes={content.tree} locale={locale} mode="live" />;
 }

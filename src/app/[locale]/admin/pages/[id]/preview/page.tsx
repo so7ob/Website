@@ -6,7 +6,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { locales, type Locale } from "@/lib/i18n";
-import { validateBlocks, type Block } from "@/lib/blocks/types";
+import { loadContentForRender } from "@/lib/blocks/validate";
 import { requireMe } from "@/components/admin/guard";
 import type { PreviewDevice } from "@/components/admin/editor/editor-canvas";
 import { PreviewShell } from "./preview-shell";
@@ -37,13 +37,15 @@ export default async function AdminPagePreviewPage({
   if (!page) notFound();
 
   const blocksJson = contentLocale === "ar" ? page.draftBlocksAr : page.draftBlocksEn;
-  const check = validateBlocks(blocksJson);
-  const blocks: Block[] = check.ok ? check.blocks : [];
+  // بوابة التحقق نفسها: ترحيل v0 → v1 + تطبيع — والخطأ صريح لا صفحة فارغة
+  const content = loadContentForRender(blocksJson);
+  const nodes = content.ok ? content.tree : [];
 
   return (
     <PreviewShell
       pageId={id}
-      blocks={blocks}
+      nodes={nodes}
+      loadError={content.ok ? null : content.error}
       locale={contentLocale}
       uiLocale={locale}
       initialDevice={device}

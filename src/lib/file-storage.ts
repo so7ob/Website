@@ -4,7 +4,7 @@
  */
 import { randomBytes } from "crypto";
 import { mkdirSync, writeFileSync, existsSync, readFileSync, unlinkSync } from "fs";
-import { join, extname, basename } from "path";
+import { join, basename } from "path";
 import { dataDirectory } from "./data-paths";
 
 function uploadsDirectory(): string {

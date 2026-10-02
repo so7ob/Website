@@ -38,6 +38,7 @@ import { localeMeta, type Locale } from "@/lib/i18n";
 import { StatusBadge, PriorityBadge, UserStatusBadge } from "@/components/admin/badges";
 import { EmptyState } from "@/components/admin/empty-state";
 import { MessageBubble, ReplyComposer } from "@/components/admin/conversation";
+import { TrackPanel } from "@/components/admin/track/track-panel";
 import {
   apiGet,
   apiSend,
@@ -671,6 +672,11 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
               </Button>
             ) : null}
           </section>
+
+          {/* رابط المتابعة — لوحة الطاقم المشتركة (خفية عند الطباعة) */}
+          <div className="print:hidden">
+            <TrackPanel scope="request" cardId={detail.id} locale={locale} t={t.admin.track} />
+          </div>
 
           {/* المرفقات */}
           <section className="rounded-2xl border border-border bg-white p-4">

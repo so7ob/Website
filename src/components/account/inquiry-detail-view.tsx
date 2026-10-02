@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Paperclip,
   Printer,
+  Radar,
   SearchX,
   Send,
   User,
@@ -192,10 +193,21 @@ export function InquiryDetailView({
           </span>
         </div>
         <Button
+          asChild
+          variant="outline"
+          aria-label={t.openTracking}
+          className="ms-auto h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40 print:hidden"
+        >
+          <Link href={`/${locale}/track?card=inquiry:${inquiry.id}`}>
+            <Radar className="h-4 w-4 text-brand" aria-hidden="true" />
+            {t.openTracking}
+          </Link>
+        </Button>
+        <Button
           variant="outline"
           onClick={() => window.print()}
           aria-label={t.print}
-          className="ms-auto h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40 print:hidden"
+          className="h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40 print:hidden"
         >
           <Printer className="h-4 w-4" aria-hidden="true" />
           {t.print}

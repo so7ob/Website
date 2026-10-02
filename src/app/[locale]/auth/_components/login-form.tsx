@@ -41,8 +41,11 @@ export function LoginForm({ locale, t, next }: { locale: Locale; t: PortalConten
       });
 
       if (!result || !result.ok || result.error) {
-        // بيانات غير صحيحة أو حساب مقفل/موقوف — رسالة عامة لا تكشف السبب
-        setError(result?.error === "rateLimited" ? t.errors.rateLimited : t.errors.generic);
+        // next-auth يعيد error=CredentialsSignin لبيانات الاعتماد الفاشلة —
+        // رسالة دقيقة بلا كشف سبب محدد (وجود الحساب مقابل كلمة المرور مقابل الحالة)
+        if (result?.error === "rateLimited") setError(t.errors.rateLimited);
+        else if (result?.error) setError(t.errors.credentials);
+        else setError(t.errors.generic);
         setSubmitting(false);
         return;
       }

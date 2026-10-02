@@ -373,7 +373,7 @@ export const blockSchemas = {
   }),
 } as const;
 
-export type BlockType = keyof typeof blockSchemas;
+export type BlockType = keyof typeof blockSchemas | import("./tree").ContainerType;
 
 export type Block = {
   id: string;
@@ -417,7 +417,9 @@ export const BLOCK_LIBRARY: { type: BlockType; group: "home" | "pages" | "generi
 
 export const BLOCK_TYPES = Object.keys(blockSchemas) as BlockType[];
 
-/** تحقق صفحة كاملة — يُستخدم في الخادم قبل الحفظ والنشر */
+/** تحقق صفحة كاملة — يُستخدم في الخادم قبل الحفظ والنشر.
+ *  يعيد البيانات المطّبعة من zod (بإسقاط المفاتيح غير المعروفة وتفعيل القيم الافتراضية)
+ *  حتى يُحفظ المحتوى المنظف لا JSON الأصلي الوارد. */
 export function validateBlocks(input: unknown): { ok: true; blocks: Block[] } | { ok: false; error: string } {
   if (typeof input !== "string") return { ok: false, error: "blocks_not_json" };
   let parsed: unknown;
@@ -430,22 +432,25 @@ export function validateBlocks(input: unknown): { ok: true; blocks: Block[] } | 
   if (parsed.length > 60) return { ok: false, error: "too_many_blocks" };
 
   const seenIds = new Set<string>();
+  const normalized: Block[] = [];
   for (const raw of parsed) {
     if (typeof raw !== "object" || raw === null) return { ok: false, error: "block_invalid" };
     const type = (raw as { type?: unknown }).type;
-    if (typeof type !== "string" || !(type in blockSchemas)) return { ok: false, error: "block_type_unknown" };
+    // فحص ملكية مباشر — يمنع تجاوز الفحص بمفاتيح من سلسلة النموذج مثل constructor
+    if (typeof type !== "string" || !Object.hasOwn(blockSchemas, type)) return { ok: false, error: "block_type_unknown" };
     const schema = blockSchemas[type as BlockType] as z.ZodTypeAny;
     const result = schema.safeParse(raw);
     if (!result.success) {
       return { ok: false, error: `block_schema:${type}:${result.error.issues[0]?.path.join(".") ?? "?"}` };
     }
-    const id = (raw as { id?: unknown }).id;
-    if (typeof id === "string") {
-      if (seenIds.has(id)) return { ok: false, error: "block_duplicate_id" };
-      seenIds.add(id);
-    }
+    const data = result.data as Block;
+    const id = typeof data.id === "string" ? data.id : undefined;
+    if (!id) return { ok: false, error: "block_invalid" };
+    if (seenIds.has(id)) return { ok: false, error: "block_duplicate_id" };
+    seenIds.add(id);
+    normalized.push(data);
   }
-  return { ok: true, blocks: parsed as Block[] };
+  return { ok: true, blocks: normalized };
 }
 
 /** المسارات المحجوزة — لا يمكن لصفحة CMS استخدامها */
