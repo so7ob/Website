@@ -448,3 +448,28 @@ Stage Summary:
 - Audit + outbox now have icon-chip headers matching profile/security pages; audit JSON expand cue rotates smoothly and the expanded band reads as a tinted detail section; outbox emails/dates are mono/tabular like other workhorse tables
 - Pages list rows get status-colored FileText chips (emerald/amber/skydrop/muted) giving instant visual triage; menus builder speaks the pill-tab + rounded-xl item-card language with visible ordering numbers and softer focus rings
 - Request + inquiry detail sidebars now share the user-detail dt/dd start-rule pattern (border-s-2 accent, navy values) and wrap their status/priority badges as one gap-2 row — all RTL-safe (logical properties), palette-compliant, zero logic/state/prop/translation changes, 44px targets + ARIA preserved
+
+---
+Task ID: 18
+Agent: main (Z.ai Code)
+Task: Round-18 integration — QA, dashboard range/overdue/client-chip features, styling round 4, commit
+
+Work Log:
+- Round-start assessment: worklog read; all checks green (lint/tsc/67-67/server 200 AR+EN); tree clean at a8aabf0
+- agent-browser QA (all pass, 0 console errors): admin login+dashboard, notifications page + staff link mapping (click → /ar/admin/requests/{id}), requests aging badge "بانتظار رد الفريق · 1 ساعة" (S7-87ADGHJU) + no badge when staff replied last, client portal pills + awaitingYou dot, client→admin redirect, mobile 375px no overflow. NOTE: login lives at /ar/auth/login (not /ar/login)
+- Stability verdict: NO bugs found → scope = round-17 "next candidates": dashboard date-range filters + overdue KPI + client awaitingYou chip visual + styling round 4
+- Main agent staged ALL shared translations first (round-17 conflict-avoidance pattern): admin.dashboard.{rangeLabel,range7,range30,range90,overdueReplies,overdueHint} + account.requests.{awaitingHours("{n} ساعة"/"{n}h"),awaitingDays("{n} يوم"/"{n}d")} — tsc + 67/67 verified before launching subagents
+- Launched 18-a (frontend-styling-expert, styling round 4: audit/outbox/pages/menus/request+inquiry detail) + 18-b (general-purpose, 3 features) in parallel with strict file ownership
+- BUG FOUND IN INTEGRATION QA: 18-b passed a full ISO timestamp to fmtDayLabel (expects YYYY-MM-DD; it appends T00:00:00) → "RangeError: Invalid time value" crashed /ar/admin on 7-day render (subagent static checks can't catch runtime date bugs) — fixed with .slice(0, 10); page reloads clean
+- Browser QA of dashboard features (all pass): range pills (7/30/90) with navy active state + aria-current, chart 7 daily bars w/ weekday labels / 30 bars w/ sparse day numbers (3,8,13,18,23,28,2) / 13 weekly buckets w/ d/M labels (5/7…27/9), invalid range=999 → default 7, KPI hint uses range total + label, EN locale fully verified
+- Overdue KPI verified positive AND negative: current data → 0 (correct); backdated S7-87ADGHJU createdAt 25h → card shows "1 ردود متأخرة"; ALSO first browser verification of round-17 amber aging badge "رد متأخر · 1 يوم" on admin list; data restored after test
+- Client awaitingYou chip: neutral "بانتظار ردك · 3 ساعة" (border-border bg-muted), amber "بانتظار ردك · 1 يوم" (backdated both lastStaff/lastClientReplyAt 30h/32h), EN "Awaiting your reply · 3h"; data restored; verified chip correctly DISAPPEARS when only staff reply backdated (client became last responder — logic sanity confirmed by accident)
+- 18-a styling verified in DOM: audit+outbox header icon chips + computed uppercase 12px theads + rotate chevron, pages list 8 status icon chips, menus pill tabs + order numbers 1-6 + card hover, request detail 9 accent-start dd borders + mono ref, inquiry detail 3 dd borders. NOTE: after subagent edits a hard reload is needed (stale Turbopack cache served old markup on first load)
+- Mobile 375px: dashboard (2-col cards, pills wrap, no overflow), 30d chart, client requests — all clean; VLM review of desktop dashboard: "professionally designed with zero apparent technical or directional errors"; request-detail VLM: high-quality RTL, consistent accent borders
+- ENVIRONMENT: dev server OOM-killed twice during round (5th+6th occurrences — kernel killed next-server at ~2.5GB RSS during /ar/admin cold compile; dmesg confirmed). Recovery that worked: agent-browser close --all (frees ~600MB chrome), setsid restart, warm routes SEQUENTIALLY with patient single curls (--max-time 240); unauthenticated curl to /ar/admin returns 307 BEFORE compiling the page — to warm the admin chain use an authenticated curl (csrf+credentials flow with cookie jar); after warmup memory stabilizes ~2.0-2.2GB
+- Final checks: lint ✓, tsc ✓, 67/67 ✓, git diff --check ✓; committed afc9cea and pushed HEAD:feature/3-interactive-platform (PR #4 updated); server verified healthy post-push (all routes 200)
+
+Stage Summary:
+- Round 18 complete: dashboard date-range selector (server-rendered pills, adaptive daily/weekly chart bucketing), overdue-replies KPI (in-memory column comparison after pruned Prisma query), client awaitingYour-reply aging chip (dot→labeled chip, neutral/amber), styling round 4 (audit, outbox, pages, menus, request+inquiry details)
+- All features browser-verified AR/EN + mobile; one integration bug (fmtDayLabel ISO arg) caught and fixed by main-agent QA — subagent static-only verification has this blind spot
+- Next candidates: websocket real-time notifications (mini-service; polling exists at 30s), requests-list overdue filter chip (KPI → filtered list), request deep-link from notifications already works — consider email-outbox retry UX, editor keyboard shortcuts, or inquiry SLA next
