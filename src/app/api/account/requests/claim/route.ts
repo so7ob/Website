@@ -3,10 +3,9 @@
  * لا يكفي تطابق البريد: يُرسل رابط تأكيد بالبريد المسجل في الطلب.
  */
 import { type NextRequest } from "next/server";
-import { db } from "@/lib/db";
 import { guardApi, json } from "@/lib/auth/session";
 import { checkRateLimit, memoryStore } from "@/lib/ratelimit";
-import { issueToken } from "@/lib/auth/tokens";
+import { beginClaim } from "@/lib/auth/claims";
 import { sendMail, absoluteUrl, emailDevMode } from "@/lib/auth/email";
 import { claimRequestMail } from "@/lib/auth/email-templates";
 import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
@@ -34,25 +33,13 @@ export async function POST(req: NextRequest) {
   } catch {
     return json({ ok: false, code: "invalid" }, 400);
   }
-  const refCode = String(body.refCode ?? "").trim().toUpperCase().slice(0, 30);
+  const refCode = String(body?.refCode ?? "").trim().toUpperCase().slice(0, 30);
   if (!refCode) return json({ ok: false, code: "invalid" }, 400);
 
-  const request = await db.projectRequest.findUnique({
-    where: { refCode },
-    include: { claim: true },
-  });
-
-  // رد موحد — لا نكشف وجود الطلب لغير أصحابه
   const generic = { ok: true, message: "claim_sent" };
-  if (!request || request.archivedAt) return json(generic);
-  if (request.clientId || request.claim) return json(generic); // مرتبط أو ربط سابق
-
-  // رابط التأكيد يُرسل للبريد المسجل في الطلب نفسه — إثبات الملكية
-  const token = await issueToken(user.id, "request_claim");
-  // نربط الرمز بالطلب عبر سجل مبدئي pending
-  await db.requestClaim.create({
-    data: { requestId: request.id, userId: user.id, status: "pending" },
-  });
+  const started = await beginClaim(user.id, refCode);
+  if (!started) return json(generic);
+  const { request, token } = started;
 
   const locale = request.locale === "en" ? "en" : "ar";
   const verifyUrl = absoluteUrl(`/api/account/claim-verify?token=${token.raw}&ref=${refCode}`);

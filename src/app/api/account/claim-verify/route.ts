@@ -4,8 +4,7 @@
  * إرسال الرابط للبريد المسجل في الطلب يثبت ملكيته؛ والجلسة تثبت هوية الحساب.
  */
 import { NextResponse, type NextRequest } from "next/server";
-import { db } from "@/lib/db";
-import { consumeToken } from "@/lib/auth/tokens";
+import { completeClaim } from "@/lib/auth/claims";
 import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
 import { getAuthUser } from "@/lib/auth/session";
 
@@ -20,29 +19,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`${base}?claim=login_required`, req.url));
   }
 
-  const userId = await consumeToken(token, "request_claim");
-  if (!userId || userId !== user.id) {
-    return NextResponse.redirect(new URL(`${base}?claim=invalid`, req.url));
-  }
-
-  const request = ref ? await db.projectRequest.findUnique({ where: { refCode: ref.toUpperCase() } }) : null;
+  const request = await completeClaim(user.id, token, ref.toUpperCase());
   if (!request) {
     return NextResponse.redirect(new URL(`${base}?claim=invalid`, req.url));
   }
-
-  const claim = await db.requestClaim.findUnique({ where: { requestId: request.id } });
-  if (!claim || claim.userId !== user.id || claim.status !== "pending") {
-    return NextResponse.redirect(new URL(`${base}?claim=invalid`, req.url));
-  }
-
-  // الربط الفعلي — مع تسجيل الحدث
-  await db.$transaction([
-    db.requestClaim.update({ where: { requestId: request.id }, data: { status: "verified", verifiedAt: new Date() } }),
-    db.projectRequest.update({ where: { id: request.id }, data: { clientId: user.id } }),
-    db.requestMessage.create({
-      data: { requestId: request.id, authorType: "system", kind: "system", body: `claim_linked:${user.id}` },
-    }),
-  ]);
 
   await audit({
     actorId: user.id,

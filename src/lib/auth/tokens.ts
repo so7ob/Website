@@ -2,7 +2,8 @@
  * رموز أحادية الاستخدام محدودة المدة — تحقق البريد، استعادة كلمة المرور، ربط الطلبات.
  * تُخزن كبصمة SHA-256 فقط؛ لا تُخزن الرموز نفسها في قاعدة البيانات.
  */
-import { createHash, randomBytes, timingSafeEqual } from "crypto";
+import { createHash, randomBytes } from "crypto";
+import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -20,30 +21,40 @@ export interface IssuedToken {
   expiresAt: Date;
 }
 
-/** يُصدر رمزًا جديدًا لغرض محدد — يبطل أي رموز سابقة من نفس النوع لنفس المستخدم */
-export async function issueToken(userId: string, type: TokenType): Promise<IssuedToken> {
+type TokenScope = { resourceId?: string; userId?: string; tx?: Prisma.TransactionClient };
+
+/** Reissuing a claim affects only this resource, not another request's mail. */
+export async function issueToken(userId: string, type: TokenType, options: TokenScope = {}): Promise<IssuedToken> {
+  if (type === "request_claim" && !options.resourceId) throw new Error("Claim tokens require a resource");
   const raw = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + TOKEN_TTL[type]);
-  await db.authToken.deleteMany({ where: { userId, type, usedAt: null } });
-  await db.authToken.create({ data: { userId, type, tokenHash: sha256(raw), expiresAt } });
-  return { raw, expiresAt };
+  const write = async (tx: Prisma.TransactionClient) => {
+    const resourceId = options.resourceId ?? null;
+    await tx.authToken.deleteMany({ where: { userId, type, resourceId, usedAt: null } });
+    await tx.authToken.create({ data: { userId, type, resourceId, tokenHash: sha256(raw), expiresAt } });
+    return { raw, expiresAt };
+  };
+  return options.tx ? write(options.tx) : db.$transaction(write);
 }
 
-/** يتحقق من رمز ويستهلكه (أحادي الاستخدام) — يرجع userId عند النجاح فقط */
-export async function consumeToken(raw: string, type: TokenType): Promise<string | null> {
-  if (!raw || typeof raw !== "string" || raw.length > 200) return null;
+/** The conditional UPDATE is the first DB operation: only one caller can consume. */
+export async function consumeToken(raw: string, type: TokenType, options: TokenScope = {}): Promise<string | null> {
+  if (typeof raw !== "string" || !/^[a-f0-9]{64}$/.test(raw)) return null;
+  if (type === "request_claim" && (!options.resourceId || !options.userId)) return null;
   const tokenHash = sha256(raw);
-  const record = await db.authToken.findUnique({ where: { tokenHash } });
-  if (!record || record.type !== type) return null;
-  if (record.usedAt || record.expiresAt.getTime() < Date.now()) {
-    // رمز مستهلك أو منتهٍ — نبطله إن كان صالح الشكل
-    if (!record.usedAt) await db.authToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
-    return null;
-  }
-  const ok = timingSafeEqual(Buffer.from(record.tokenHash, "hex"), Buffer.from(tokenHash, "hex"));
-  if (!ok) return null;
-  await db.authToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
-  return record.userId;
+  const consume = async (tx: Prisma.TransactionClient) => {
+    const changed = await tx.authToken.updateMany({
+      where: {
+        tokenHash, type, resourceId: options.resourceId ?? null,
+        ...(options.userId ? { userId: options.userId } : {}),
+        usedAt: null, expiresAt: { gt: new Date() }, user: { status: { not: "suspended" } },
+      },
+      data: { usedAt: new Date() },
+    });
+    if (changed.count !== 1) return null;
+    return (await tx.authToken.findUniqueOrThrow({ where: { tokenHash } })).userId;
+  };
+  return options.tx ? consume(options.tx) : db.$transaction(consume);
 }
 
 /** بصمة IP مجهولة لأغراض التدقيق وحماية الإساءة — لا يُخزن العنوان نفسه */
