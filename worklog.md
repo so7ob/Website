@@ -571,3 +571,26 @@ Work Log:
 Stage Summary:
 - All four secondary auth forms (register/forgot/reset/invite) now speak the app's page-header language: brand-accent icon chips (UserPlus/MailQuestion/KeyRound/Mail) beside the navy h1 inside the shared AuthCard; success/error heroes converted to the emerald/rose status-tinted families; every auth input (via shared TextField) gets the 2px ring/40 focus polish + rose error tones; login untouched except the banner tone so its decorative treatment is preserved
 - Admin users list matches audit/outbox/media headers (Users icon chip), its filter row + dialogs share the established ring/dialog-title language, and the invite CTA is a proper shadowed brand pill; badges + table patterns verified already-conformant (no logic touched — sorting/invite/edit/role/suspend flows byte-identical)
+
+---
+Task ID: 20
+Agent: main (Z.ai Code)
+Task: Round-20 integration — assessment, QA, client deep-links + inquiry aging + editor shortcuts, styling round 6, commit
+
+Work Log:
+- Round-start assessment: worklog read; all checks green (lint ✓, tsc ✓, 67/67 ✓, AR/EN 200); agent-browser QA sweep (admin dashboard KPI links regression, requests list, invalid-id 404 behavior, pages list + editor toolbar, client account/requests) — 0 console errors
+- ONE BUG FOUND (accessibility): pages-list kebab menu buttons all carried the same meaningless aria-label "الصفحة" (tp.pageTitle) — screen readers can't distinguish rows; users-list equivalent correctly uses tu.actions. Fixed by main agent with new translation key admin.pages.rowActions ("إجراءات — {title}"/"Actions — {title}") + per-row title interpolation (locale-aware titleAr/titleEn fallback)
+- MAIN-AGENT FEATURE: editor Ctrl+S save-draft shortcut — added "s" branch to the existing keydown handler (undo/redo/escape existed; works inside edit fields like doc editors), calls performSaveRef and toasts te.saved ("محفوظة") on success; zero new keys (te.saved existed)
+- Main agent staged rowActions translation BEFORE launching subagents (conflict-avoidance pattern); tsc + 67/67 verified
+- Launched 20-b (general-purpose: client dashboard deep-links + status tab from URL + inquiry aging badges list/detail) + 20-a (frontend-styling-expert: auth forms + users list) in parallel with strict file ownership
+- Browser QA client side (qa-client login): all 4 account KPI cards are links with aria-labels ("طلبات مفتوحة: 1" / "بانتظار ردك: 1" / "إشعارات غير مقروءة: 2" / "إجمالي الطلبات: 1"); clicking "بانتظار ردك" → /ar/account/requests?status=responded with "تم الرد" tab selected; ?status=bogus → falls back to "عرض الكل"; notifications card → /ar/account/notifications; 0 errors. Known limitation (documented by 20-b): awaitingReply KPI deep-links to status=responded (closest tab) — exact "team-replied-last" filter would need a new account API param
+- Browser QA inquiry aging (admin): neutral badge "بانتظار رد الفريق · 5 ساعة" on IQ-3HCT8G4S; backdated last client message 30h → amber "رد متأخر · 1 يوم" (border-amber-300 bg-amber-100) on BOTH list and detail; sent staff reply → chip disappears live (client-side computation from loaded messages); data fully restored (message timestamp, test reply deleted, status back to new)
+- Browser QA main fixes: 8 kebab buttons now labeled "إجراءات — سُحُب التقنية | so7ob" / "إجراءات — من نحن" etc.; Ctrl+S dispatch → exactly 1 sonner toast "محفوظة" (verified synchronously via [data-sonner-toast] query)
+- Browser QA styling round 6: register icon-chip (UserPlus, size-10 rounded-xl bg-accent), users list header chip, shared text-field focus polish flows to all auth forms; EN parity verified (register "Create account", inquiries "Awaiting team reply · 5h"); mobile 375px inquiries + account no overflow
+- ENVIRONMENT: dev server OOM-killed once more (8th occurrence, 2.28GB RSS during QA) — double-fork recovery from round 19 worked first try (`bash -c 'setsid nohup bun run dev >> dev.log 2>&1 < /dev/null &'`); routes re-warmed sequentially; stable at ~1.9GB with 2.2GB free
+- Final checks: lint ✓, tsc ✓, 67/67 ✓, git diff --check ✓; committed fa206d7 and pushed HEAD:feature/3-interactive-platform (PR #4 updated); post-push health verified (AR/EN/login 200)
+
+Stage Summary:
+- Round 20 complete: client portal made actionable (4 KPI deep-links + URL-driven status tab), inquiries gained full aging parity with requests (API awaitingSince + list/detail badges, live-clearing on staff reply), editor Ctrl+S shortcut, a11y fix for pages kebab labels, styling round 6 (auth forms register/forgot/reset/invite + users list + shared text-field)
+- All features browser-verified AR/EN + mobile 375px with zero console errors; test data restored after aging/reply tests
+- Next candidates: websocket real-time notifications (mini-service; 30s polling exists; memory-risky), outbox retry UX, request-claim deep-link polish, editor block-search palette (Ctrl+/), account awaiting-you exact filter API param, inquiries CSV export, dashboard "recent events" deep-links
