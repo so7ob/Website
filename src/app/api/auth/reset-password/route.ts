@@ -5,7 +5,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { consumeToken } from "@/lib/auth/tokens";
+import { consumeToken, sha256 } from "@/lib/auth/tokens";
 import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
 import { assertSameOrigin } from "@/lib/auth/session";
 
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "invalid" }, { status: 400 });
   }
 
-  const token = String(body.token ?? "");
-  const password = String(body.password ?? "");
+  const token = String(body?.token ?? "");
+  const password = String(body?.password ?? "");
   if (!token || !password) {
     return NextResponse.json({ ok: false, code: "invalid" }, { status: 400 });
   }
@@ -30,30 +30,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "invalid", errors: { password: "password_weak" } }, { status: 400 });
   }
 
-  const userId = await consumeToken(token, "password_reset");
-  if (!userId) {
-    return NextResponse.json({ ok: false, code: "invalid_token" }, { status: 400 });
-  }
-
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return NextResponse.json({ ok: false, code: "invalid_token" }, { status: 400 });
-  }
-
+  // Reject invalid tokens before the expensive password hash; the transaction rechecks atomically.
+  if (!/^[a-f0-9]{64}$/.test(token) || !await db.authToken.findFirst({ where: {
+    tokenHash: sha256(token), type: "password_reset", usedAt: null, expiresAt: { gt: new Date() }, user: { status: { not: "suspended" } },
+  }, select: { id: true } })) return NextResponse.json({ ok: false, code: "invalid_token" }, { status: 400 });
   const passwordHash = await bcrypt.hash(password, 12);
-  await db.user.update({
-    where: { id: userId },
-    data: {
-      passwordHash,
-      sessionsRevokedAt: new Date(), // إبطال كل الجلسات القائمة
-      failedLoginCount: 0,
-      lockedUntil: null,
-    },
+  const user = await db.$transaction(async tx => {
+    const userId = await consumeToken(token, "password_reset", { tx });
+    if (!userId) return null;
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: { passwordHash, sessionsRevokedAt: new Date(), failedLoginCount: 0, lockedUntil: null },
+    });
+    await tx.authSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date(), revokedReason: "password_reset" } });
+    return updated;
   });
-  await db.authSession.updateMany({
-    where: { userId, revokedAt: null },
-    data: { revokedAt: new Date(), revokedReason: "password_reset" },
-  });
+  if (!user) return NextResponse.json({ ok: false, code: "invalid_token" }, { status: 400 });
+  const userId = user.id;
 
   await audit({
     actorId: userId,

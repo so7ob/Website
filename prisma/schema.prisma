@@ -97,6 +97,7 @@ model AuthToken {
   userId    String
   tokenHash String    @unique
   type      String // email_verify | password_reset | request_claim
+  resourceId String? // required for request_claim; never accept legacy unbound tokens
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

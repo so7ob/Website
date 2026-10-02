@@ -11,26 +11,19 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token") ?? "";
   const locale = req.nextUrl.searchParams.get("locale") === "en" ? "en" : "ar";
 
-  const userId = await consumeToken(token, "email_verify");
-  if (!userId) {
-    return NextResponse.redirect(new URL(`/${locale}/auth/verified?status=invalid`, req.url));
-  }
-
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return NextResponse.redirect(new URL(`/${locale}/auth/verified?status=invalid`, req.url));
-  }
-
-  const alreadyVerified = Boolean(user.emailVerifiedAt);
-  if (!alreadyVerified) {
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        emailVerifiedAt: new Date(),
-        status: user.status === "pending_verification" ? "active" : user.status,
-      },
-    });
-  }
+  const result = await db.$transaction(async tx => {
+    const userId = await consumeToken(token, "email_verify", { tx });
+    if (!userId) return null;
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    const alreadyVerified = Boolean(user.emailVerifiedAt);
+    if (!alreadyVerified) await tx.user.update({ where: { id: userId }, data: {
+      emailVerifiedAt: new Date(), status: user.status === "pending_verification" ? "active" : user.status,
+    } });
+    return { user, alreadyVerified };
+  });
+  if (!result) return NextResponse.redirect(new URL(`/${locale}/auth/verified?status=invalid`, req.url));
+  const { user, alreadyVerified } = result;
+  const userId = user.id;
 
   await audit({
     actorId: userId,
