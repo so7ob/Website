@@ -10,13 +10,14 @@ export async function GET(req: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const url = new URL(req.url);
-  const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
+  const requestedPage = Number(url.searchParams.get("page") ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= 1000000 ? requestedPage : 1;
   const pageSize = 20;
 
   const [total, rows] = await Promise.all([
     db.emailLog.count(),
-    db.emailLog.findMany({ orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
+    db.emailLog.findMany({ select: { id: true, to: true, subject: true, status: true, createdAt: true }, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
   ]);
 
-  return json({ ok: true, total, page, pageSize, emails: rows });
+  return json({ ok: true, total, page, pageSize, emails: rows.map(row => ({ ...row, bodyText: "", bodyHtml: null, error: null })) });
 }
