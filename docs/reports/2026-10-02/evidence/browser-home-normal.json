@@ -1,0 +1,30 @@
+[
+  {
+    "locale": "ar",
+    "width": 375,
+    "lcp": 980,
+    "cls": 0.0002826534979423868,
+    "heroOpacity": "1"
+  },
+  {
+    "locale": "en",
+    "width": 375,
+    "lcp": 888,
+    "cls": 0.0002291530864197531,
+    "heroOpacity": "1"
+  },
+  {
+    "locale": "ar",
+    "width": 1280,
+    "lcp": 924,
+    "cls": 0.0011089930216471354,
+    "heroOpacity": "1"
+  },
+  {
+    "locale": "en",
+    "width": 1280,
+    "lcp": 912,
+    "cls": 0.008123860104878743,
+    "heroOpacity": "1"
+  }
+]

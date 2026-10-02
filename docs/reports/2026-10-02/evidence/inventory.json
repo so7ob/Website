@@ -1,0 +1,1706 @@
+[
+  {
+    "package": "@dnd-kit/core",
+    "range": "^6.3.1",
+    "locked": "6.3.1",
+    "installed": "6.3.1",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": ">=16.8.0",
+      "react-dom": ">=16.8.0"
+    },
+    "imports": [
+      "src/components/admin/editor/editor-canvas.tsx"
+    ]
+  },
+  {
+    "package": "@dnd-kit/sortable",
+    "range": "^10.0.0",
+    "locked": "10.0.0",
+    "installed": "10.0.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": ">=16.8.0",
+      "@dnd-kit/core": "^6.3.0"
+    },
+    "imports": [
+      "src/components/admin/editor/editor-canvas.tsx"
+    ]
+  },
+  {
+    "package": "@dnd-kit/utilities",
+    "range": "^3.2.2",
+    "locked": "3.2.2",
+    "installed": "3.2.2",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": ">=16.8.0"
+    },
+    "imports": [
+      "src/components/admin/editor/editor-canvas.tsx"
+    ]
+  },
+  {
+    "package": "@fontsource/ibm-plex-sans",
+    "range": "^5.3.0",
+    "locked": "5.3.0",
+    "installed": "5.3.0",
+    "license": "OFL-1.1",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "src/app/[locale]/layout.tsx"
+    ]
+  },
+  {
+    "package": "@fontsource/ibm-plex-sans-arabic",
+    "range": "^5.3.0",
+    "locked": "5.3.0",
+    "installed": "5.3.0",
+    "license": "OFL-1.1",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "src/app/[locale]/layout.tsx"
+    ]
+  },
+  {
+    "package": "@hookform/resolvers",
+    "range": "^5.1.1",
+    "locked": "5.2.2",
+    "installed": "5.2.2",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react-hook-form": "^7.55.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "@mdxeditor/editor",
+    "range": "^3.39.1",
+    "locked": "3.52.3",
+    "installed": "3.52.3",
+    "license": "MIT",
+    "engines": {
+      "node": ">=16"
+    },
+    "peers": {
+      "react": ">= 18 || >= 19",
+      "react-dom": ">= 18 || >= 19"
+    },
+    "imports": []
+  },
+  {
+    "package": "@prisma/client",
+    "range": "^6.11.1",
+    "locked": "6.19.2",
+    "installed": "6.19.2",
+    "license": "Apache-2.0",
+    "engines": {
+      "node": ">=18.18"
+    },
+    "peers": {
+      "prisma": "*",
+      "typescript": ">=5.1.0"
+    },
+    "imports": [
+      "scripts/create-admin.ts",
+      "scripts/restore-demo-users.ts",
+      "src/lib/db.ts"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-accordion",
+    "range": "^1.2.11",
+    "locked": "1.2.12",
+    "installed": "1.2.12",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/site/faq-accordion.tsx",
+      "src/components/ui/accordion.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-alert-dialog",
+    "range": "^1.1.14",
+    "locked": "1.1.15",
+    "installed": "1.1.15",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/alert-dialog.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-aspect-ratio",
+    "range": "^1.1.7",
+    "locked": "1.1.8",
+    "installed": "1.1.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/aspect-ratio.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-avatar",
+    "range": "^1.1.10",
+    "locked": "1.1.11",
+    "installed": "1.1.11",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/avatar.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-checkbox",
+    "range": "^1.3.2",
+    "locked": "1.3.3",
+    "installed": "1.3.3",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/checkbox.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-collapsible",
+    "range": "^1.1.11",
+    "locked": "1.1.12",
+    "installed": "1.1.12",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/collapsible.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-context-menu",
+    "range": "^2.2.15",
+    "locked": "2.2.16",
+    "installed": "2.2.16",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/context-menu.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-dialog",
+    "range": "^1.1.14",
+    "locked": "1.1.15",
+    "installed": "1.1.15",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/dialog.tsx",
+      "src/components/ui/sheet.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-dropdown-menu",
+    "range": "^2.1.15",
+    "locked": "2.1.16",
+    "installed": "2.1.16",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/dropdown-menu.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-hover-card",
+    "range": "^1.1.14",
+    "locked": "1.1.15",
+    "installed": "1.1.15",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/hover-card.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-label",
+    "range": "^2.1.7",
+    "locked": "2.1.8",
+    "installed": "2.1.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/form.tsx",
+      "src/components/ui/label.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-menubar",
+    "range": "^1.1.15",
+    "locked": "1.1.16",
+    "installed": "1.1.16",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/menubar.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-navigation-menu",
+    "range": "^1.2.13",
+    "locked": "1.2.14",
+    "installed": "1.2.14",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/navigation-menu.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-popover",
+    "range": "^1.1.14",
+    "locked": "1.1.15",
+    "installed": "1.1.15",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/popover.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-progress",
+    "range": "^1.1.7",
+    "locked": "1.1.8",
+    "installed": "1.1.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/progress.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-radio-group",
+    "range": "^1.3.7",
+    "locked": "1.3.8",
+    "installed": "1.3.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/radio-group.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-scroll-area",
+    "range": "^1.2.9",
+    "locked": "1.2.10",
+    "installed": "1.2.10",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/scroll-area.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-select",
+    "range": "^2.2.5",
+    "locked": "2.2.6",
+    "installed": "2.2.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/select.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-separator",
+    "range": "^1.1.7",
+    "locked": "1.1.8",
+    "installed": "1.1.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/separator.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-slider",
+    "range": "^1.3.5",
+    "locked": "1.3.6",
+    "installed": "1.3.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/slider.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-slot",
+    "range": "^1.2.3",
+    "locked": "1.2.4",
+    "installed": "1.2.4",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/badge.tsx",
+      "src/components/ui/breadcrumb.tsx",
+      "src/components/ui/button.tsx",
+      "src/components/ui/form.tsx",
+      "src/components/ui/sidebar.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-switch",
+    "range": "^1.2.5",
+    "locked": "1.2.6",
+    "installed": "1.2.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/switch.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-tabs",
+    "range": "^1.1.12",
+    "locked": "1.1.13",
+    "installed": "1.1.13",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/tabs.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-toast",
+    "range": "^1.2.14",
+    "locked": "1.2.15",
+    "installed": "1.2.15",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/toast.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-toggle",
+    "range": "^1.1.9",
+    "locked": "1.1.10",
+    "installed": "1.1.10",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/toggle.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-toggle-group",
+    "range": "^1.1.10",
+    "locked": "1.1.11",
+    "installed": "1.1.11",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/toggle-group.tsx"
+    ]
+  },
+  {
+    "package": "@radix-ui/react-tooltip",
+    "range": "^1.2.7",
+    "locked": "1.2.8",
+    "installed": "1.2.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "*",
+      "@types/react-dom": "*",
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/tooltip.tsx"
+    ]
+  },
+  {
+    "package": "@reactuses/core",
+    "range": "^6.0.5",
+    "locked": "6.1.9",
+    "installed": "6.1.9",
+    "license": "Unlicense",
+    "engines": null,
+    "peers": {
+      "qrcode": "^1.5",
+      "react": "^16.8.0  || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "@tanstack/react-query",
+    "range": "^5.82.0",
+    "locked": "5.90.19",
+    "installed": "5.90.19",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^18 || ^19"
+    },
+    "imports": []
+  },
+  {
+    "package": "@tanstack/react-table",
+    "range": "^8.21.3",
+    "locked": "8.21.3",
+    "installed": "8.21.3",
+    "license": "MIT",
+    "engines": {
+      "node": ">=12"
+    },
+    "peers": {
+      "react": ">=16.8",
+      "react-dom": ">=16.8"
+    },
+    "imports": []
+  },
+  {
+    "package": "bcryptjs",
+    "range": "^3.0.3",
+    "locked": "3.0.3",
+    "installed": "3.0.3",
+    "license": "BSD-3-Clause",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "scripts/create-admin.ts",
+      "scripts/restore-demo-users.ts",
+      "src/app/api/auth/change-password/route.ts",
+      "src/app/api/auth/invite/route.ts",
+      "src/app/api/auth/register/route.ts",
+      "src/app/api/auth/reset-password/route.ts",
+      "src/lib/auth/options.ts"
+    ]
+  },
+  {
+    "package": "class-variance-authority",
+    "range": "^0.7.1",
+    "locked": "0.7.1",
+    "installed": "0.7.1",
+    "license": "Apache-2.0",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "src/components/ui/alert.tsx",
+      "src/components/ui/badge.tsx",
+      "src/components/ui/button.tsx",
+      "src/components/ui/navigation-menu.tsx",
+      "src/components/ui/sidebar.tsx",
+      "src/components/ui/toast.tsx",
+      "src/components/ui/toggle-group.tsx",
+      "src/components/ui/toggle.tsx"
+    ]
+  },
+  {
+    "package": "clsx",
+    "range": "^2.1.1",
+    "locked": "2.1.1",
+    "installed": "2.1.1",
+    "license": "MIT",
+    "engines": {
+      "node": ">=6"
+    },
+    "peers": null,
+    "imports": [
+      "src/lib/utils.ts"
+    ]
+  },
+  {
+    "package": "cmdk",
+    "range": "^1.1.1",
+    "locked": "1.1.1",
+    "installed": "1.1.1",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^18 || ^19 || ^19.0.0-rc",
+      "react-dom": "^18 || ^19 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/command.tsx"
+    ]
+  },
+  {
+    "package": "date-fns",
+    "range": "^4.1.0",
+    "locked": "4.1.0",
+    "installed": "4.1.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "src/components/account/format.ts",
+      "src/components/admin/helpers.ts"
+    ]
+  },
+  {
+    "package": "embla-carousel-react",
+    "range": "^8.6.0",
+    "locked": "8.6.0",
+    "installed": "8.6.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^16.8.0 || ^17.0.1 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/carousel.tsx"
+    ]
+  },
+  {
+    "package": "framer-motion",
+    "range": "^12.23.2",
+    "locked": "12.26.2",
+    "installed": "12.26.2",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@emotion/is-prop-valid": "*",
+      "react": "^18.0.0 || ^19.0.0",
+      "react-dom": "^18.0.0 || ^19.0.0"
+    },
+    "imports": [
+      "src/components/blocks/hero-block.tsx",
+      "src/components/home/hero.tsx",
+      "src/components/site/cloud-hero-art.tsx"
+    ]
+  },
+  {
+    "package": "input-otp",
+    "range": "^1.4.2",
+    "locked": "1.4.2",
+    "installed": "1.4.2",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/input-otp.tsx"
+    ]
+  },
+  {
+    "package": "lucide-react",
+    "range": "^0.525.0",
+    "locked": "0.525.0",
+    "installed": "0.525.0",
+    "license": "ISC",
+    "engines": null,
+    "peers": {
+      "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    },
+    "imports": [
+      "src/app/[locale]/account/page.tsx",
+      "src/app/[locale]/admin/page.tsx",
+      "src/app/[locale]/admin/pages/[id]/preview/preview-shell.tsx",
+      "src/app/[locale]/admin/pages/pages-client.tsx",
+      "src/app/[locale]/auth/_components/forgot-form.tsx",
+      "src/app/[locale]/auth/_components/invite-form.tsx",
+      "src/app/[locale]/auth/_components/login-form.tsx",
+      "src/app/[locale]/auth/_components/logout-action.tsx",
+      "src/app/[locale]/auth/_components/register-form.tsx",
+      "src/app/[locale]/auth/_components/reset-form.tsx",
+      "src/app/[locale]/auth/verified/page.tsx",
+      "src/components/account/account-shell.tsx",
+      "src/components/account/inquiries-view.tsx",
+      "src/components/account/inquiry-detail-view.tsx",
+      "src/components/account/new-inquiry-dialog.tsx",
+      "src/components/account/new-request-view.tsx",
+      "src/components/account/notifications-view.tsx",
+      "src/components/account/profile-form.tsx",
+      "src/components/account/request-detail-view.tsx",
+      "src/components/account/requests-view.tsx",
+      "src/components/account/security-view.tsx",
+      "src/components/admin/admin-shell.tsx",
+      "src/components/admin/audit/audit-client.tsx",
+      "src/components/admin/command-palette.tsx",
+      "src/components/admin/conversation.tsx",
+      "src/components/admin/editor/block-library.tsx",
+      "src/components/admin/editor/block-palette.tsx",
+      "src/components/admin/editor/editor-canvas.tsx",
+      "src/components/admin/editor/media-picker.tsx",
+      "src/components/admin/editor/page-editor.tsx",
+      "src/components/admin/editor/page-settings-dialog.tsx",
+      "src/components/admin/editor/properties-panel.tsx",
+      "src/components/admin/editor/props-form.tsx",
+      "src/components/admin/editor/versions-dialog.tsx",
+      "src/components/admin/empty-state.tsx",
+      "src/components/admin/inquiries/inquiries-client.tsx",
+      "src/components/admin/inquiries/inquiry-detail-client.tsx",
+      "src/components/admin/media/media-client.tsx",
+      "src/components/admin/menus/menus-client.tsx",
+      "src/components/admin/notifications/notifications-client.tsx",
+      "src/components/admin/outbox/outbox-client.tsx",
+      "src/components/admin/pagination.tsx",
+      "src/components/admin/requests/request-detail-client.tsx",
+      "src/components/admin/requests/requests-client.tsx",
+      "src/components/admin/requests/saved-replies-dialog.tsx",
+      "src/components/admin/settings/settings-client.tsx",
+      "src/components/admin/users/user-detail-client.tsx",
+      "src/components/admin/users/users-client.tsx",
+      "src/components/blocks/contact-info-block.tsx",
+      "src/components/blocks/hero-block.tsx",
+      "src/components/blocks/nav-cta-banner.tsx",
+      "src/components/blocks/numbered-values-block.tsx",
+      "src/components/blocks/process-full-block.tsx",
+      "src/components/blocks/request-form-block.tsx",
+      "src/components/blocks/rich-text-block.tsx",
+      "src/components/blocks/services-detail-block.tsx",
+      "src/components/blocks/vision-mission-block.tsx",
+      "src/components/blocks/works-full-block.tsx",
+      "src/components/blocks/works-showcase-block.tsx",
+      "src/components/form/project-request-form.tsx",
+      "src/components/home/hero.tsx",
+      "src/components/home/home-works.tsx",
+      "src/components/pages/about-page.tsx",
+      "src/components/pages/contact-page.tsx",
+      "src/components/pages/process-page.tsx",
+      "src/components/pages/services-page.tsx",
+      "src/components/pages/works-page.tsx",
+      "src/components/site/announcement-bar.tsx",
+      "src/components/site/faq-accordion.tsx",
+      "src/components/site/language-switcher.tsx",
+      "src/components/site/service-icon.tsx",
+      "src/components/site/site-footer.tsx",
+      "src/components/site/site-header.tsx",
+      "src/components/ui/accordion.tsx",
+      "src/components/ui/breadcrumb.tsx",
+      "src/components/ui/calendar.tsx",
+      "src/components/ui/carousel.tsx",
+      "src/components/ui/checkbox.tsx",
+      "src/components/ui/command.tsx",
+      "src/components/ui/context-menu.tsx",
+      "src/components/ui/dialog.tsx",
+      "src/components/ui/dropdown-menu.tsx",
+      "src/components/ui/input-otp.tsx",
+      "src/components/ui/menubar.tsx",
+      "src/components/ui/navigation-menu.tsx",
+      "src/components/ui/pagination.tsx",
+      "src/components/ui/radio-group.tsx",
+      "src/components/ui/resizable.tsx",
+      "src/components/ui/select.tsx",
+      "src/components/ui/sheet.tsx",
+      "src/components/ui/sidebar.tsx",
+      "src/components/ui/toast.tsx",
+      "src/components/works/booking-prototype.tsx"
+    ]
+  },
+  {
+    "package": "next",
+    "range": "^16.1.1",
+    "locked": "16.1.3",
+    "installed": "16.1.3",
+    "license": "MIT",
+    "engines": {
+      "node": ">=20.9.0"
+    },
+    "peers": {
+      "@opentelemetry/api": "^1.1.0",
+      "@playwright/test": "^1.51.1",
+      "babel-plugin-react-compiler": "*",
+      "react": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+      "react-dom": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+      "sass": "^1.3.0"
+    },
+    "imports": [
+      "src/app/[locale]/[[...slug]]/page.tsx",
+      "src/app/[locale]/account/inquiries/[id]/page.tsx",
+      "src/app/[locale]/account/inquiries/page.tsx",
+      "src/app/[locale]/account/layout.tsx",
+      "src/app/[locale]/account/notifications/page.tsx",
+      "src/app/[locale]/account/page.tsx",
+      "src/app/[locale]/account/profile/page.tsx",
+      "src/app/[locale]/account/requests/[id]/page.tsx",
+      "src/app/[locale]/account/requests/new/page.tsx",
+      "src/app/[locale]/account/requests/page.tsx",
+      "src/app/[locale]/account/security/page.tsx",
+      "src/app/[locale]/admin/layout.tsx",
+      "src/app/[locale]/admin/page.tsx",
+      "src/app/[locale]/admin/pages/[id]/preview/page.tsx",
+      "src/app/[locale]/admin/pages/[id]/preview/preview-shell.tsx",
+      "src/app/[locale]/admin/pages/pages-client.tsx",
+      "src/app/[locale]/auth/_components/forgot-form.tsx",
+      "src/app/[locale]/auth/_components/invite-form.tsx",
+      "src/app/[locale]/auth/_components/login-form.tsx",
+      "src/app/[locale]/auth/_components/register-form.tsx",
+      "src/app/[locale]/auth/_components/reset-form.tsx",
+      "src/app/[locale]/auth/forgot-password/page.tsx",
+      "src/app/[locale]/auth/invite/page.tsx",
+      "src/app/[locale]/auth/layout.tsx",
+      "src/app/[locale]/auth/login/page.tsx",
+      "src/app/[locale]/auth/logout/page.tsx",
+      "src/app/[locale]/auth/register/page.tsx",
+      "src/app/[locale]/auth/reset-password/page.tsx",
+      "src/app/[locale]/auth/verified/page.tsx",
+      "src/app/[locale]/layout.tsx",
+      "src/app/api/account/claim-verify/route.ts",
+      "src/app/api/account/drafts/route.ts",
+      "src/app/api/account/inquiries/[id]/messages/route.ts",
+      "src/app/api/account/inquiries/[id]/route.ts",
+      "src/app/api/account/inquiries/route.ts",
+      "src/app/api/account/notifications/route.ts",
+      "src/app/api/account/profile/route.ts",
+      "src/app/api/account/requests/[id]/messages/route.ts",
+      "src/app/api/account/requests/[id]/route.ts",
+      "src/app/api/account/requests/claim/route.ts",
+      "src/app/api/account/requests/route.ts",
+      "src/app/api/admin/audit/route.ts",
+      "src/app/api/admin/dashboard/route.ts",
+      "src/app/api/admin/inquiries/[id]/messages/route.ts",
+      "src/app/api/admin/inquiries/[id]/route.ts",
+      "src/app/api/admin/inquiries/bulk/route.ts",
+      "src/app/api/admin/inquiries/export/route.ts",
+      "src/app/api/admin/inquiries/route.ts",
+      "src/app/api/admin/media/[id]/route.ts",
+      "src/app/api/admin/media/route.ts",
+      "src/app/api/admin/menus/route.ts",
+      "src/app/api/admin/outbox/route.ts",
+      "src/app/api/admin/pages/[id]/publish/route.ts",
+      "src/app/api/admin/pages/[id]/route.ts",
+      "src/app/api/admin/pages/[id]/versions/[version]/restore/route.ts",
+      "src/app/api/admin/pages/[id]/versions/route.ts",
+      "src/app/api/admin/pages/route.ts",
+      "src/app/api/admin/requests/[id]/route.ts",
+      "src/app/api/admin/requests/bulk/route.ts",
+      "src/app/api/admin/requests/export/route.ts",
+      "src/app/api/admin/requests/route.ts",
+      "src/app/api/admin/saved-replies/[id]/route.ts",
+      "src/app/api/admin/saved-replies/route.ts",
+      "src/app/api/admin/search/route.ts",
+      "src/app/api/admin/settings/route.ts",
+      "src/app/api/admin/users/[id]/route.ts",
+      "src/app/api/admin/users/route.ts",
+      "src/app/api/attachments/[id]/route.ts",
+      "src/app/api/attachments/route.ts",
+      "src/app/api/auth/change-password/route.ts",
+      "src/app/api/auth/forgot-password/route.ts",
+      "src/app/api/auth/invite/route.ts",
+      "src/app/api/auth/register/route.ts",
+      "src/app/api/auth/reset-password/route.ts",
+      "src/app/api/auth/sessions/route.ts",
+      "src/app/api/auth/verify-email/route.ts",
+      "src/app/api/inquiries/route.ts",
+      "src/app/api/media/[id]/route.ts",
+      "src/app/api/requests/route.ts",
+      "src/app/not-found.tsx",
+      "src/app/robots.ts",
+      "src/app/sitemap.ts",
+      "src/components/account/account-shell.tsx",
+      "src/components/account/inquiries-view.tsx",
+      "src/components/account/inquiry-detail-view.tsx",
+      "src/components/account/new-inquiry-dialog.tsx",
+      "src/components/account/new-request-view.tsx",
+      "src/components/account/notifications-view.tsx",
+      "src/components/account/profile-form.tsx",
+      "src/components/account/request-detail-view.tsx",
+      "src/components/account/requests-view.tsx",
+      "src/components/admin/admin-shell.tsx",
+      "src/components/admin/command-palette.tsx",
+      "src/components/admin/editor/page-editor.tsx",
+      "src/components/admin/guard.ts",
+      "src/components/admin/inquiries/inquiries-client.tsx",
+      "src/components/admin/inquiries/inquiry-detail-client.tsx",
+      "src/components/admin/notifications/notifications-client.tsx",
+      "src/components/admin/requests/request-detail-client.tsx",
+      "src/components/admin/requests/requests-client.tsx",
+      "src/components/admin/users/user-detail-client.tsx",
+      "src/components/admin/users/users-client.tsx",
+      "src/components/blocks/block-link.tsx",
+      "src/components/blocks/hero-block.tsx",
+      "src/components/blocks/process-full-block.tsx",
+      "src/components/blocks/request-form-shell.tsx",
+      "src/components/blocks/services-detail-block.tsx",
+      "src/components/form/project-request-form.tsx",
+      "src/components/home/final-cta.tsx",
+      "src/components/home/hero.tsx",
+      "src/components/home/home-faq.tsx",
+      "src/components/home/home-services.tsx",
+      "src/components/home/home-works.tsx",
+      "src/components/pages/about-page.tsx",
+      "src/components/pages/contact-page.tsx",
+      "src/components/pages/faq-page.tsx",
+      "src/components/pages/process-page.tsx",
+      "src/components/pages/services-page.tsx",
+      "src/components/site/announcement-bar.tsx",
+      "src/components/site/language-switcher.tsx",
+      "src/components/site/site-footer.tsx",
+      "src/components/site/site-header.tsx",
+      "src/lib/auth/session.ts",
+      "src/lib/requests-service.ts",
+      "src/middleware.ts"
+    ]
+  },
+  {
+    "package": "next-auth",
+    "range": "^4.24.11",
+    "locked": "4.24.13",
+    "installed": "4.24.13",
+    "license": "ISC",
+    "engines": null,
+    "peers": {
+      "@auth/core": "0.34.3",
+      "next": "^12.2.5 || ^13 || ^14 || ^15 || ^16",
+      "nodemailer": "^7.0.7",
+      "react": "^17.0.2 || ^18 || ^19",
+      "react-dom": "^17.0.2 || ^18 || ^19"
+    },
+    "imports": [
+      "src/app/[locale]/auth/_components/login-form.tsx",
+      "src/app/[locale]/auth/_components/logout-action.tsx",
+      "src/app/api/auth/[...nextauth]/route.ts",
+      "src/app/api/auth/sessions/route.ts",
+      "src/components/account/security-view.tsx",
+      "src/lib/auth/options.ts",
+      "src/lib/auth/session.ts"
+    ]
+  },
+  {
+    "package": "next-intl",
+    "range": "^4.3.4",
+    "locked": "4.7.0",
+    "installed": "4.7.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "next": "^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+      "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc <19.0.0 || ^19.0.0",
+      "typescript": "^5.0.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "next-themes",
+    "range": "^0.4.6",
+    "locked": "0.4.6",
+    "installed": "0.4.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/sonner.tsx"
+    ]
+  },
+  {
+    "package": "nodemailer",
+    "range": "^10.0.13",
+    "locked": "10.0.13",
+    "installed": "10.0.13",
+    "license": "MIT-0",
+    "engines": {
+      "node": ">=20.0.0"
+    },
+    "peers": null,
+    "imports": [
+      "src/lib/auth/email.ts"
+    ]
+  },
+  {
+    "package": "prisma",
+    "range": "^6.11.1",
+    "locked": "6.19.2",
+    "installed": "6.19.2",
+    "license": "Apache-2.0",
+    "engines": {
+      "node": ">=18.18"
+    },
+    "peers": {
+      "typescript": ">=5.1.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "react",
+    "range": "^19.0.0",
+    "locked": "19.2.3",
+    "installed": "19.2.3",
+    "license": "MIT",
+    "engines": {
+      "node": ">=0.10.0"
+    },
+    "peers": null,
+    "imports": [
+      "src/app/[locale]/account/inquiries/page.tsx",
+      "src/app/[locale]/account/requests/page.tsx",
+      "src/app/[locale]/admin/pages/[id]/preview/preview-shell.tsx",
+      "src/app/[locale]/admin/pages/pages-client.tsx",
+      "src/app/[locale]/auth/_components/forgot-form.tsx",
+      "src/app/[locale]/auth/_components/invite-form.tsx",
+      "src/app/[locale]/auth/_components/login-form.tsx",
+      "src/app/[locale]/auth/_components/logout-action.tsx",
+      "src/app/[locale]/auth/_components/register-form.tsx",
+      "src/app/[locale]/auth/_components/reset-form.tsx",
+      "src/components/account/account-shell.tsx",
+      "src/components/account/inquiries-view.tsx",
+      "src/components/account/inquiry-detail-view.tsx",
+      "src/components/account/new-inquiry-dialog.tsx",
+      "src/components/account/new-request-view.tsx",
+      "src/components/account/notifications-view.tsx",
+      "src/components/account/profile-form.tsx",
+      "src/components/account/request-detail-view.tsx",
+      "src/components/account/requests-view.tsx",
+      "src/components/account/security-view.tsx",
+      "src/components/account/use-debounced.ts",
+      "src/components/admin/admin-shell.tsx",
+      "src/components/admin/audit/audit-client.tsx",
+      "src/components/admin/command-palette.tsx",
+      "src/components/admin/conversation.tsx",
+      "src/components/admin/editor/block-palette.tsx",
+      "src/components/admin/editor/editor-canvas.tsx",
+      "src/components/admin/editor/media-picker.tsx",
+      "src/components/admin/editor/page-editor.tsx",
+      "src/components/admin/editor/page-settings-dialog.tsx",
+      "src/components/admin/editor/props-form.tsx",
+      "src/components/admin/editor/versions-dialog.tsx",
+      "src/components/admin/inquiries/inquiries-client.tsx",
+      "src/components/admin/inquiries/inquiry-detail-client.tsx",
+      "src/components/admin/media/media-client.tsx",
+      "src/components/admin/menus/menus-client.tsx",
+      "src/components/admin/notifications/notifications-client.tsx",
+      "src/components/admin/outbox/outbox-client.tsx",
+      "src/components/admin/requests/request-detail-client.tsx",
+      "src/components/admin/requests/requests-client.tsx",
+      "src/components/admin/requests/saved-replies-dialog.tsx",
+      "src/components/admin/settings/settings-client.tsx",
+      "src/components/admin/use-debounced.ts",
+      "src/components/admin/users/user-detail-client.tsx",
+      "src/components/admin/users/users-client.tsx",
+      "src/components/blocks/block-container.tsx",
+      "src/components/blocks/block-link.tsx",
+      "src/components/blocks/request-form-block.tsx",
+      "src/components/blocks/request-form-shell.tsx",
+      "src/components/form/project-request-form.tsx",
+      "src/components/pages/contact-page.tsx",
+      "src/components/site/announcement-bar.tsx",
+      "src/components/site/language-switcher.tsx",
+      "src/components/site/section.tsx",
+      "src/components/site/site-header.tsx",
+      "src/components/ui/accordion.tsx",
+      "src/components/ui/alert-dialog.tsx",
+      "src/components/ui/alert.tsx",
+      "src/components/ui/avatar.tsx",
+      "src/components/ui/badge.tsx",
+      "src/components/ui/breadcrumb.tsx",
+      "src/components/ui/button.tsx",
+      "src/components/ui/calendar.tsx",
+      "src/components/ui/card.tsx",
+      "src/components/ui/carousel.tsx",
+      "src/components/ui/chart.tsx",
+      "src/components/ui/checkbox.tsx",
+      "src/components/ui/command.tsx",
+      "src/components/ui/context-menu.tsx",
+      "src/components/ui/dialog.tsx",
+      "src/components/ui/drawer.tsx",
+      "src/components/ui/dropdown-menu.tsx",
+      "src/components/ui/form.tsx",
+      "src/components/ui/hover-card.tsx",
+      "src/components/ui/input-otp.tsx",
+      "src/components/ui/input.tsx",
+      "src/components/ui/label.tsx",
+      "src/components/ui/menubar.tsx",
+      "src/components/ui/navigation-menu.tsx",
+      "src/components/ui/pagination.tsx",
+      "src/components/ui/popover.tsx",
+      "src/components/ui/progress.tsx",
+      "src/components/ui/radio-group.tsx",
+      "src/components/ui/resizable.tsx",
+      "src/components/ui/scroll-area.tsx",
+      "src/components/ui/select.tsx",
+      "src/components/ui/separator.tsx",
+      "src/components/ui/sheet.tsx",
+      "src/components/ui/sidebar.tsx",
+      "src/components/ui/slider.tsx",
+      "src/components/ui/switch.tsx",
+      "src/components/ui/table.tsx",
+      "src/components/ui/tabs.tsx",
+      "src/components/ui/textarea.tsx",
+      "src/components/ui/toast.tsx",
+      "src/components/ui/toggle-group.tsx",
+      "src/components/ui/toggle.tsx",
+      "src/components/ui/tooltip.tsx",
+      "src/components/works/booking-prototype.tsx",
+      "src/hooks/use-mobile.ts",
+      "src/hooks/use-toast.ts"
+    ]
+  },
+  {
+    "package": "react-day-picker",
+    "range": "^9.8.0",
+    "locked": "9.13.0",
+    "installed": "9.13.0",
+    "license": "MIT",
+    "engines": {
+      "node": ">=18"
+    },
+    "peers": {
+      "react": ">=16.8.0"
+    },
+    "imports": [
+      "src/components/ui/calendar.tsx"
+    ]
+  },
+  {
+    "package": "react-dom",
+    "range": "^19.0.0",
+    "locked": "19.2.3",
+    "installed": "19.2.3",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^19.2.3"
+    },
+    "imports": []
+  },
+  {
+    "package": "react-hook-form",
+    "range": "^7.60.0",
+    "locked": "7.71.1",
+    "installed": "7.71.1",
+    "license": "MIT",
+    "engines": {
+      "node": ">=18.0.0"
+    },
+    "peers": {
+      "react": "^16.8.0 || ^17 || ^18 || ^19"
+    },
+    "imports": [
+      "src/components/ui/form.tsx"
+    ]
+  },
+  {
+    "package": "react-markdown",
+    "range": "^10.1.0",
+    "locked": "10.1.0",
+    "installed": "10.1.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": ">=18",
+      "react": ">=18"
+    },
+    "imports": []
+  },
+  {
+    "package": "react-resizable-panels",
+    "range": "^3.0.3",
+    "locked": "3.0.6",
+    "installed": "3.0.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc",
+      "react-dom": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/resizable.tsx"
+    ]
+  },
+  {
+    "package": "react-syntax-highlighter",
+    "range": "^15.6.1",
+    "locked": "15.6.6",
+    "installed": "15.6.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": ">= 0.14.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "recharts",
+    "range": "^2.15.4",
+    "locked": "2.15.4",
+    "installed": "2.15.4",
+    "license": "MIT",
+    "engines": {
+      "node": ">=14"
+    },
+    "peers": {
+      "react": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+      "react-dom": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    },
+    "imports": [
+      "src/components/ui/chart.tsx"
+    ]
+  },
+  {
+    "package": "sharp",
+    "range": "^0.34.3",
+    "locked": "0.34.5",
+    "installed": "0.34.5",
+    "license": "Apache-2.0",
+    "engines": {
+      "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+    },
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "sonner",
+    "range": "^2.0.6",
+    "locked": "2.0.7",
+    "installed": "2.0.7",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^18.0.0 || ^19.0.0 || ^19.0.0-rc",
+      "react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/app/[locale]/admin/pages/pages-client.tsx",
+      "src/app/[locale]/auth/_components/reset-form.tsx",
+      "src/components/account/inquiry-detail-view.tsx",
+      "src/components/account/new-inquiry-dialog.tsx",
+      "src/components/account/new-request-view.tsx",
+      "src/components/account/notifications-view.tsx",
+      "src/components/account/profile-form.tsx",
+      "src/components/account/request-detail-view.tsx",
+      "src/components/account/requests-view.tsx",
+      "src/components/account/security-view.tsx",
+      "src/components/admin/editor/media-picker.tsx",
+      "src/components/admin/editor/page-editor.tsx",
+      "src/components/admin/editor/page-settings-dialog.tsx",
+      "src/components/admin/editor/versions-dialog.tsx",
+      "src/components/admin/inquiries/inquiries-client.tsx",
+      "src/components/admin/inquiries/inquiry-detail-client.tsx",
+      "src/components/admin/media/media-client.tsx",
+      "src/components/admin/menus/menus-client.tsx",
+      "src/components/admin/notifications/notifications-client.tsx",
+      "src/components/admin/requests/request-detail-client.tsx",
+      "src/components/admin/requests/requests-client.tsx",
+      "src/components/admin/requests/saved-replies-dialog.tsx",
+      "src/components/admin/settings/settings-client.tsx",
+      "src/components/admin/users/users-client.tsx",
+      "src/components/ui/sonner.tsx"
+    ]
+  },
+  {
+    "package": "tailwind-merge",
+    "range": "^3.3.1",
+    "locked": "3.4.0",
+    "installed": "3.4.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "src/lib/utils.ts"
+    ]
+  },
+  {
+    "package": "tailwindcss-animate",
+    "range": "^1.0.7",
+    "locked": "1.0.7",
+    "installed": "1.0.7",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "tailwindcss": ">=3.0.0 || insiders"
+    },
+    "imports": []
+  },
+  {
+    "package": "uuid",
+    "range": "^11.1.0",
+    "locked": "11.1.0",
+    "installed": "11.1.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "vaul",
+    "range": "^1.1.2",
+    "locked": "1.1.2",
+    "installed": "1.1.2",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "react": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc",
+      "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc"
+    },
+    "imports": [
+      "src/components/ui/drawer.tsx"
+    ]
+  },
+  {
+    "package": "z-ai-web-dev-sdk",
+    "range": "^0.0.18",
+    "locked": "0.0.18",
+    "installed": "0.0.18",
+    "license": "ISC",
+    "engines": {
+      "node": ">=20.0.0",
+      "bun": ">=1.3.0"
+    },
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "zod",
+    "range": "^4.0.2",
+    "locked": "4.3.5",
+    "installed": "4.3.5",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": [
+      "src/components/blocks/button-link-block.tsx",
+      "src/components/blocks/columns-block.tsx",
+      "src/components/blocks/contact-info-block.tsx",
+      "src/components/blocks/cta-section-block.tsx",
+      "src/components/blocks/divider-block.tsx",
+      "src/components/blocks/faq-section-block.tsx",
+      "src/components/blocks/feature-grid-block.tsx",
+      "src/components/blocks/gallery-block.tsx",
+      "src/components/blocks/heading-block.tsx",
+      "src/components/blocks/hero-block.tsx",
+      "src/components/blocks/image-block.tsx",
+      "src/components/blocks/nav-cta-banner.tsx",
+      "src/components/blocks/numbered-list-block.tsx",
+      "src/components/blocks/numbered-values-block.tsx",
+      "src/components/blocks/page-header-block.tsx",
+      "src/components/blocks/process-full-block.tsx",
+      "src/components/blocks/process-steps-block.tsx",
+      "src/components/blocks/request-form-block.tsx",
+      "src/components/blocks/rich-text-block.tsx",
+      "src/components/blocks/services-detail-block.tsx",
+      "src/components/blocks/services-grid-block.tsx",
+      "src/components/blocks/simple-table-block.tsx",
+      "src/components/blocks/spacer-block.tsx",
+      "src/components/blocks/text-block.tsx",
+      "src/components/blocks/vision-mission-block.tsx",
+      "src/components/blocks/works-full-block.tsx",
+      "src/components/blocks/works-showcase-block.tsx",
+      "src/lib/blocks/types.ts"
+    ]
+  },
+  {
+    "package": "zustand",
+    "range": "^5.0.6",
+    "locked": "5.0.10",
+    "installed": "5.0.10",
+    "license": "MIT",
+    "engines": {
+      "node": ">=12.20.0"
+    },
+    "peers": {
+      "@types/react": ">=18.0.0",
+      "immer": ">=9.0.6",
+      "react": ">=18.0.0",
+      "use-sync-external-store": ">=1.2.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "@tailwindcss/postcss",
+    "range": "^4",
+    "locked": "4.1.18",
+    "installed": "4.1.18",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "@testing-library/jest-dom",
+    "range": "^7.0.1",
+    "locked": "7.0.1",
+    "installed": "7.0.1",
+    "license": "MIT",
+    "engines": {
+      "node": ">=22",
+      "npm": ">=6",
+      "yarn": ">=1"
+    },
+    "peers": {
+      "@testing-library/dom": ">=10 <11",
+      "vitest": ">= 0.32"
+    },
+    "imports": [
+      "vitest.setup.ts"
+    ]
+  },
+  {
+    "package": "@testing-library/react",
+    "range": "^16.3.3",
+    "locked": "16.3.3",
+    "installed": "16.3.3",
+    "license": "MIT",
+    "engines": {
+      "node": ">=18"
+    },
+    "peers": {
+      "@testing-library/dom": "^10.0.0",
+      "@types/react": "^18.0.0 || ^19.0.0",
+      "@types/react-dom": "^18.0.0 || ^19.0.0",
+      "react": "^18.0.0 || ^19.0.0",
+      "react-dom": "^18.0.0 || ^19.0.0"
+    },
+    "imports": [
+      "src/components/site/__tests__/faq-accordion.test.tsx"
+    ]
+  },
+  {
+    "package": "@testing-library/user-event",
+    "range": "^14.6.7",
+    "locked": "14.6.7",
+    "installed": "14.6.7",
+    "license": "MIT",
+    "engines": {
+      "node": ">=12",
+      "npm": ">=6"
+    },
+    "peers": {
+      "@testing-library/dom": ">=7.21.4"
+    },
+    "imports": [
+      "src/components/site/__tests__/faq-accordion.test.tsx"
+    ]
+  },
+  {
+    "package": "@types/bcryptjs",
+    "range": "^3.0.0",
+    "locked": "3.0.0",
+    "installed": "3.0.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "@types/nodemailer",
+    "range": "^8.0.2",
+    "locked": "8.0.2",
+    "installed": "8.0.2",
+    "license": "MIT",
+    "engines": null,
+    "peers": {},
+    "imports": []
+  },
+  {
+    "package": "@types/react",
+    "range": "^19",
+    "locked": "19.2.8",
+    "installed": "19.2.8",
+    "license": "MIT",
+    "engines": null,
+    "peers": {},
+    "imports": []
+  },
+  {
+    "package": "@types/react-dom",
+    "range": "^19",
+    "locked": "19.2.3",
+    "installed": "19.2.3",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "@types/react": "^19.2.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "@vitejs/plugin-react",
+    "range": "^6.1.1",
+    "locked": "6.1.1",
+    "installed": "6.1.1",
+    "license": "MIT",
+    "engines": {
+      "node": "^20.19.0 || >=22.12.0"
+    },
+    "peers": {
+      "@rolldown/plugin-babel": "^0.1.7 || ^0.2.0",
+      "babel-plugin-react-compiler": "^1.0.0",
+      "oxc-transform-react": "^0.145.0",
+      "vite": "^8.0.0"
+    },
+    "imports": []
+  },
+  {
+    "package": "bun-types",
+    "range": "^1.3.4",
+    "locked": "1.3.6",
+    "installed": "1.3.6",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "eslint",
+    "range": "^9",
+    "locked": "9.39.2",
+    "installed": "9.39.2",
+    "license": "MIT",
+    "engines": {
+      "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+    },
+    "peers": {
+      "jiti": "*"
+    },
+    "imports": []
+  },
+  {
+    "package": "eslint-config-next",
+    "range": "^16.1.1",
+    "locked": "16.1.3",
+    "installed": "16.1.3",
+    "license": "MIT",
+    "engines": null,
+    "peers": {
+      "eslint": ">=9.0.0",
+      "typescript": ">=3.3.1"
+    },
+    "imports": [
+      "eslint.config.mjs"
+    ]
+  },
+  {
+    "package": "jsdom",
+    "range": "^30.1.1",
+    "locked": "30.1.1",
+    "installed": "30.1.1",
+    "license": "MIT",
+    "engines": {
+      "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+    },
+    "peers": {
+      "canvas": "^3.2.3"
+    },
+    "imports": []
+  },
+  {
+    "package": "tailwindcss",
+    "range": "^4",
+    "locked": "4.1.18",
+    "installed": "4.1.18",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "tw-animate-css",
+    "range": "^1.3.5",
+    "locked": "1.4.0",
+    "installed": "1.4.0",
+    "license": "MIT",
+    "engines": null,
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "typescript",
+    "range": "^5",
+    "locked": "5.9.3",
+    "installed": "5.9.3",
+    "license": "Apache-2.0",
+    "engines": {
+      "node": ">=14.17"
+    },
+    "peers": null,
+    "imports": []
+  },
+  {
+    "package": "vitest",
+    "range": "^5.0.3",
+    "locked": "5.0.3",
+    "installed": "5.0.3",
+    "license": "MIT",
+    "engines": {
+      "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+    },
+    "peers": {
+      "@edge-runtime/vm": "*",
+      "@opentelemetry/api": "^1.9.0",
+      "@types/node": "^22.0.0 || >=24.0.0",
+      "@vitest/browser-playwright": "5.0.3",
+      "@vitest/browser-preview": "5.0.3",
+      "@vitest/browser-webdriverio": "^5.0.0-beta.5 || >=5.0.0",
+      "@vitest/coverage-istanbul": "5.0.3",
+      "@vitest/coverage-v8": "5.0.3",
+      "@vitest/ui": "5.0.3",
+      "happy-dom": "*",
+      "jsdom": "*",
+      "vite": "^6.4.0 || ^7.0.0 || ^8.0.0"
+    },
+    "imports": [
+      "src/components/site/__tests__/faq-accordion.test.tsx",
+      "src/content/__tests__/parity.test.ts",
+      "src/content/__tests__/portal-parity.test.ts",
+      "src/lib/__tests__/blocks.test.ts",
+      "src/lib/__tests__/permissions.test.ts",
+      "src/lib/__tests__/ratelimit.test.ts",
+      "src/lib/__tests__/validation.test.ts",
+      "vitest.config.ts"
+    ]
+  }
+]

@@ -1,0 +1,12 @@
+import subprocess,time,json,sys,os,pathlib
+root=pathlib.Path('/tmp/so7ob-audit-20261002')
+env=os.environ.copy()
+for line in (root/'project/.env').read_text().splitlines():
+ k,v=line.split('=',1);env[k]=v.strip('"')
+env['NEXT_TELEMETRY_DISABLED']='1'
+name=sys.argv[1]; start=time.perf_counter()
+with (root/'artifacts'/f'{name}.log').open('w') as f:
+ r=subprocess.run(sys.argv[2:],cwd=root/'project',env=env,stdout=f,stderr=subprocess.STDOUT)
+result={'check':name,'exit_code':r.returncode,'seconds':round(time.perf_counter()-start,3),'command':sys.argv[2:]}
+(root/'artifacts'/f'{name}.json').write_text(json.dumps(result,indent=2))
+print(json.dumps(result))

@@ -1,0 +1,10 @@
+{
+  "check": "test",
+  "exit_code": 1,
+  "seconds": 2.538,
+  "command": [
+    "bun",
+    "run",
+    "test"
+  ]
+}

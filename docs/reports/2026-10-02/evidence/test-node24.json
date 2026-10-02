@@ -1,0 +1,10 @@
+{
+  "check": "test-node24",
+  "exit_code": 0,
+  "seconds": 2.499,
+  "command": [
+    "bun",
+    "run",
+    "test"
+  ]
+}

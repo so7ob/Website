@@ -1,0 +1,53 @@
+const {request,chromium}=require('/usr/lib/node_modules/playwright');
+const fs=require('fs');
+const root='/tmp/so7ob-audit-20261002';
+const {password}=JSON.parse(fs.readFileSync(root+'/project/.audit-secrets.json'));
+const results=[]; const record=(name,data)=>results.push({name,...data});
+const make=()=>request.newContext({baseURL:'http://localhost:3100'});
+async function login(ctx,id){const csrf=await(await ctx.get('/api/auth/csrf')).json();const r=await ctx.post('/api/auth/callback/credentials',{form:{email:id+'@audit.example',password,csrfToken:csrf.csrfToken,json:'true',callbackUrl:'http://localhost:3100/ar/account'},maxRedirects:0});await ctx.get('/api/account/profile');return r.status();}
+async function status(ctx,path,method='get',data){const r=await ctx[method](path,data===undefined?{}:{data});return r.status();}
+(async()=>{
+ const anon=await make(), contexts={};
+ for(const id of ['admin','ops','support','editor','owner','other','pending','suspended']){const ctx=await make();contexts[id]=ctx;record('login-'+id,{status:await login(ctx,id)});}
+ const {admin,ops,editor,owner,other,pending}=contexts;
+ record('unauth-admin',{status:await status(anon,'/api/admin/users')});
+ record('client-admin',{status:await status(owner,'/api/admin/users')});
+ const own=await owner.get('/api/account/requests/auditrequest');record('owner-request',{status:own.status(),internalMarkerPresent:(await own.text()).includes('AUDIT_INTERNAL_MARKER')});
+ record('nonowner-request',{status:await status(other,'/api/account/requests/auditrequest')});
+ record('pending-profile',{status:await status(pending,'/api/account/profile')});
+ record('attachment-owner',{status:await status(owner,'/api/attachments/requestattachment')});
+ record('attachment-other',{status:await status(other,'/api/attachments/requestattachment')});
+ record('attachment-editor-request',{status:await status(editor,'/api/attachments/requestattachment')});
+ record('attachment-editor-inquiry',{status:await status(editor,'/api/attachments/inquiryattachment')});
+ const cr=await admin.post('/api/admin/pages',{data:{slug:'audit-page',titleAr:'صفحة اختبار مصطنعة',titleEn:'Synthetic audit page',template:'blank-section'}});
+ const {page}=await cr.json();if(!page)throw new Error('page-create '+cr.status());const id=page.id;
+ fs.writeFileSync(root+'/artifacts/page-id.json',JSON.stringify({id}));
+ record('page-create-template',{status:cr.status()});
+ record('editor-publish',{status:await status(editor,`/api/admin/pages/${id}/publish`,'post',{})});
+ const rd=await(await admin.get(`/api/admin/pages/${id}`)).json();
+ const stamp=rd.page.draftUpdatedAt;
+ const block=t=>JSON.stringify([{id:'audit-text',type:'text',props:{paragraphs:[t]}}]);
+ const a=await admin.patch(`/api/admin/pages/${id}`,{data:{draftBlocksAr:block('First synthetic revision'),draftUpdatedAt:stamp}});
+ const b=await editor.patch(`/api/admin/pages/${id}`,{data:{draftBlocksAr:block('Second overwriting revision'),draftUpdatedAt:stamp}});
+ record('same-stamp-sequential-save',{statuses:[a.status(),b.status()],stampToleranceMs:1500});
+ const forbidden=await editor.patch(`/api/admin/pages/${id}`,{headers:{Origin:'https://cross-origin.example'},data:{titleEn:'Should reject'}});record('cross-origin-patch',{status:forbidden.status()});
+ record('publish',{status:await status(admin,`/api/admin/pages/${id}/publish`,'post',{locale:'ar'})});
+ const pv=await(await admin.get(`/api/admin/pages/${id}`)).json();record('publish-language-isolation',{enPublishedDespiteArRequest:!!pv.page.publishedBlocksEn,versionsCreated:pv.page.versions.map(v=>v.locale)});
+ await editor.patch(`/api/admin/pages/${id}`,{data:{seoTitleAr:'AUDIT_UNPUBLISHED_SEO'}});
+ const html=await(await anon.get('/ar/audit-page')).text();record('seo-draft-separation',{unpublishedSeoVisible:html.includes('AUDIT_UNPUBLISHED_SEO')});
+ await admin.patch(`/api/admin/pages/${id}`,{data:{visibility:'role',allowedRoles:['support']}});
+ record('restricted-role-editor',{status:await status(editor,'/ar/audit-page')});
+ const rh=await anon.get('/ar/audit-page',{maxRedirects:0});record('restricted-metadata',{status:rh.status(),seoMarkerVisible:(await rh.text()).includes('AUDIT_UNPUBLISHED_SEO')});
+ await admin.patch(`/api/admin/pages/${id}`,{data:{visibility:'public'}});
+ record('restore',{status:await status(admin,`/api/admin/pages/${id}/versions/1/restore`,'post',{})});
+ const forgot=await anon.post('/api/auth/forgot-password',{data:{email:'admin@audit.example'}});const fb=await forgot.json();record('production-dev-mail',{status:forgot.status(),devResetUrlReturned:!!fb.devResetUrl,nodeEnv:'production',emailDevMode:true});
+ const out=await ops.get('/api/admin/outbox');record('ops-outbox-token',{status:out.status(),resetTokenInBody:(await out.text()).includes('reset-password?token=')});
+ const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>window.__auditSvgExecuted=true</script><text y="20">Synthetic security audit</text></svg>');
+ const up=await editor.post('/api/admin/media',{multipart:{file:{name:'audit.svg',mimeType:'image/svg+xml',buffer:svg}}});const ub=await up.json();record('svg-upload',{status:up.status()});
+ const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',route=>new URL(route.request().url()).hostname==='localhost'?route.continue():route.abort());const pg=await context.newPage();
+ await pg.goto('http://localhost:3100'+ub.media.url);record('svg-script',{executed:await pg.evaluate(()=>window.__auditSvgExecuted===true)});await browser.close();
+ const revoke=await owner.post('/api/auth/sessions',{data:{all:true}});record('revoke-other-sessions',{status:revoke.status(),currentSessionProfileStatus:await status(owner,'/api/account/profile')});
+ const c1=await make(),c2=await make();await Promise.all([login(c1,'other'),login(c2,'other')]);const sr=await(await c1.get('/api/auth/sessions')).json();record('same-second-sessions',{activeRows:sr.sessions?.length});
+ await c1.dispose();await c2.dispose();await anon.dispose();for(const c of Object.values(contexts))await c.dispose();
+ fs.writeFileSync(root+'/artifacts/api-audit.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));
+})().catch(e=>{fs.writeFileSync(root+'/artifacts/api-audit.json',JSON.stringify(results,null,2));console.error(e.message);process.exitCode=1;});

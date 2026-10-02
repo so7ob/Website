@@ -1,0 +1,149 @@
+[
+  {
+    "name": "login-admin",
+    "status": 200
+  },
+  {
+    "name": "login-ops",
+    "status": 200
+  },
+  {
+    "name": "login-support",
+    "status": 200
+  },
+  {
+    "name": "login-editor",
+    "status": 200
+  },
+  {
+    "name": "login-owner",
+    "status": 200
+  },
+  {
+    "name": "login-other",
+    "status": 200
+  },
+  {
+    "name": "login-pending",
+    "status": 200
+  },
+  {
+    "name": "login-suspended",
+    "status": 401
+  },
+  {
+    "name": "unauth-admin",
+    "status": 401
+  },
+  {
+    "name": "client-admin",
+    "status": 403
+  },
+  {
+    "name": "owner-request",
+    "status": 200,
+    "internalMarkerPresent": false
+  },
+  {
+    "name": "nonowner-request",
+    "status": 403
+  },
+  {
+    "name": "pending-profile",
+    "status": 200
+  },
+  {
+    "name": "attachment-owner",
+    "status": 404
+  },
+  {
+    "name": "attachment-other",
+    "status": 403
+  },
+  {
+    "name": "attachment-editor-request",
+    "status": 403
+  },
+  {
+    "name": "attachment-editor-inquiry",
+    "status": 404
+  },
+  {
+    "name": "page-create-template",
+    "status": 201
+  },
+  {
+    "name": "editor-publish",
+    "status": 403
+  },
+  {
+    "name": "same-stamp-sequential-save",
+    "statuses": [
+      200,
+      200
+    ],
+    "stampToleranceMs": 1500
+  },
+  {
+    "name": "cross-origin-patch",
+    "status": 403
+  },
+  {
+    "name": "publish",
+    "status": 200
+  },
+  {
+    "name": "publish-language-isolation",
+    "enPublishedDespiteArRequest": true,
+    "versionsCreated": [
+      "ar",
+      "en"
+    ]
+  },
+  {
+    "name": "seo-draft-separation",
+    "unpublishedSeoVisible": true
+  },
+  {
+    "name": "restricted-role-editor",
+    "status": 200
+  },
+  {
+    "name": "restricted-metadata",
+    "status": 307,
+    "seoMarkerVisible": true
+  },
+  {
+    "name": "restore",
+    "status": 200
+  },
+  {
+    "name": "production-dev-mail",
+    "status": 200,
+    "devResetUrlReturned": true,
+    "nodeEnv": "production",
+    "emailDevMode": true
+  },
+  {
+    "name": "ops-outbox-token",
+    "status": 200,
+    "resetTokenInBody": true
+  },
+  {
+    "name": "svg-upload",
+    "status": 201
+  },
+  {
+    "name": "svg-script",
+    "executed": true
+  },
+  {
+    "name": "revoke-other-sessions",
+    "status": 200,
+    "currentSessionProfileStatus": 401
+  },
+  {
+    "name": "same-second-sessions",
+    "activeRows": 2
+  }
+]

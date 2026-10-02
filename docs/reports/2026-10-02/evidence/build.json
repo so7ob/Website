@@ -1,0 +1,10 @@
+{
+  "check": "build",
+  "exit_code": 0,
+  "seconds": 32.735,
+  "command": [
+    "bun",
+    "run",
+    "build"
+  ]
+}
