@@ -1,0 +1,10 @@
+{
+  "check": "typecheck",
+  "exit_code": 0,
+  "seconds": 17.309,
+  "command": [
+    "bun",
+    "run",
+    "typecheck"
+  ]
+}

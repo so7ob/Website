@@ -1,0 +1,10 @@
+{
+  "check": "lint",
+  "exit_code": 0,
+  "seconds": 17.443,
+  "command": [
+    "bun",
+    "run",
+    "lint"
+  ]
+}

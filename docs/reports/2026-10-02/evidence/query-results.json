@@ -1,0 +1,499 @@
+[
+  {
+    "name": "home",
+    "status": 200,
+    "queryCount": 9,
+    "queryDurationSumMs": 6,
+    "requestElapsedWithTracingMs": 183.09,
+    "queries": [
+      {
+        "duration": 1,
+        "query": "SELECT `main`.`MenuItem`.`id`, `main`.`MenuItem`.`location`, `main`.`MenuItem`.`labelAr`, `main`.`MenuItem`.`labelEn`, `main`.`MenuItem`.`url`, `main`.`MenuItem`.`pageSlug`, `main`.`MenuItem`.`order`, `main`.`MenuItem`.`enabled`, `main`.`MenuItem`.`createdAt` FROM `main`.`MenuItem` WHERE (`main`.`MenuItem`.`location` = ? AND `main`.`MenuItem`.`enabled` = ?) ORDER BY `main`.`MenuItem`.`order` ASC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 1,
+        "query": "SELECT `main`.`SiteSetting`.`key`, `main`.`SiteSetting`.`value`, `main`.`SiteSetting`.`updatedById`, `main`.`SiteSetting`.`updatedAt` FROM `main`.`SiteSetting` WHERE `main`.`SiteSetting`.`key` IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Page`.`id`, `main`.`Page`.`slug`, `main`.`Page`.`status`, `main`.`Page`.`visibility`, `main`.`Page`.`allowedRoles`, `main`.`Page`.`titleAr`, `main`.`Page`.`titleEn`, `main`.`Page`.`seoTitleAr`, `main`.`Page`.`seoTitleEn`, `main`.`Page`.`seoDescAr`, `main`.`Page`.`seoDescEn`, `main`.`Page`.`publishedBlocksAr`, `main`.`Page`.`publishedBlocksEn` FROM `main`.`Page` WHERE (`main`.`Page`.`slug` = ? AND `main`.`Page`.`status` = ?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 1,
+        "query": "SELECT `main`.`Page`.`id`, `main`.`Page`.`slug`, `main`.`Page`.`status`, `main`.`Page`.`visibility`, `main`.`Page`.`allowedRoles`, `main`.`Page`.`titleAr`, `main`.`Page`.`titleEn`, `main`.`Page`.`seoTitleAr`, `main`.`Page`.`seoTitleEn`, `main`.`Page`.`seoDescAr`, `main`.`Page`.`seoDescEn`, `main`.`Page`.`publishedBlocksAr`, `main`.`Page`.`publishedBlocksEn` FROM `main`.`Page` WHERE (`main`.`Page`.`slug` = ? AND `main`.`Page`.`status` = ?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 3,
+        "query": "SELECT `main`.`MenuItem`.`id`, `main`.`MenuItem`.`location`, `main`.`MenuItem`.`labelAr`, `main`.`MenuItem`.`labelEn`, `main`.`MenuItem`.`url`, `main`.`MenuItem`.`pageSlug`, `main`.`MenuItem`.`order`, `main`.`MenuItem`.`enabled`, `main`.`MenuItem`.`createdAt` FROM `main`.`MenuItem` WHERE (`main`.`MenuItem`.`location` = ? AND `main`.`MenuItem`.`enabled` = ?) ORDER BY `main`.`MenuItem`.`order` ASC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      }
+    ]
+  },
+  {
+    "name": "list",
+    "status": 200,
+    "queryCount": 10,
+    "queryDurationSumMs": 1,
+    "requestElapsedWithTracingMs": 19.63,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProjectRequest`.`id` FROM `main`.`ProjectRequest` WHERE `main`.`ProjectRequest`.`archivedAt` IS NULL LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`roleKey` IN (?,?,?) AND `main`.`User`.`status` = ?) ORDER BY `main`.`User`.`name` ASC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 1,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`refCode`, `main`.`ProjectRequest`.`requestType`, `main`.`ProjectRequest`.`serviceType`, `main`.`ProjectRequest`.`description`, `main`.`ProjectRequest`.`budget`, `main`.`ProjectRequest`.`currency`, `main`.`ProjectRequest`.`timeline`, `main`.`ProjectRequest`.`name`, `main`.`ProjectRequest`.`company`, `main`.`ProjectRequest`.`email`, `main`.`ProjectRequest`.`phone`, `main`.`ProjectRequest`.`preferredContact`, `main`.`ProjectRequest`.`referenceUrl`, `main`.`ProjectRequest`.`locale`, `main`.`ProjectRequest`.`descriptionHash`, `main`.`ProjectRequest`.`clientIpHash`, `main`.`ProjectRequest`.`userAgent`, `main`.`ProjectRequest`.`status`, `main`.`ProjectRequest`.`notifiedAt`, `main`.`ProjectRequest`.`createdAt`, `main`.`ProjectRequest`.`clientId`, `main`.`ProjectRequest`.`assigneeId`, `main`.`ProjectRequest`.`priority`, `main`.`ProjectRequest`.`resolutionNote`, `main`.`ProjectRequest`.`closedAt`, `main`.`ProjectRequest`.`archivedAt`, `main`.`ProjectRequest`.`lastActivityAt`, `main`.`ProjectRequest`.`lastClientReplyAt`, `main`.`ProjectRequest`.`lastStaffReplyAt`, `main`.`ProjectRequest`.`clientReadAt`, `main`.`ProjectRequest`.`staffReadAt`, `main`.`ProjectRequest`.`updatedAt`, COALESCE(`aggr_selection_0_RequestMessage`.`_aggr_count_messages`, 0) AS `_aggr_count_messages` FROM `main`.`ProjectRequest` LEFT JOIN (SELECT `main`.`RequestMessage`.`requestId`, COUNT(*) AS `_aggr_count_messages` FROM `main`.`RequestMessage` WHERE 1=1 GROUP BY `main`.`RequestMessage`.`requestId`) AS `aggr_selection_0_RequestMessage` ON (`main`.`ProjectRequest`.`id` = `aggr_selection_0_RequestMessage`.`requestId`) WHERE `main`.`ProjectRequest`.`archivedAt` IS NULL ORDER BY `main`.`ProjectRequest`.`lastActivityAt` DESC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name`, `main`.`User`.`email` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?,?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`RequestMessage`.`id`, `main`.`RequestMessage`.`requestId`, `main`.`RequestMessage`.`authorType`, `main`.`RequestMessage`.`createdAt` FROM `main`.`RequestMessage` WHERE (`main`.`RequestMessage`.`requestId` IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) AND `main`.`RequestMessage`.`kind` = ?) ORDER BY `main`.`RequestMessage`.`createdAt` ASC LIMIT ? OFFSET ?"
+      }
+    ]
+  },
+  {
+    "name": "overdue",
+    "status": 200,
+    "queryCount": 12,
+    "queryDurationSumMs": 2,
+    "requestElapsedWithTracingMs": 30.59,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 1,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`lastClientReplyAt`, `main`.`ProjectRequest`.`lastStaffReplyAt` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`status` IN (?,?,?,?,?) AND `main`.`ProjectRequest`.`archivedAt` IS NULL AND ((`main`.`ProjectRequest`.`lastClientReplyAt` IS NOT NULL AND `main`.`ProjectRequest`.`lastClientReplyAt` < ?) OR (`main`.`ProjectRequest`.`lastClientReplyAt` IS NULL AND `main`.`ProjectRequest`.`lastStaffReplyAt` IS NULL AND `main`.`ProjectRequest`.`createdAt` < ?))) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`roleKey` IN (?,?,?) AND `main`.`User`.`status` = ?) ORDER BY `main`.`User`.`name` ASC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 1,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProjectRequest`.`id` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`archivedAt` IS NULL AND `main`.`ProjectRequest`.`id` IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`refCode`, `main`.`ProjectRequest`.`requestType`, `main`.`ProjectRequest`.`serviceType`, `main`.`ProjectRequest`.`description`, `main`.`ProjectRequest`.`budget`, `main`.`ProjectRequest`.`currency`, `main`.`ProjectRequest`.`timeline`, `main`.`ProjectRequest`.`name`, `main`.`ProjectRequest`.`company`, `main`.`ProjectRequest`.`email`, `main`.`ProjectRequest`.`phone`, `main`.`ProjectRequest`.`preferredContact`, `main`.`ProjectRequest`.`referenceUrl`, `main`.`ProjectRequest`.`locale`, `main`.`ProjectRequest`.`descriptionHash`, `main`.`ProjectRequest`.`clientIpHash`, `main`.`ProjectRequest`.`userAgent`, `main`.`ProjectRequest`.`status`, `main`.`ProjectRequest`.`notifiedAt`, `main`.`ProjectRequest`.`createdAt`, `main`.`ProjectRequest`.`clientId`, `main`.`ProjectRequest`.`assigneeId`, `main`.`ProjectRequest`.`priority`, `main`.`ProjectRequest`.`resolutionNote`, `main`.`ProjectRequest`.`closedAt`, `main`.`ProjectRequest`.`archivedAt`, `main`.`ProjectRequest`.`lastActivityAt`, `main`.`ProjectRequest`.`lastClientReplyAt`, `main`.`ProjectRequest`.`lastStaffReplyAt`, `main`.`ProjectRequest`.`clientReadAt`, `main`.`ProjectRequest`.`staffReadAt`, `main`.`ProjectRequest`.`updatedAt`, COALESCE(`aggr_selection_0_RequestMessage`.`_aggr_count_messages`, 0) AS `_aggr_count_messages` FROM `main`.`ProjectRequest` LEFT JOIN (SELECT `main`.`RequestMessage`.`requestId`, COUNT(*) AS `_aggr_count_messages` FROM `main`.`RequestMessage` WHERE 1=1 GROUP BY `main`.`RequestMessage`.`requestId`) AS `aggr_selection_0_RequestMessage` ON (`main`.`ProjectRequest`.`id` = `aggr_selection_0_RequestMessage`.`requestId`) WHERE (`main`.`ProjectRequest`.`archivedAt` IS NULL AND `main`.`ProjectRequest`.`id` IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`refCode`, `main`.`ProjectRequest`.`requestType`, `main`.`ProjectRequest`.`serviceType`, `main`.`ProjectRequest`.`description`, `main`.`ProjectRequest`.`budget`, `main`.`ProjectRequest`.`currency`, `main`.`ProjectRequest`.`timeline`, `main`.`ProjectRequest`.`name`, `main`.`ProjectRequest`.`company`, `main`.`ProjectRequest`.`email`, `main`.`ProjectRequest`.`phone`, `main`.`ProjectRequest`.`preferredContact`, `main`.`ProjectRequest`.`referenceUrl`, `main`.`ProjectRequest`.`locale`, `main`.`ProjectRequest`.`descriptionHash`, `main`.`ProjectRequest`.`clientIpHash`, `main`.`ProjectRequest`.`userAgent`, `main`.`ProjectRequest`.`status`, `main`.`ProjectRequest`.`notifiedAt`, `main`.`ProjectRequest`.`createdAt`, `main`.`ProjectRequest`.`clientId`, `main`.`ProjectRequest`.`assigneeId`, `main`.`ProjectRequest`.`priority`, `main`.`ProjectRequest`.`resolutionNote`, `main`.`ProjectRequest`.`closedAt`, `main`.`ProjectRequest`.`archivedAt`, `main`.`ProjectRequest`.`lastActivityAt`, `main`.`ProjectRequest`.`lastClientReplyAt`, `main`.`ProjectRequest`.`lastStaffReplyAt`, `main`.`ProjectRequest`.`clientReadAt`, `main`.`ProjectRequest`.`staffReadAt`, `main`.`ProjectRequest`.`updatedAt`, COALESCE(`aggr_selection_0_RequestMessage`.`_aggr_count_messages`, 0) AS `_aggr_count_messages` FROM `main`.`ProjectRequest` LEFT JOIN (SELECT `main`.`RequestMessage`.`requestId`, COUNT(*) AS `_aggr_count_messages` FROM `main`.`RequestMessage` WHERE 1=1 GROUP BY `main`.`RequestMessage`.`requestId`) AS `aggr_selection_0_RequestMessage` ON (`main`.`ProjectRequest`.`id` = `aggr_selection_0_RequestMessage`.`requestId`) WHERE (`main`.`ProjectRequest`.`archivedAt` IS NULL AND `main`.`ProjectRequest`.`id` IN (?)) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name`, `main`.`User`.`email` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`RequestMessage`.`id`, `main`.`RequestMessage`.`requestId`, `main`.`RequestMessage`.`authorType`, `main`.`RequestMessage`.`createdAt` FROM `main`.`RequestMessage` WHERE (`main`.`RequestMessage`.`requestId` IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) AND `main`.`RequestMessage`.`kind` = ?) ORDER BY `main`.`RequestMessage`.`createdAt` ASC LIMIT ? OFFSET ?"
+      }
+    ]
+  },
+  {
+    "name": "detail",
+    "status": 200,
+    "queryCount": 13,
+    "queryDurationSumMs": 3,
+    "requestElapsedWithTracingMs": 30.91,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`refCode`, `main`.`ProjectRequest`.`requestType`, `main`.`ProjectRequest`.`serviceType`, `main`.`ProjectRequest`.`description`, `main`.`ProjectRequest`.`budget`, `main`.`ProjectRequest`.`currency`, `main`.`ProjectRequest`.`timeline`, `main`.`ProjectRequest`.`name`, `main`.`ProjectRequest`.`company`, `main`.`ProjectRequest`.`email`, `main`.`ProjectRequest`.`phone`, `main`.`ProjectRequest`.`preferredContact`, `main`.`ProjectRequest`.`referenceUrl`, `main`.`ProjectRequest`.`locale`, `main`.`ProjectRequest`.`descriptionHash`, `main`.`ProjectRequest`.`clientIpHash`, `main`.`ProjectRequest`.`userAgent`, `main`.`ProjectRequest`.`status`, `main`.`ProjectRequest`.`notifiedAt`, `main`.`ProjectRequest`.`createdAt`, `main`.`ProjectRequest`.`clientId`, `main`.`ProjectRequest`.`assigneeId`, `main`.`ProjectRequest`.`priority`, `main`.`ProjectRequest`.`resolutionNote`, `main`.`ProjectRequest`.`closedAt`, `main`.`ProjectRequest`.`archivedAt`, `main`.`ProjectRequest`.`lastActivityAt`, `main`.`ProjectRequest`.`lastClientReplyAt`, `main`.`ProjectRequest`.`lastStaffReplyAt`, `main`.`ProjectRequest`.`clientReadAt`, `main`.`ProjectRequest`.`staffReadAt`, `main`.`ProjectRequest`.`updatedAt` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`refCode`, `main`.`ProjectRequest`.`requestType`, `main`.`ProjectRequest`.`serviceType`, `main`.`ProjectRequest`.`description`, `main`.`ProjectRequest`.`budget`, `main`.`ProjectRequest`.`currency`, `main`.`ProjectRequest`.`timeline`, `main`.`ProjectRequest`.`name`, `main`.`ProjectRequest`.`company`, `main`.`ProjectRequest`.`email`, `main`.`ProjectRequest`.`phone`, `main`.`ProjectRequest`.`preferredContact`, `main`.`ProjectRequest`.`referenceUrl`, `main`.`ProjectRequest`.`locale`, `main`.`ProjectRequest`.`descriptionHash`, `main`.`ProjectRequest`.`clientIpHash`, `main`.`ProjectRequest`.`userAgent`, `main`.`ProjectRequest`.`status`, `main`.`ProjectRequest`.`notifiedAt`, `main`.`ProjectRequest`.`createdAt`, `main`.`ProjectRequest`.`clientId`, `main`.`ProjectRequest`.`assigneeId`, `main`.`ProjectRequest`.`priority`, `main`.`ProjectRequest`.`resolutionNote`, `main`.`ProjectRequest`.`closedAt`, `main`.`ProjectRequest`.`archivedAt`, `main`.`ProjectRequest`.`lastActivityAt`, `main`.`ProjectRequest`.`lastClientReplyAt`, `main`.`ProjectRequest`.`lastStaffReplyAt`, `main`.`ProjectRequest`.`clientReadAt`, `main`.`ProjectRequest`.`staffReadAt`, `main`.`ProjectRequest`.`updatedAt` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 1,
+        "query": "SELECT `main`.`RequestMessage`.`id`, `main`.`RequestMessage`.`requestId`, `main`.`RequestMessage`.`authorId`, `main`.`RequestMessage`.`authorType`, `main`.`RequestMessage`.`kind`, `main`.`RequestMessage`.`body`, `main`.`RequestMessage`.`editedAt`, `main`.`RequestMessage`.`createdAt` FROM `main`.`RequestMessage` WHERE `main`.`RequestMessage`.`requestId` IN (?) ORDER BY `main`.`RequestMessage`.`createdAt` ASC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name`, `main`.`User`.`roleKey` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?,?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`RequestStatusEvent`.`id`, `main`.`RequestStatusEvent`.`requestId`, `main`.`RequestStatusEvent`.`fromStatus`, `main`.`RequestStatusEvent`.`toStatus`, `main`.`RequestStatusEvent`.`changedById`, `main`.`RequestStatusEvent`.`note`, `main`.`RequestStatusEvent`.`createdAt` FROM `main`.`RequestStatusEvent` WHERE `main`.`RequestStatusEvent`.`requestId` IN (?) ORDER BY `main`.`RequestStatusEvent`.`createdAt` ASC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Attachment`.`id`, `main`.`Attachment`.`filename`, `main`.`Attachment`.`storedName`, `main`.`Attachment`.`mimeType`, `main`.`Attachment`.`size`, `main`.`Attachment`.`kind`, `main`.`Attachment`.`uploaderId`, `main`.`Attachment`.`requestId`, `main`.`Attachment`.`inquiryId`, `main`.`Attachment`.`messageId`, `main`.`Attachment`.`createdAt` FROM `main`.`Attachment` WHERE `main`.`Attachment`.`requestId` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name`, `main`.`User`.`email`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`status` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 2,
+        "query": "UPDATE `main`.`ProjectRequest` SET `staffReadAt` = ?, `updatedAt` = ? WHERE (`main`.`ProjectRequest`.`id` = ? AND 1=1) RETURNING `id` AS `id`, `refCode` AS `refCode`, `requestType` AS `requestType`, `serviceType` AS `serviceType`, `description` AS `description`, `budget` AS `budget`, `currency` AS `currency`, `timeline` AS `timeline`, `name` AS `name`, `company` AS `company`, `email` AS `email`, `phone` AS `phone`, `preferredContact` AS `preferredContact`, `referenceUrl` AS `referenceUrl`, `locale` AS `locale`, `descriptionHash` AS `descriptionHash`, `clientIpHash` AS `clientIpHash`, `userAgent` AS `userAgent`, `status` AS `status`, `notifiedAt` AS `notifiedAt`, `createdAt` AS `createdAt`, `clientId` AS `clientId`, `assigneeId` AS `assigneeId`, `priority` AS `priority`, `resolutionNote` AS `resolutionNote`, `closedAt` AS `closedAt`, `archivedAt` AS `archivedAt`, `lastActivityAt` AS `lastActivityAt`, `lastClientReplyAt` AS `lastClientReplyAt`, `lastStaffReplyAt` AS `lastStaffReplyAt`, `clientReadAt` AS `clientReadAt`, `staffReadAt` AS `staffReadAt`, `updatedAt` AS `updatedAt`"
+      }
+    ]
+  },
+  {
+    "name": "dashboard",
+    "status": 200,
+    "queryCount": 20,
+    "queryDurationSumMs": 14,
+    "requestElapsedWithTracingMs": 33.21,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`User`.`id` FROM `main`.`User` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`Page`.`id` FROM `main`.`Page` WHERE `main`.`Page`.`status` = ? LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`Inquiry`.`id` FROM `main`.`Inquiry` WHERE (`main`.`Inquiry`.`status` IN (?,?,?,?) AND `main`.`Inquiry`.`archivedAt` IS NULL) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuditLog`.`id`, `main`.`AuditLog`.`actorId`, `main`.`AuditLog`.`actorEmail`, `main`.`AuditLog`.`action`, `main`.`AuditLog`.`entityType`, `main`.`AuditLog`.`entityId`, `main`.`AuditLog`.`details`, `main`.`AuditLog`.`ipHash`, `main`.`AuditLog`.`createdAt` FROM `main`.`AuditLog` WHERE 1=1 ORDER BY `main`.`AuditLog`.`createdAt` DESC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?,?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 3,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`createdAt` FROM `main`.`ProjectRequest` WHERE `main`.`ProjectRequest`.`createdAt` >= ? LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 3,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`User`.`id` FROM `main`.`User` WHERE `main`.`User`.`status` = ? LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 4,
+        "query": "SELECT COUNT(*) AS `_count$_all`, `main`.`ProjectRequest`.`status` FROM `main`.`ProjectRequest` WHERE `main`.`ProjectRequest`.`archivedAt` IS NULL GROUP BY `main`.`ProjectRequest`.`status` LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 4,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProjectRequest`.`id` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`status` IN (?,?,?,?,?) AND `main`.`ProjectRequest`.`archivedAt` IS NULL) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`User`.`id` FROM `main`.`User` WHERE `main`.`User`.`status` = ? LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`User`.`id` FROM `main`.`User` WHERE `main`.`User`.`status` = ? LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProjectRequest`.`id` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`status` = ? AND `main`.`ProjectRequest`.`archivedAt` IS NULL) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProjectRequest`.`id` FROM `main`.`ProjectRequest` WHERE (`main`.`ProjectRequest`.`status` = ? AND `main`.`ProjectRequest`.`archivedAt` IS NULL) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`Page`.`id` FROM `main`.`Page` WHERE `main`.`Page`.`status` IN (?,?) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`ProjectRequest`.`id`, `main`.`ProjectRequest`.`refCode`, `main`.`ProjectRequest`.`name`, `main`.`ProjectRequest`.`status`, `main`.`ProjectRequest`.`serviceType`, `main`.`ProjectRequest`.`createdAt`, `main`.`ProjectRequest`.`assigneeId` FROM `main`.`ProjectRequest` WHERE `main`.`ProjectRequest`.`archivedAt` IS NULL ORDER BY `main`.`ProjectRequest`.`createdAt` DESC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      }
+    ]
+  },
+  {
+    "name": "editor",
+    "status": 200,
+    "queryCount": 7,
+    "queryDurationSumMs": 0,
+    "requestElapsedWithTracingMs": 20.58,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Page`.`id`, `main`.`Page`.`slug`, `main`.`Page`.`isHome`, `main`.`Page`.`order`, `main`.`Page`.`visibility`, `main`.`Page`.`allowedRoles`, `main`.`Page`.`status`, `main`.`Page`.`titleAr`, `main`.`Page`.`titleEn`, `main`.`Page`.`seoTitleAr`, `main`.`Page`.`seoTitleEn`, `main`.`Page`.`seoDescAr`, `main`.`Page`.`seoDescEn`, `main`.`Page`.`ogMediaId`, `main`.`Page`.`draftBlocksAr`, `main`.`Page`.`draftBlocksEn`, `main`.`Page`.`draftUpdatedAt`, `main`.`Page`.`draftUpdatedById`, `main`.`Page`.`publishedBlocksAr`, `main`.`Page`.`publishedBlocksEn`, `main`.`Page`.`publishedAt`, `main`.`Page`.`publishedById`, `main`.`Page`.`sourceKey`, `main`.`Page`.`seedVersion`, `main`.`Page`.`editorTouchedAt`, `main`.`Page`.`createdAt`, `main`.`Page`.`updatedAt` FROM `main`.`Page` WHERE (`main`.`Page`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`PageVersion`.`id`, `main`.`PageVersion`.`locale`, `main`.`PageVersion`.`version`, `main`.`PageVersion`.`authorId`, `main`.`PageVersion`.`note`, `main`.`PageVersion`.`createdAt`, `main`.`PageVersion`.`pageId` FROM `main`.`PageVersion` WHERE `main`.`PageVersion`.`pageId` IN (?) ORDER BY `main`.`PageVersion`.`createdAt` DESC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`name` FROM `main`.`User` WHERE `main`.`User`.`id` IN (?) LIMIT ? OFFSET ?"
+      }
+    ]
+  },
+  {
+    "name": "save",
+    "status": 200,
+    "queryCount": 7,
+    "queryDurationSumMs": 4,
+    "requestElapsedWithTracingMs": 24.08,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Page`.`id`, `main`.`Page`.`slug`, `main`.`Page`.`isHome`, `main`.`Page`.`order`, `main`.`Page`.`visibility`, `main`.`Page`.`allowedRoles`, `main`.`Page`.`status`, `main`.`Page`.`titleAr`, `main`.`Page`.`titleEn`, `main`.`Page`.`seoTitleAr`, `main`.`Page`.`seoTitleEn`, `main`.`Page`.`seoDescAr`, `main`.`Page`.`seoDescEn`, `main`.`Page`.`ogMediaId`, `main`.`Page`.`draftBlocksAr`, `main`.`Page`.`draftBlocksEn`, `main`.`Page`.`draftUpdatedAt`, `main`.`Page`.`draftUpdatedById`, `main`.`Page`.`publishedBlocksAr`, `main`.`Page`.`publishedBlocksEn`, `main`.`Page`.`publishedAt`, `main`.`Page`.`publishedById`, `main`.`Page`.`sourceKey`, `main`.`Page`.`seedVersion`, `main`.`Page`.`editorTouchedAt`, `main`.`Page`.`createdAt`, `main`.`Page`.`updatedAt` FROM `main`.`Page` WHERE (`main`.`Page`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 2,
+        "query": "UPDATE `main`.`Page` SET `draftBlocksAr` = ?, `draftUpdatedAt` = ?, `draftUpdatedById` = ?, `editorTouchedAt` = ?, `updatedAt` = ? WHERE (`main`.`Page`.`id` = ? AND 1=1) RETURNING `id` AS `id`, `slug` AS `slug`, `draftUpdatedAt` AS `draftUpdatedAt`, `status` AS `status`"
+      },
+      {
+        "duration": 2,
+        "query": "INSERT INTO `main`.`AuditLog` (`id`, `actorId`, `actorEmail`, `action`, `entityType`, `entityId`, `details`, `ipHash`, `createdAt`) VALUES (?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `actorId` AS `actorId`, `actorEmail` AS `actorEmail`, `action` AS `action`, `entityType` AS `entityType`, `entityId` AS `entityId`, `details` AS `details`, `ipHash` AS `ipHash`, `createdAt` AS `createdAt`"
+      }
+    ]
+  },
+  {
+    "name": "publish",
+    "status": 200,
+    "queryCount": 17,
+    "queryDurationSumMs": 6,
+    "requestElapsedWithTracingMs": 47.65,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Page`.`id`, `main`.`Page`.`slug`, `main`.`Page`.`isHome`, `main`.`Page`.`order`, `main`.`Page`.`visibility`, `main`.`Page`.`allowedRoles`, `main`.`Page`.`status`, `main`.`Page`.`titleAr`, `main`.`Page`.`titleEn`, `main`.`Page`.`seoTitleAr`, `main`.`Page`.`seoTitleEn`, `main`.`Page`.`seoDescAr`, `main`.`Page`.`seoDescEn`, `main`.`Page`.`ogMediaId`, `main`.`Page`.`draftBlocksAr`, `main`.`Page`.`draftBlocksEn`, `main`.`Page`.`draftUpdatedAt`, `main`.`Page`.`draftUpdatedById`, `main`.`Page`.`publishedBlocksAr`, `main`.`Page`.`publishedBlocksEn`, `main`.`Page`.`publishedAt`, `main`.`Page`.`publishedById`, `main`.`Page`.`sourceKey`, `main`.`Page`.`seedVersion`, `main`.`Page`.`editorTouchedAt`, `main`.`Page`.`createdAt`, `main`.`Page`.`updatedAt` FROM `main`.`Page` WHERE (`main`.`Page`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT MAX(`version`) AS `_max$version` FROM (SELECT `main`.`PageVersion`.`version` FROM `main`.`PageVersion` WHERE (`main`.`PageVersion`.`pageId` = ? AND `main`.`PageVersion`.`locale` = ?) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT MAX(`version`) AS `_max$version` FROM (SELECT `main`.`PageVersion`.`version` FROM `main`.`PageVersion` WHERE (`main`.`PageVersion`.`pageId` = ? AND `main`.`PageVersion`.`locale` = ?) LIMIT ? OFFSET ?) AS `sub`"
+      },
+      {
+        "duration": 0,
+        "query": "BEGIN IMMEDIATE"
+      },
+      {
+        "duration": 0,
+        "query": "UPDATE `main`.`Page` SET `publishedBlocksAr` = ?, `publishedBlocksEn` = ?, `publishedAt` = ?, `publishedById` = ?, `status` = ?, `updatedAt` = ? WHERE (`main`.`Page`.`id` = ? AND 1=1) RETURNING `id` AS `id`, `slug` AS `slug`, `isHome` AS `isHome`, `order` AS `order`, `visibility` AS `visibility`, `allowedRoles` AS `allowedRoles`, `status` AS `status`, `titleAr` AS `titleAr`, `titleEn` AS `titleEn`, `seoTitleAr` AS `seoTitleAr`, `seoTitleEn` AS `seoTitleEn`, `seoDescAr` AS `seoDescAr`, `seoDescEn` AS `seoDescEn`, `ogMediaId` AS `ogMediaId`, `draftBlocksAr` AS `draftBlocksAr`, `draftBlocksEn` AS `draftBlocksEn`, `draftUpdatedAt` AS `draftUpdatedAt`, `draftUpdatedById` AS `draftUpdatedById`, `publishedBlocksAr` AS `publishedBlocksAr`, `publishedBlocksEn` AS `publishedBlocksEn`, `publishedAt` AS `publishedAt`, `publishedById` AS `publishedById`, `sourceKey` AS `sourceKey`, `seedVersion` AS `seedVersion`, `editorTouchedAt` AS `editorTouchedAt`, `createdAt` AS `createdAt`, `updatedAt` AS `updatedAt`"
+      },
+      {
+        "duration": 0,
+        "query": "INSERT INTO `main`.`PageVersion` (`id`, `pageId`, `locale`, `version`, `blocks`, `authorId`, `createdAt`) VALUES (?,?,?,?,?,?,?) RETURNING `id` AS `id`, `pageId` AS `pageId`, `locale` AS `locale`, `version` AS `version`, `blocks` AS `blocks`, `authorId` AS `authorId`, `note` AS `note`, `createdAt` AS `createdAt`"
+      },
+      {
+        "duration": 0,
+        "query": "INSERT INTO `main`.`PageVersion` (`id`, `pageId`, `locale`, `version`, `blocks`, `authorId`, `createdAt`) VALUES (?,?,?,?,?,?,?) RETURNING `id` AS `id`, `pageId` AS `pageId`, `locale` AS `locale`, `version` AS `version`, `blocks` AS `blocks`, `authorId` AS `authorId`, `note` AS `note`, `createdAt` AS `createdAt`"
+      },
+      {
+        "duration": 3,
+        "query": "COMMIT"
+      },
+      {
+        "duration": 2,
+        "query": "INSERT INTO `main`.`AuditLog` (`id`, `actorId`, `actorEmail`, `action`, `entityType`, `entityId`, `details`, `ipHash`, `createdAt`) VALUES (?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `actorId` AS `actorId`, `actorEmail` AS `actorEmail`, `action` AS `action`, `entityType` AS `entityType`, `entityId` AS `entityId`, `details` AS `details`, `ipHash` AS `ipHash`, `createdAt` AS `createdAt`"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id` FROM `main`.`User` WHERE (`main`.`User`.`status` = ? AND `main`.`User`.`roleKey` IN (?,?,?)) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "BEGIN IMMEDIATE"
+      },
+      {
+        "duration": 0,
+        "query": "INSERT INTO `main`.`Notification` (`id`, `userId`, `type`, `payload`, `link`, `createdAt`) VALUES (?,?,?,?,?,?), (?,?,?,?,?,?)"
+      },
+      {
+        "duration": 1,
+        "query": "COMMIT"
+      }
+    ]
+  },
+  {
+    "name": "restore",
+    "status": 200,
+    "queryCount": 9,
+    "queryDurationSumMs": 4,
+    "requestElapsedWithTracingMs": 21.62,
+    "queries": [
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`status`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`roleKey`, `main`.`User`.`name` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`AuthSession`.`id`, `main`.`AuthSession`.`revokedAt`, `main`.`AuthSession`.`expiresAt` FROM `main`.`AuthSession` WHERE (`main`.`AuthSession`.`fingerprint` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`User`.`id`, `main`.`User`.`email`, `main`.`User`.`passwordHash`, `main`.`User`.`name`, `main`.`User`.`phone`, `main`.`User`.`company`, `main`.`User`.`locale`, `main`.`User`.`roleKey`, `main`.`User`.`status`, `main`.`User`.`emailVerifiedAt`, `main`.`User`.`sessionsRevokedAt`, `main`.`User`.`lastLoginAt`, `main`.`User`.`failedLoginCount`, `main`.`User`.`lockedUntil`, `main`.`User`.`createdAt`, `main`.`User`.`updatedAt` FROM `main`.`User` WHERE (`main`.`User`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Role`.`key`, `main`.`Role`.`nameAr`, `main`.`Role`.`nameEn`, `main`.`Role`.`descriptionAr`, `main`.`Role`.`descriptionEn`, `main`.`Role`.`permissions`, `main`.`Role`.`isSystem`, `main`.`Role`.`createdAt`, `main`.`Role`.`updatedAt` FROM `main`.`Role` WHERE `main`.`Role`.`key` IN (?) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`Page`.`id`, `main`.`Page`.`slug`, `main`.`Page`.`isHome`, `main`.`Page`.`order`, `main`.`Page`.`visibility`, `main`.`Page`.`allowedRoles`, `main`.`Page`.`status`, `main`.`Page`.`titleAr`, `main`.`Page`.`titleEn`, `main`.`Page`.`seoTitleAr`, `main`.`Page`.`seoTitleEn`, `main`.`Page`.`seoDescAr`, `main`.`Page`.`seoDescEn`, `main`.`Page`.`ogMediaId`, `main`.`Page`.`draftBlocksAr`, `main`.`Page`.`draftBlocksEn`, `main`.`Page`.`draftUpdatedAt`, `main`.`Page`.`draftUpdatedById`, `main`.`Page`.`publishedBlocksAr`, `main`.`Page`.`publishedBlocksEn`, `main`.`Page`.`publishedAt`, `main`.`Page`.`publishedById`, `main`.`Page`.`sourceKey`, `main`.`Page`.`seedVersion`, `main`.`Page`.`editorTouchedAt`, `main`.`Page`.`createdAt`, `main`.`Page`.`updatedAt` FROM `main`.`Page` WHERE (`main`.`Page`.`id` = ? AND 1=1) LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`PageVersion`.`id`, `main`.`PageVersion`.`pageId`, `main`.`PageVersion`.`locale`, `main`.`PageVersion`.`version`, `main`.`PageVersion`.`blocks`, `main`.`PageVersion`.`authorId`, `main`.`PageVersion`.`note`, `main`.`PageVersion`.`createdAt` FROM `main`.`PageVersion` WHERE (`main`.`PageVersion`.`pageId` = ? AND `main`.`PageVersion`.`locale` = ? AND `main`.`PageVersion`.`version` = ?) ORDER BY `main`.`PageVersion`.`createdAt` DESC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 0,
+        "query": "SELECT `main`.`PageVersion`.`id`, `main`.`PageVersion`.`pageId`, `main`.`PageVersion`.`locale`, `main`.`PageVersion`.`version`, `main`.`PageVersion`.`blocks`, `main`.`PageVersion`.`authorId`, `main`.`PageVersion`.`note`, `main`.`PageVersion`.`createdAt` FROM `main`.`PageVersion` WHERE (`main`.`PageVersion`.`pageId` = ? AND `main`.`PageVersion`.`locale` = ? AND `main`.`PageVersion`.`version` = ?) ORDER BY `main`.`PageVersion`.`createdAt` DESC LIMIT ? OFFSET ?"
+      },
+      {
+        "duration": 2,
+        "query": "UPDATE `main`.`Page` SET `draftBlocksAr` = ?, `draftBlocksEn` = ?, `draftUpdatedAt` = ?, `draftUpdatedById` = ?, `editorTouchedAt` = ?, `updatedAt` = ? WHERE (`main`.`Page`.`id` = ? AND 1=1) RETURNING `id` AS `id`, `slug` AS `slug`, `isHome` AS `isHome`, `order` AS `order`, `visibility` AS `visibility`, `allowedRoles` AS `allowedRoles`, `status` AS `status`, `titleAr` AS `titleAr`, `titleEn` AS `titleEn`, `seoTitleAr` AS `seoTitleAr`, `seoTitleEn` AS `seoTitleEn`, `seoDescAr` AS `seoDescAr`, `seoDescEn` AS `seoDescEn`, `ogMediaId` AS `ogMediaId`, `draftBlocksAr` AS `draftBlocksAr`, `draftBlocksEn` AS `draftBlocksEn`, `draftUpdatedAt` AS `draftUpdatedAt`, `draftUpdatedById` AS `draftUpdatedById`, `publishedBlocksAr` AS `publishedBlocksAr`, `publishedBlocksEn` AS `publishedBlocksEn`, `publishedAt` AS `publishedAt`, `publishedById` AS `publishedById`, `sourceKey` AS `sourceKey`, `seedVersion` AS `seedVersion`, `editorTouchedAt` AS `editorTouchedAt`, `createdAt` AS `createdAt`, `updatedAt` AS `updatedAt`"
+      },
+      {
+        "duration": 2,
+        "query": "INSERT INTO `main`.`AuditLog` (`id`, `actorId`, `actorEmail`, `action`, `entityType`, `entityId`, `details`, `ipHash`, `createdAt`) VALUES (?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `actorId` AS `actorId`, `actorEmail` AS `actorEmail`, `action` AS `action`, `entityType` AS `entityType`, `entityId` AS `entityId`, `details` AS `details`, `ipHash` AS `ipHash`, `createdAt` AS `createdAt`"
+      }
+    ]
+  }
+]

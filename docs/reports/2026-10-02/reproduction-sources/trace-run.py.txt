@@ -1,0 +1,6 @@
+import os,pathlib,subprocess
+root=pathlib.Path('/tmp/so7ob-audit-20261002');env=os.environ.copy()
+for line in (root/'project/.env').read_text().splitlines():
+ k,v=line.split('=',1);env[k]=v.strip('"')
+env.update(PORT='3101',HOSTNAME='127.0.0.1',NEXTAUTH_URL='http://localhost:3101',NEXT_TELEMETRY_DISABLED='1')
+with (root/'artifacts/trace-server.log').open('w') as f:subprocess.run(['bun','server.js'],cwd=root/'trace-server',env=env,stdout=f,stderr=subprocess.STDOUT)

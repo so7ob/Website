@@ -1,0 +1,26 @@
+[
+  {
+    "name": "claim-token-cross-request",
+    "victimClaimStatus": 200,
+    "ownClaimStatus": 200,
+    "verifyStatus": 307,
+    "victimAccessAfterOwnMailboxToken": 200,
+    "tokenSource": "own synthetic request email flow, ref changed to victim"
+  },
+  {
+    "name": "other-attachment",
+    "status": 403
+  },
+  {
+    "name": "editor-inquiry-attachment-after-path-correction",
+    "status": 200
+  },
+  {
+    "name": "owner-attachment-after-path-correction",
+    "status": 200
+  },
+  {
+    "name": "same-second-fingerprint",
+    "activeRows": 2
+  }
+]

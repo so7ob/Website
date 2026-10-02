@@ -1,0 +1,28 @@
+const {chromium}=require('/usr/lib/node_modules/playwright');
+const AxeBuilder=require('/usr/lib/node_modules/@axe-core/playwright').default;
+const fs=require('fs');
+const root='/tmp/so7ob-audit-20261002', {password}=JSON.parse(fs.readFileSync(root+'/project/.audit-secrets.json'));
+const {id}=JSON.parse(fs.readFileSync(root+'/artifacts/page-id.json'));
+const results=[];
+async function login(ctx,user){const c=await(await ctx.request.get('http://localhost:3100/api/auth/csrf')).json();await ctx.request.post('http://localhost:3100/api/auth/callback/credentials',{form:{email:user+'@audit.example',password,csrfToken:c.csrfToken,json:'true'}});await ctx.request.get('http://localhost:3100/api/account/profile');}
+(async()=>{
+ const browser=await chromium.launch({headless:true});
+ fs.mkdirSync(root+'/artifacts/screenshots',{recursive:true});
+ for(const width of [375,1280])for(const locale of ['ar','en'])for(const route of ['home','contact','login','account','editor']){
+  const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
+  await context.route('**/*',r=>new URL(r.request().url()).hostname==='localhost'?r.continue():r.abort());
+  if(route==='account')await login(context,'owner');if(route==='editor')await login(context,'admin');
+  await context.addInitScript(()=>{window.__audit={lcp:0,cls:0,longTasks:[]};new PerformanceObserver(list=>{for(const e of list.getEntries())window.__audit.lcp=e.startTime}).observe({type:'largest-contentful-paint',buffered:true});new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.__audit.cls+=e.value}).observe({type:'layout-shift',buffered:true});new PerformanceObserver(list=>{for(const e of list.getEntries())window.__audit.longTasks.push(e.duration)}).observe({type:'longtask',buffered:true});});
+  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const path=route==='home'?`/${locale}`:route==='login'?`/${locale}/auth/login`:route==='account'?`/${locale}/account/requests/auditrequest`:route==='editor'?`/${locale}/admin/pages/${id}/edit`:`/${locale}/contact`;
+  const start=performance.now();const response=await page.goto('http://localhost:3100'+path,{waitUntil:'networkidle'});
+  const readyMs=performance.now()-start;await page.waitForTimeout(500);
+  const data=await page.evaluate(()=>{const n=performance.getEntriesByType('navigation')[0],r=performance.getEntriesByType('resource'),js=r.filter(e=>e.name.includes('.js')&&e.initiatorType==='script');return {url:location.pathname,dir:document.documentElement.dir,lang:document.documentElement.lang,viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,ttfbMs:n.responseStart-n.requestStart,fcpMs:performance.getEntriesByName('first-contentful-paint')[0]?.startTime,lcpMs:window.__audit.lcp,cls:window.__audit.cls,longTaskExcessMs:window.__audit.longTasks.reduce((s,d)=>s+Math.max(0,d-50),0),jsEncodedBytes:js.reduce((s,e)=>s+e.encodedBodySize,0),jsDecodedBytes:js.reduce((s,e)=>s+e.decodedBodySize,0),jsRequests:js.length,fontBytes:r.filter(e=>e.name.includes('.woff')).reduce((s,e)=>s+e.encodedBodySize,0),jsUrls:js.map(e=>new URL(e.name).pathname)};});
+  await page.screenshot({path:root+`/artifacts/screenshots/${locale}-${route}-${width}.png`,fullPage:true});
+  const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
+  const row={route,locale,width,status:response.status(),readyMs:Math.round(readyMs),...data,errors,axe:axe.violations.map(v=>({id:v.id,impact:v.impact,count:v.nodes.length,targets:v.nodes.slice(0,4).map(n=>n.target)}))};results.push(row);
+  fs.writeFileSync(root+'/artifacts/browser-audit.json',JSON.stringify({browserVersion:browser.version(),runs:results},null,2));console.log(JSON.stringify({route,locale,width,status:row.status,readyMs:row.readyMs,jsKB:Math.round(row.jsEncodedBytes/1024),lcpMs:row.lcpMs,cls:row.cls,overflow:row.scrollWidth>width,axe:row.axe.map(v=>[v.id,v.count])}));
+  await context.close();
+ }
+ await browser.close();
+})().catch(e=>{console.error(e.message);process.exitCode=1});

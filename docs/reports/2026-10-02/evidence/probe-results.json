@@ -1,0 +1,24 @@
+{
+  "tokenConcurrentUses": 10,
+  "attempts": 10,
+  "prototype": [
+    {
+      "type": "__proto__",
+      "result": "exception"
+    },
+    {
+      "type": "constructor",
+      "result": "exception"
+    },
+    {
+      "type": "toString",
+      "result": "exception"
+    }
+  ],
+  "sqlite": [
+    {
+      "version": "3.46.0"
+    }
+  ],
+  "tables": 24
+}
