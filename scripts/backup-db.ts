@@ -1,21 +1,14 @@
-/**
- * نسخة احتياطية لقاعدة البيانات قبل أي ترحيل — الوقت باسم الملف.
- * الاستخدام: bun run scripts/backup-db.ts [وصف اختياري]
- */
-import { copyFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
+import { join } from "node:path";
+import { dataDirectory } from "../src/lib/data-paths";
+import { createBackup } from "./lib/backup";
 
-const dbPath = process.env.DATABASE_URL?.replace("file:", "");
-const desc = process.argv.slice(2).join("-").replace(/[^\w-]/g, "") || "manual";
-
-if (!dbPath || !existsSync(dbPath)) {
-  console.error("✗ لم يُعثر على قاعدة البيانات — تحقق من DATABASE_URL");
+try {
+  const description = process.argv.slice(2).join("-").replace(/[^\w-]/g, "") || "manual";
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const target = join(dataDirectory(), "backups", `${stamp}-${description}`);
+  createBackup(target);
+  console.log(`Verified database and uploads snapshot: ${target}`);
+} catch (error) {
+  console.error("Backup failed:", error instanceof Error ? error.message : "unknown error");
   process.exit(1);
 }
-
-const backupDir = join(process.cwd(), "db", "backups");
-mkdirSync(backupDir, { recursive: true });
-const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const target = join(backupDir, `custom-${stamp}-${desc}.db`);
-copyFileSync(dbPath, target);
-console.log(`✓ نسخة احتياطية: ${target}`);

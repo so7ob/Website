@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false, "plugins": [], "types": ["bun-types", "node"] },
+  "include": ["scripts/backup-db.ts", "scripts/restore-backup.ts", "scripts/start-production.ts", "scripts/lib/**/*.ts", "scripts/__tests__/**/*.ts"],
+  "exclude": ["node_modules"]
+}

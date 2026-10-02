@@ -60,3 +60,13 @@ sandbox-local/
 download/
 upload/
 tool-results
+
+# Persistent data / snapshots must never be committed
+db/backups/
+backups/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite-wal
+*.sqlite-shm
