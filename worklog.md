@@ -934,3 +934,398 @@ Stage Summary:
 - Key lessons: (1) the sandbox bootstrap can re-provision .env and db/custom.db at boot while keeping git/node_modules/src — nothing in .env or the DB is durable; only committed code is; (2) killing `bun run dev` wrappers does NOT kill the `next dev` child — kill node/next-server PIDs or port 3000 stays bound (EADDRINUSE); (3) Notification.link for new_inquiry points to the LIST route, not the inquiry id — cleanup scripts must filter by payload ref, not link id; (4) EMAIL_DEV_MODE needs an explicit "true" in .env (strict ===) — register/verify flows depend on it
 - Recovery playbook if this recurs: bun run db:seed (now fixed) → bun run scripts/create-admin.ts … → bun run scripts/restore-demo-users.ts → restart dev (kill next children first) — or simply reboot the sandbox: DEV_AUTH_SECRET_FALLBACK keeps sessions valid, only DB data needs reseeding
 - Next candidates (unchanged from round 24): websocket real-time notifications (mini-service decision pending), public site print polish, dashboard "needs attention" smart panel, notification preferences; NEW: consider a periodic bun run db:backup cron (backup-db.ts exists) so future wipes cost minutes not a round
+
+---
+Task ID: 26
+Agent: main (Z.ai Code)
+Task: Round 26 — user-reported login failure («لماذا لا استطيع تسجيل الدخول») — diagnosis + full recovery + error-message UX fix
+
+Work Log:
+- Diagnosis chain: dev.log showed POST /api/auth/callback/credentials 401 ×3 → authorize() rejects = wrong password / missing user / lock → DB query found ONLY admin@so7ob.local (fails=2, support@ + client@ missing) → bcrypt compare proved admin hash did NOT match documented AdminS7ob2026! → .env had been re-provisioned down to ONLY DATABASE_URL (no AUTH_SECRET/EMAIL_DEV_MODE/NEXT_PUBLIC_SITE_URL) — the known sandbox bootstrap wipe pattern (round 25), this time with a REPLACED db/custom.db carrying a foreign admin hash (content rows intact: 5 roles / 8 pages / 12 menus / 6 settings)
+- Fixes: (1) .env restored to the 4-key contract, AUTH_SECRET pinned to the DEV_AUTH_SECRET_FALLBACK value (cookie continuity); (2) scripts/restore-demo-users.ts upgraded — admin@so7ob.local added to DEMO_USERS + new --reset-passwords flag (re-pins documented password, status=active, clears failedLoginCount/lockedUntil; default no-flag behavior still create-only); (3) ran with flag → admin password re-pinned + support/client created; (4) dev server hard restart (killed bun wrapper + next children 5172-5297, confirmed port 3000 free, double-fork restart, .env loaded)
+- UX fix while in there: wrong-password showed «حدث خطأ غير متوقع — أعد المحاولة» (implies server fault) → new t.auth.errors.credentials key (ar+en+types) «تعذّر تسجيل الدخول — تحقق من البريد وكلمة المرور (أو أن الحساب غير متاح)» used for next-auth error branch (CredentialsSignin/rateLimited distinction kept; generic kept for catch/network) — no info leak about which factor failed
+- Verification (agent-browser): wrong password → new precise alert ✓; admin/AdminS7ob2026! → /ar/admin dashboard full render (3 users KPI) ✓; signout → client/ClientS7ob2026! → /ar/account «مرحبًا، عميل العرض» ✓; signout → support/SupportS7ob2026! → /ar/admin ✓; dev.log no 401/500 after fixes
+- Suite: lint ✓ / tsc ✓ / 79/79 ✓; committed fcaacf6 (fix(auth)) — 5 files
+
+Stage Summary:
+- Login failure root cause: sandbox re-provision replaced DB (foreign admin hash, demo users gone) and stripped .env; documented credentials no longer matched → 401 on every attempt
+- Recovery now one command: bun run scripts/restore-demo-users.ts --reset-passwords (+ .env 4-key contract below)
+- Working credentials (local dev only, @so7ob.local): admin@so7ob.local / AdminS7ob2026! · support@so7ob.local / SupportS7ob2026! · client@so7ob.local / ClientS7ob2026!
+- .env contract to re-create on any future wipe: DATABASE_URL=file:/home/z/my-project/db/custom.db · NEXT_PUBLIC_SITE_URL=http://localhost:3000 · AUTH_SECRET=ce1cfd44862e227ec0cd7d7e40d7b0145031bfaa0070fe12ecd36ce1146bcc5d · EMAIL_DEV_MODE=true
+- Lessons: (1) check .env + user table FIRST on any auth complaint — the sandbox wipes are silent and recurring; (2) errors.generic is a shared server-fault fallback across admin components — never repurpose its wording for auth failures, add a dedicated key; (3) authorize() rejects are indistinguishable (user-missing vs password vs lock) by design — error copy must stay factor-agnostic
+- Next candidates (unchanged): websocket real-time notifications decision, periodic db:backup cron (backup-db.ts), public site print polish, dashboard "needs attention" panel
+
+---
+Task ID: 27-b
+Agent: general-purpose
+Task: Wire TRACKING-LINK surfaces into existing flows — success-card tracking sections (request form + new-inquiry dialog) and shared admin TrackPanel mounted in request/inquiry detail sidebars
+
+Work Log:
+- Read worklog tail (24-a/24-c conventions: pill language min-h-11 rounded-full, logical RTL properties, toast pattern apiErrorMessage(err, t.auth.errors), print:hidden for interactive admin sections) + full reference files: portal/types.ts (t.track.{openTracking,copyTracking,trackingHint,trackingUnavailable,copied} + admin.track.* blocks verified present AR/EN/types — zero new keys consumed), api/admin/track/route.ts (GET → {ok,link{state,expiresAt,revokedAt}|null,policy{mode,source,canReplyViaLink},settings.forceLogin}; POST renew → {ok,token}, revoke → {ok} | {ok:false,code:"already_revoked"|"not_found"} on HTTP 200 — hence no ApiError throw, must inspect body), admin/helpers.ts (apiGet/apiSend/ApiError/apiErrorMessage), creation routes confirming trackUrl is relative "/{locale}/track?t=<token>" | null
+- MODIFIED src/components/form/project-request-form.tsx: new state trackUrl (string|null, from typeof body.trackUrl === "string" guard) + copied + copiedTimer ref; trackT = getPortalContent(locale).track (portal dict — form's SiteContent has no track block); success card keeps ref pill, then when trackUrl: section rounded-2xl border border-brand/30 bg-accent/50 p-4 text-start mx-auto max-w-md with t.track.trackingHint (text-sm leading-7 text-muted-foreground) + two pill buttons row (flex flex-wrap gap-2, min-h-11 rounded-full): PRIMARY bg-primary text-primary-foreground + ExternalLink size-4 → t.track.openTracking → window.open(absolute,"_blank","noopener,noreferrer"); OUTLINE border pill + Copy→Check(2s) → t.track.copyTracking→t.track.copied; absolute = path.startsWith("/") ? origin+path : path (typeof window guarded, handlers only — hydration-safe); clipboard .catch → textarea+execCommand fallback → final failure console.warn only (never throws into UI); when trackUrl null → muted line t.track.trackingUnavailable (spec: link failure must not block ref display); resetForm clears trackUrl/copied
+- MODIFIED src/components/account/types.ts: CreateInquiryResponse gains trackUrl?: string | null (+ doc comment 201 {ok,ref,id,trackUrl})
+- MODIFIED src/components/account/new-inquiry-dialog.tsx: created state extended {ref, id?, trackUrl: string|null} (typeof body guard on setCreated); SAME tracking section after ref pill in success state — same design language as the form but dialog-scale: shadcn Buttons, flex-col sm:flex-row stacking, min-h-11 rounded-full px-5; open button window.open noopener noreferrer; copy button Copy→Check 2s with legacy textarea fallback; null → t.track.trackingUnavailable line; handleOpenChange reset already clears created (trackUrl/copied reset with it); unmount clears copiedTimer
+- NEW src/components/admin/track/track-panel.tsx ("use client"): props {scope: "request"|"inquiry", cardId, locale: "ar"|"en", t: PortalContent["admin"]["track"]}; internal getPortalContent(locale) for auth.errors (toast pattern parity with detail clients) + track.{copyTracking,copied} for the reveal copy button (zero new keys); GET on mount via apiGet + AbortController + reloadToken refetch (same pattern as detail clients), loading skeleton h-20 animate-pulse rounded-xl bg-muted inside the section chrome, fetch failure → toast.error(apiErrorMessage) + render null; section rounded-2xl border bg-white p-4, heading row Link2 size-4 text-brand + t.section; policy row: t.effectivePolicy label + mode chip (bg-accent text-brand-strong rounded-full — category-chip language) + t.policySource[source] tiny muted after; settings.forceLogin → separate amber warning line (TriangleAlert size-4 + t.forceLoginActive, bg-amber-50 text-amber-800 rounded-xl px-3 py-2); link row when state valid|expired|revoked: soft chip (emerald/amber/rose — badge.tsx soft-tone language) + t.expiresAt + Intl.DateTimeFormat(locale==="en"?"en-US":"ar",{dateStyle:"medium",timeStyle:"short"}) dates (the codebase's Intl pattern per task), revoked adds · t.revokedAt + date, all ltr-isolate tabular-nums; link null/missing → muted t.noLink; actions row: renew outline pill (RefreshCw, min-h-11 rounded-full px-5, spin while pending) → ok {ok,token} → REPLACE actions with one-time reveal box (emerald border, t.renewed text-sm font-medium emerald-700, read-only mono Input dir=ltr showing /{locale}/track?t=…, icon-only copy Button aria-label swapping Copy→Check, t.renewHint tiny muted) + quiet refetch so state chip/expiry refresh; revoke destructive-outline pill (Ban, border-destructive/40 text-destructive hover:bg-destructive/10) → window.confirm(t.revokeConfirm) → POST → ok: toast.success(t.revoked) + refetch; already_revoked/not_found (HTTP 200 ok:false) → silent refetch only; both buttons disabled while pending
+- MODIFIED src/components/admin/requests/request-detail-client.tsx + src/components/admin/inquiries/inquiry-detail-client.tsx: import TrackPanel, rendered in the management aside after the status/assignee/archive section (requests: between الإدارة and المرفقات; inquiries: end of aside) — scope per card, cardId={detail.id}, locale, t={t.admin.track}; wrapped in print:hidden (interactive admin chrome, matches management-section print convention); rendered unconditionally per task — API enforces view.all/reply server-side
+- Verification (static only — dev server/browser/tests untouched per task rules): bun run typecheck = 0 errors; bun run lint = 0 problems; dev.log tail clean (GETs only, no compile errors); git status: exactly my 4 M + 1 new file (other working-tree diffs are backend/content staged by main agent — untouched); RTL audit of added lines = zero physical left/right (text-start/ltr-isolate/dir only); hydration audit = window/Intl-dates only in handlers or post-client-fetch states, initial renders deterministic (skeletons)
+
+Stage Summary:
+- Tracking links are now surfaced end-to-end: guest/account creators see a tracking section in every success surface (project request form success card + account new-inquiry dialog success state) showing t.track.trackingHint with open-in-new-tab (noopener noreferrer) and copy-with-2s-feedback pill buttons working off the API's relative trackUrl, with the trackingUnavailable muted line when null (never blocks the ref pill); staff see the shared TrackPanel in both admin detail sidebars showing the card's effective access policy + its source chip, the platform force-login amber override warning, the current link state chip (فعّال/منتهي/ملغى soft tones) with expiresAt/revokedAt Intl dates, one-time token reveal after renew (full /{locale}/track?t=… link in a read-only mono box with copy), and confirm-guarded revoke with silent refetch on already_revoked/not_found
+- Component API: <TrackPanel scope="request"|"inquiry" cardId={id} locale={"ar"|"en"} t={PortalContent["admin"]["track"]} /> — self-fetching, self-toasting (reuses apiErrorMessage + auth.errors.generic), renders null only when its initial fetch fails (after one error toast), print:hidden handled by the host page
+- Key decisions for main agent: (1) copy UX degrades silently by design (clipboard → textarea/execCommand → console.warn) per task — no error toast for copy failures anywhere; (2) renew triggers a quiet panel refetch (not task-mandated) so the state chip/expiry reflect the renewed link while the one-time reveal box persists; (3) revoke responses arrive on HTTP 200 with ok:false (no throw from apiSend) so already_revoked/not_found are detected by body shape and refetched silently; (4) TrackPanel gets auth.errors internally via getPortalContent(locale) to follow the existing admin toast pattern without widening the task-specified prop signature; (5) date formatting uses Intl.DateTimeFormat (task-specified) instead of the adjacent date-fns fmtDateTime — minor inconsistency with sibling aside sections, flagged if a future round wants unification
+- Browser-QA checklist for main agent: (1) /ar/contact (or any request form) submit → success card shows ref pill + tracking section (hint + «فتح المتابعة» primary + «نسخ الرابط» outline); open → /ar/track?t=… in new tab; copy → label swaps to «نُسخ الرابط» + Check for 2s; (2) if platform force-login blocks token issuance → «تعذر إنشاء رابط المتابعة الآن…» muted line instead, ref pill intact; (3) logged-in account → الاستفسارات → استفسار جديد → success dialog shows the same section stacked vertically (sm: horizontal), close/reopen resets to form state; (4) /ar/admin/requests/[id] sidebar → «رابط المتابعة» section between management and attachments: policy chip + source text, force-login amber line if enabled globally, «فعّال» chip + ينتهي في date; (5) تجديد الرابط → buttons replaced by green reveal box with full link + copy icon button (aria-label) + renewHint; verify old token now dead and new one works; (6) إلغاء الرابط → confirm dialog → toast «أُلغي رابط المتابعة» + chip flips to «ملغى» + revokedAt date; revoke again → no toast, silent refetch; (7) cards without links → «لا يوجد رابط متابعة لهذه البطاقة» + renew/revoke still offered (renew 404s→error toast if no link ever existed); (8) same panel on /ar/admin/inquiries/[id] (scope=inquiry); (9) EN parity for all labels, RTL flip clean (no physical-direction classes), print preview hides the panel, mobile 375px wraps buttons, 0 console errors; hard-reload after edits (Turbopack stale-cache note from round 18)
+
+---
+Task ID: 27-a
+Agent: general-purpose
+Task: Public tracking page UI — src/app/[locale]/track/page.tsx (server) + track-client.tsx (client): token exchange → card view (header/timeline/conversation/reply) → failure states, consuming only existing portal.track strings
+
+Work Log:
+- Read worklog tail (rounds 24-26: pill language, hydration-safe patterns, sandbox-wipe lessons) + all references fully: portal types.ts track block + ar.ts meanings; login page (content-loading + generateMetadata pattern), auth-card/login-form (brand header, rose alerts, pill buttons, min-h-11), auth layout (standalone column + Logo link + own Toaster + decorative blur blobs), account inquiry-detail-view (conversation/message/InfoRow language, ltr-isolate refCode, reply composer semantics, role/status patterns), account/format.ts (formatDate "PPP p" + formatBytes Intl unit — REUSED verbatim via import, zero new util code), account/status-badge.tsx (chip soft-pair language)
+- Discovery: [locale] root layout has NO Toaster and always renders site header/footer; auth/account layouts each add their own Toaster → my page.tsx renders <Toaster richColors position="top-center" dir> itself (sonner toasts would otherwise be invisible on track). Track pages render inside the public site chrome exactly like auth pages (auth layout comment confirms "داخل تخطيط الموقع العام") — "standalone like auth" = centered brand column without portal shells, which is what I built
+- NEW page.tsx (server): generateMetadata (login-page mirror) with title = portal.track.title + robots {index:false, follow:false} (locale-aware title requires generateMetadata; literal "export const metadata" can't vary by locale — deviation documented); params/searchParams awaited (Next 16 Promise pattern); searchParams typed Record<string, string|string[]|undefined> (login-page pattern, Next-16-type-safe) then normalized for arrays; getSettings() in Promise.all with searchParams → siteNames {nameAr,nameEn} passed to client + locale-resolved name used as brand-link aria-label; dir + decorative gradient/blur background mirroring auth layout; Logo (nameLang per locale) links to /{locale}; container max-w-2xl px-4 py-10 sm:py-14; no site-header/footer removal (impossible without editing the root layout — outside ownership; matches auth pages exactly)
+- NEW track-client.tsx: local interfaces for all API shapes (TrackCard/Policy/Link/Access/Message/Attachment/CardPayload); phases loading|ready|invalid|expired|revoked|policy_denied|login_required|rate_limited
+- State machine: single boot useEffect keyed by input signature with a SYNCHRONOUS handledRef guard set before any await — this is the StrictMode-proof pattern (reactStrictMode:true): double-mount's 2nd run is skipped so the one-time token exchange POST fires exactly once, and run 1 is allowed to complete (no cancelled flag in boot/loadCard — React 18 setState-after-unmount is a safe no-op) → no stuck-loading race. Token path: POST /api/track/exchange {token} → 200 {ok,url} → parse "card=scope:id" (parser accepts "?card=…", raw "card=…", bare "scope:id"; validates scope∈{request,inquiry}) → FIRST capture window.location.href into shareUrlRef+state (shareable link, pre-replace) → pre-book loadedCardRef with the new key → router.replace(`/${locale}/track?card=${scope}:${id}`) → await loadCard (order per spec: capture → replace → load; pre-booked key means the props-change after replace dedupes to zero extra fetches). 429→rate_limited; 403 codes revoked/expired→states, invalid/unknown→invalid; network→invalid (safe default). No-token path: validate cardParam → loadCard GET /api/track/card?scope&id (encodeURIComponent both): 200 → normalizeCard (defensive array guards) → ready; 403 policy_denied/owner_required/revoked/expired → states; 404/anything → invalid
+- loadCard: loadedCardRef dedupes concurrent/duplicate loads per scope:id (defeats the replace-vs-fetch race); stores cardKey state for the sign-in next URL
+- Reply flow: POST /api/track/reply {scope,id,body} — sendingRef guard + disabled + empty-disabled; success (res.ok && json.ok — accepts contract's 201 and any 2xx) → append json.message to local list + clear textarea + toast.success(replySent); 409 → toast replyDuplicate; 403 → toast replyDisabledLogin + setReplyBlocked(true) (box flips to muted info box); network/500 → toast replyFailed KEEPING text; textarea maxLength 5000 + dir=ltr mono char counter (aria-describedby), min-h-28, Send/Loader2 pill h-11 rounded-full shadow-brand/20
+- Reply gating: canReply = !replyBlocked && !policy.cardClosed && (via link ? canReplyViaLink : canReplyByOwner); denial box (role="status", Info icon, bg-muted/40) priority: 403→replyDisabledLogin, cardClosed→replyDisabledClosed, link without reply→replyDisabledView, account-without-reply (rare edge, no fitting string) → replyDisabledClosed as neutral fallback (noted)
+- Card view: header card (rounded-2xl border bg-white p-5 sm:p-6) with type chip (bg-accent text-brand-strong, t.cardType[scope]) + status chip (STATUS_CHIP_CLASSES per spec: new→brand-soft, in_review/awaiting_info/in_progress→amber-100, responded→green-100, closed/cancelled→gray muted; unknown→status as-is with gray fallback), refLabel + refCode mono text-xl dir=ltr ltr-isolate, subject h1 text-xl bold, description whitespace-pre-line, created/lastUpdate dl rows with Calendar/Clock size-4; link expiry/policy badges intentionally SKIPPED per spec (expiresAt/mode strings live under admin.track — not consumable on public page)
+- Copy row (only when arrived via token): bg-accent/40 section with t.trackingHint + outline pill «copyTracking» → clipboard.writeText → Check icon + «copied» for 2s (timer cleaned up on unmount); clipboard failure → toast replyFailed; no openTracking (belongs to success dialogs per spec)
+- Timeline: hidden when empty; ol with per-item border-s-2 ps-4 + pb-5 (continuous connector), size-2 dots -start-[5px] centered on the line, last event dot bg-brand, statusLabels lookup ?? raw, formatDate per locale
+- Conversation: MessageSquare heading, max-h-96 overflow-y-auto pe-1 + aria-live, auto-scroll to newest on messageCount change (detail-view precedent), empty state dashed rounded-2xl «noReplies»; each message flex gap-3: staff avatar = brand bg initial (authorName ?? staffAuthor), client avatar = muted initial (guestAuthor via link / ownerAuthor via account — task's simplification), system avatar = muted Bot icon + staffAuthor name (deviation from initial noted: a Bot pictogram distinguishes system notes from staff); body whitespace-pre-line text-sm leading-7; attachments list under body: Paperclip + truncate filename + formatBytes (no download link — public contract exposes no URL)
+- Failure states: rounded-3xl border bg-white p-8 sm:p-12 role="alert" with size-16 colored circle icons — invalid XCircle rose, expired/rate_limited Hourglass amber, revoked ShieldAlert rose, policy_denied ShieldAlert amber, login_required LogIn brand-soft; heading/body from exact strings (rateLimited has no body pair — heading only); pill sign-in Button (t.signIn, LogIn) for login_required AND policy_denied → /{locale}/auth/login?next=encodeURIComponent(/$locale/track?card=$cardKey) (task assigned the button to owner_required; policy_denied shares the same loginRequired copy so the affordance matches the message — decision noted); subtle backHome link min-h-11 → /{locale}; loading = centered Loader2 text-brand role="status" sr-only title, never blank
+- A11y/RTL/hydration: zero physical left/right classes (audit grep clean: ps/pe/ms/start/end/-start only); aria-labels + aria-hidden on decorative icons; keyboard focus rings via built-in Button focus-visible + outline-brand pattern on text links; no window access during render (searchParams via props; window only in effect/handlers); StrictMode-safe boot; mobile-first single column (chips/copy-row/reply rows all flex-wrap at 375px)
+- Verification (static only per task rules — dev server/browser untouched): bun run typecheck = 0 errors; bun run lint (full project) = 0 problems; RTL audit grep = clean; zero new translation keys, zero edits outside my two files (git status confirms)
+- Contract notes for main agent: (1) reply success treated as res.ok && json.ok — if the API ever returns 200 instead of 201 it still works; (2) exchange url parser is tolerant of "?card=…", "card=…" and bare "scope:id"; (3) unused-on-this-page track strings are intentional: you/closed/closedBody (no closed failure state — closed is a policy flag rendering the disabled box), openTracking/copyLink/trackingUnavailable (success-dialog territory, other agent), attachments (per-message rows carry no heading), signIn IS used; (4) policy_denied also gets the sign-in button (see above) — remove one JSX block if undesired
+
+Stage Summary:
+- /{locale}/track is live as a standalone branded tracking page: noindex metadata, token links (?t=…) exchange once then rewrite to ?card=scope:id (URL captured pre-replace as the shareable link with a copy button + trackingHint row), direct ?card=… links load straight away; card view = type/status chips + mono refCode + subject/description + created/lastUpdate, status timeline with connector, scrollable conversation with staff/client/system attribution per access.via, and a policy-aware reply composer (5000 chars, duplicate/403/network toasts, text preserved on failure) or an explicit muted denial box (closed / view-only link / login-required after 403); all seven failure modes (invalid/expired/revoked/policy_denied/login_required/rate_limited/network) render branded full-width cards with colored icons, login_required/policy_denied offer a pill sign-in button that returns to the exact card, everything else links backHome
+- Browser-QA checklist for main agent (after 27-b's API routes exist): (1) /ar/track with no params → invalid card (rose XCircle) + backHome; /en same in English; (2) paste token URL ?t=… → brief spinner → URL becomes ?card=scope:id → card view; copy row visible → click «نسخ الرابط» → button flips to Check+«نُسخ الرابط» for 2s → clipboard contains the ORIGINAL token URL; (3) header chips correct per status (new=brand, in_review=amber, responded=green, closed=gray); refCode LTR mono inside RTL; (4) timeline renders oldest→newest with brand dot on the latest; hidden when timeline empty; (5) conversation: staff name/avatar brand, client shows «صاحب رابط المتابعة» via link vs «صاحب البطاقة» via account, system shows Bot icon; long threads scroll (max-h-96) and start scrolled to newest; (6) reply: type → counter n/5000 → send → toast «أُرسل ردك بنجاح», message appends instantly, textarea clears; resubmit same text fast → «رد مطابق…»; empty submit disabled; (7) closed card → muted box «الردود مغلقة…»; link_view link → «تتيح الاطلاع فقط عبر الرابط»; (8) expired/revoked tokens → amber Hourglass / rose ShieldAlert cards with exact strings; (9) owner_required → brand LogIn card → «تسجيل الدخول» → login → returns to the same card via next; (10) throttled exchange → amber «محاولات كثيرة…»; (11) with APIs missing (pre-27-b) any visit degrades gracefully to the invalid card — no console errors; (12) keyboard: Tab reaches copy button, textarea, send, links with visible rings; (13) 375px: no horizontal overflow, rows wrap; (14) RTL spot-check: timeline line/dots on the right, dots not clipped; (15) zero console errors/warnings on every state
+
+---
+Task ID: 27
+Agent: main (Z.ai Code)
+Task: Round 27 — QA sweep + full spec received → tracking-links vertical slice (spec sections 8+9, the "essential requirement")
+
+Work Log:
+- Round-start QA: admin login → pages editor → added heading block → autosave PATCH 200 «محفوظة» (earlier 2× PATCH 403 in dev.log were a non-privileged session — correct behavior, not a bug); A-item audit confirmed rounds 1-26 already ship draft/published separation, baseRevision+409, sanitized-block storage, atomic home-swap, slug conflict/redirect-loop checks
+- Spec gap analysis: ZERO tracking-link code existed (no TrackLink model/route/page) → built the full vertical slice this round
+- Backend: prisma TrackLink model (tokenHash unique, scope, requestId|inquiryId exactly-one, expiresAt/revokedAt, relations both sides, db:push clean); src/lib/track/policy.ts (4 modes, settings forceLogin/requestsMode/inquiriesMode/linkTtlDays=90/allowGuestAttachments, resolveTrackPolicy priority platform>card-exception>type-default, isCardClosed); src/lib/track/session.ts (32B CSPRNG base64url token, sha256 store, HMAC-signed HttpOnly link session {lid,exp} 12h, timingSafeEqual); src/lib/track/service.ts (issue/renew/revoke, latestLink, getTrackView with owner/staff/link-holder gates + card-exception loading, replyViaTrack with owner/staff/link checks + closed-card block + 2min duplicate-hash guard + notifyStaffOfReply best-effort); AUDIT_ACTIONS +5 track.*
+- APIs: POST /api/track/exchange (rate-limited 10/10min/IP, unified 403, sets signed cookie, returns ?card= url), GET /api/track/card (auth = signed link session OR account owner OR authorized staff; policy live), POST /api/track/reply (same gates + policy.canReplyViaLink/ByOwner + closed + duplicate → 409), /api/admin/track GET (link state + effective policy + source + forceLogin) / POST renew|revoke|policy-exception (guards requests.reply/inquiries.reply); all responses Cache-Control private,no-store + X-Robots-Tag noindex + Referrer-Policy no-referrer
+- Creation integration: requests/inquiries/account-inquiries routes issue link post-save (failure never blocks success) and return trackUrl /{locale}/track?t=<raw>
+- Staged strings: portal.track.* (~45 keys ar/en/types) + admin.track.* (policy/mode/source/state/renew/revoke) — zero new keys after staging
+- Parallel subagents: 27-a (track page: server metadata noindex + client state machine token→exchange→replace→card load, all failure states, card view with chips/timeline/conversation/attachments/per-policy reply box, copy share link) and 27-b (success-card + new-inquiry-dialog tracking sections with openTracking/copyTracking + trackingUnavailable fallback, admin TrackPanel shared component wired into both detail asides with renew one-time reveal + revoke confirm)
+- Integration fix by main: 27-a's loadCard dedupe was deadlocked by its own pre-replace key reservation (card stuck loading forever) → added {force:true} to the token-path call, reservation removed; post-replace effect now correctly skips via dedupe ref
+- Browser QA (guest flow, no session): submit public request → success card shows «فتح المتابعة»/«نسخ الرابط» → open link → exchange 200 → URL cleaned to ?card= → full card view (type/status chips, mono ref, description, ar dates, conversation) → guest reply posts 201 and renders with «صاحب رابط المتابعة» badge + no ghost account
+- Admin QA: request detail shows TrackPanel — policy chip «متابعة بالرابط — اطلاع ورد» + source «الإعداد الافتراضي لنوع البطاقة» + «فعّال» + expiry date; revoke → confirm dialog exact copy → chip «ملغى» → signed-out guest immediately gets the «أُلغي هذا الرابط» state (derived session did NOT survive revocation)
+- API policy matrix (curl): login_required default → link holder 403 policy_denied(type_default); link_view → card 200 + reply POST 403 policy_denied (server-enforced, test 11); forceLogin=true → 403 with source platform_force_login overriding everything (tests 13/19); id-swap → 404 no leak (test 14); headers verified
+- Cleanup: test request S7-97QYS9P4 + messages/link/notifications/audit deleted; settings restored forceLogin=false requestsMode=login_required (safe migration posture)
+- Dev server OOM'd during subagent round (10th) → pkill bun+next children, double-fork restart
+- Suite: lint ✓ tsc ✓ 79/79 ✓; committed (feat(track))
+
+Stage Summary:
+- Spec sections 8+9 vertical slice COMPLETE and verified end-to-end: create→link→anonymous view→reply→admin policy display→revoke→instant denial. Raw tokens exist only in the response payload at issue/renew time (never stored/logged); hashes only in DB
+- Remaining for full spec compliance (round 28+): admin SETTINGS UI for global defaults (forceLogin toggle + per-type modes + TTL — backend reads them already), email delivery of the link (dev outbox path), renew-token UI re-test, inquiry-side browser pass (dialog + admin panel), account-portal request/inquiry track URL display, attachment download via link (policy-gated), notification for guests on staff reply (email), tests for the policy matrix, README/tracking-policy guide
+- Key lessons: (1) reserve-then-call patterns deadlock when the callee guards on the reserved key — pass force or restructure; (2) raw minted tokens are needed for tests since they're never stored — mint via hash-swap script; (3) sonner Toaster was missing on track page ([locale] layout has none outside admin/account shells) — 27-a added one locally
+- Next candidates: admin track-settings UI (section 8 settings list), email-outbox delivery of link + guest notifications, tests 9-21 from spec, websocket notifications decision, db:backup periodic
+
+---
+Task ID: 28-core
+Agent: main (Z.ai Code)
+Task: Round 28 — §4 بناء الصفحات والتصميم المتجاوب: شجرة المحتوى v1 + الأنماط المدركة للأجهزة + عارض الشجرة + بوابة التحقق (قيد التنفيذ — الجزء الخادمي جاهز)
+
+Work Log:
+- نموذج شجرة المحتوى v1: src/lib/blocks/tree.ts — مغلف { schemaVersion: 1, blocks: ContentNode[] }، أنواع حاويات (section/container/row/column)، سجل موحّد BLOCK_REGISTRY (مخطط + قواعد أبناء + تسميات + مجموعات)، أدوات شجرة (find/remove/cloneWithNewIds/collectIds/countNodes/maxDepth/newNodeId)، defaultNode للإدراج، حدود: عمق 6 / 120 عقدة / 300KB
+- أنماط مدركة للأجهزة: src/lib/blocks/style.ts — NodeStyle {base,mobile,tablet,desktop} مع وراثة (effectiveValue) وإعادة ضبط (resetDeviceValue)، خرائط أصناف Tailwind (nodeStyleClasses) mobile-first (بلا بادئة + md: + lg:)، خصائص متناظرة RTL-آمنة + محاذاة منطقية، 9 أنماط محفوظة STYLE_PRESETS
+- ترحيل آمن: src/lib/blocks/migrate.ts — v0 مصفوفة → v1 شجرة، كتلة columns القديمة → row/column ب heading+text children (نفس النصوص، معرفات مشتقة مستقرة)، نوع غير معروف → فشل صريح block_type_unknown:type (لا صفحات فارغة صامتة)، idempotent لمدخل v1
+- بوابة التحقق: src/lib/blocks/validate.ts — validateContent: حجم/عدد/عمق/معرفات مكررة/مراسات مكررة/فحص Object.hasOwn/قواعد الأبناء/منع children داخل ورقية، يُعاد JSON المطبّع (check.json) — الحفظ يخزن ناتج التحقق لا الأصلي، الشكل القديم style {background,paddingY} يتحول إلى base
+- BlockType وسّع ليشمل الحاويات (type-only import في types.ts — لا دورة تشغيل)
+- الأسلاك الخادمية: PATCH/[id] و publish و restore و POST /pages الآن عبر validateContent؛ restore يرحّل إصدارات v0 تلقائيًا؛ قوالب الإنشاء تصبح مغلف v1؛ versions route يحسب blockCount للشجرة؛ الصفحة العامة [[...slug]] عبر loadContentForRender + localePublished يدعم المغلف (كان ينكسر مع v1!)
+- العارض: page-renderer.tsx أعيد كتابته — PageRenderer({nodes, locale, mode}) يرسم الحاويات (section بعرض موقع داخلي، row شبكة grid-cols بحسب الأبناء + lg:col-span، column كومة، container صندوق عام) عبر nodeStyleClasses؛ الكتلة الورقية داخل حاوية تُرسم عاريًا (NestedBlockContext) — Section وBlockContainer يحترمان السياق فلا تتضاعف الحشوة
+- أوضاع العرض: RenderModeContext (live/edit/test) في nested-context.tsx — وضع test: نموذج الطلب يعرض شارة اختبار ويحاكي النجاح (TEST-...) بلا أي fetch (ProjectRequestForm simulate prop)؛ صفحة المعاينة الإدارية تستخدم mode="test" + خطأ تحقق صريح بدل صفحة فارغة
+- typecheck متبقي 4 أخطاء كلها في جانب المحرر (TYPE_ICONS / PROP_FIELDS / DEFAULT_PROPS / editor-canvas) — نطاق المهمة 4
+
+Stage Summary:
+- العقود للمحرك التالي: ContentNode/ContentEnvelope/BLOCK_REGISTRY/defaultNode/newNodeId/cloneWithNewIds (tree.ts)، validateContent(input)→{ok,envelope,json,tree,migrated}|{ok:false,error} (validate.ts)، NodeStyle/STYLE_PRESETS/effectiveValue/resetDeviceValue (style.ts)، PageRenderer({nodes,locale,mode}) (page-renderer.tsx)
+- المحرر يحمّل عبر validateContent ويحفظ JSON.stringify({schemaVersion:1, blocks: draft}) — الخادم يطبع ويخزن check.json
+- لم يُلمس prisma schema (المحتوى JSON نصي — لا ترحيل قاعدة بيانات مطلوب)
+
+---
+Task ID: 28
+Agent: main (Z.ai Code)
+Task: Round 28 — §4 بناء الصفحات والتصميم المتجاوب مكتملة: شجرة المحتوى v1 + ترحيل آمن + بوابة تحقق + عارض شجرة + محرر شجري (طبقات/أنماط أجهزة/iframe/وضع اختبار) — مُوثق ومُختبر ومُودع
+
+Work Log:
+- (اكتمال مهمة 28-core أعلاه) + مهمة 4: وكيل الواجهة طوّر المحرر كاملًا — typecheck كان قد انتهى بنجاح قبل انتهاء مهلته (لم يلحق بكتابة worklog؛ هذا القسم يوثق عمله)
+- المحرر الشجري: editor-canvas.tsx أعيد كتابته عوديًا — NodeWrapper لكل عقدة مع SortableContext لكل حاوية، إضافة عنصر داخل الحاوية المحددة وفق قواعد الأبناء (BLOCK_REGISTRY.children)، شارة نوع أعلى كل حاوية، placeholder «أضف عنصرًا» للحاويات الفارغة، سحب ضمن الأشقاء فقط (الإفلات عبر الحاويات يتجاهل بأمان)
+- layer-tree.tsx (جديد): تبويب ثانٍ بجانب المكتبة — بحث فوري، شجرة متداخلة بمستويات، أزرار إظهار/إخفاء لكل جهاز، تكرار، حذف، تحديد بالنقر
+- properties-panel.tsx: تبويب «المظهر» — أجهزة (الأساس/جوال/تابلت/كمبيوتر) مع حقول الخلفية/الحشوات/الزوايا/الظلال/الحدود/التباعد، شارة «موروث من الأساس» + زر إعادة ضبط (effectiveValue/resetDeviceValue)، أنماط محفوظة (STYLE_PRESETS) تطبق على العقدة المحددة فقط مع تنبيه النطاق
+- page-editor.tsx: التحميل عبر validateContent (يقبل v0 وv1)، الحفظ بمغلف {schemaVersion:1, blocks} مع تحقق محلي قبل الإرسال، breadcrumb تحديد، إدراج وفق قواعد الأبناء مع تحذير امتلاء الحاوية، وضع الاختبار (FlaskConical) بلافتة كهرمانية وتمرير التفاعل، وضع معاينة iframe بعرض بكسل حقيقي (375/768/1280 + مخصص) وتكبير بصري (transform) وزر تحديث — media queries تعمل فعليًا داخل الـiframe
+- i18n: مفاتيح جديدة ثنائية اللغة في portal ar/en/types (الطبقات، المظهر حسب الجهاز، موروث، وضع الاختبار، معاينة iframe…) مع فحص parity
+- اختبارات جديدة (26 حالة) في src/lib/__tests__/content-tree.test.ts: قبول/تطبيع/ترحيل v0→v1/ترحيل columns القديمة بنصوصها/idempotent/رفض صريح (نوع مجهول، constructor، معرفات مكررة، مراسات مكررة، children داخل ورقية، child_not_allowed، عمق، عدد، حجم)/أدوات الشجرة/الأنماط المدركة (بادئات md:/lg: + وراثة + إعادة ضبط)
+- إصلاحات أثناء الدمج: BlockType وسّع للحاويات عبر type-only import؛ أزلنة تكرار الأصناف المتطابقة عبر الفواصل في style.ts (emitFor مع prevValue)
+- QA خادمي (curl بكوكي admin): حفظ مصفوفة v0 فيها columns → خُزنت مغلف v1 بصف/عمودين/heading+text بنفس النصوص ✓؛ معرف مكرر → 400 invalid_blocks ✓؛ row>text → 400 child_not_allowed:row:text ✓؛ مراجعة قديمة → 409 ✓؛ صفحة مؤقتة بمحتوى شجري → نشر AR فقط → الصفحة العامة تعرض section(bg-navy+py-20)+row(grid-cols-1 md:1 lg:2)+أعمدة متداخلة+زر ✓ (ثم أُرشفت للتنظيف)
+- QA متصفح (agent-browser): دخول admin → محرر «من نحن» → المكتبة تُظهر الأنواع البنيوية أولًا (قسم/حاوية/صف/عمود) → إضافة قسم → «محفوظة» تلقائيًا → شجرة الطبقات تعرض القسم بأزرار الإخفاء لكل جهاز → تبويب المظهر: خلفية كحلي على الأساس → تابلت تظهر «كحلي + موروث من الأساس» → معاينة iframe تعمل بزر تحديث → وضع الاختبار يبدل → console بلا أخطاء (0) → لقطات في .qa/ 
+- انحدار: الصفحات المنشورة القديمة (v0) تُرحّل شفافًا عند العرض — الرئيسية 200 بمحتواها الكامل
+- بنية تحتية: خادم التطوير يُقتل بصمت بين استدعاءات الأدوات (ليس OOM — قتل واحد موثق 2.2GB)؛ الحل: تشغيل داخل نفس الاستدعاء + NODE_OPTIONS=--max-old-space-size=1536
+
+Stage Summary:
+- §4 مكتملة بنسبتها الكاملة تقريبًا: شجرة محتوى (أقسام/حاويات/صفوف/أعمدة/عناصر متداخلة) + تعريف موحد (سجل: مخطط/قواعد أبناء/تسميات/مجموعات) + schemaVersion=1 وترحيل آمن يحفظ شكل الصفحات ولا يصمت على المجهول + حدود (عمق 6/120 عقدة/300KB) + validateBlocks→validateContent تطبيعي (الحفظ يخزن ناتج التحقق) + أدوات تخطيط مكتملة بقيم هوية + إعدادات لكل جهاز بوراثة وإعادة ضبط وخصائص منطقية + فصل مسؤولية التباعد (الحاوية تملك، الورقية عارية) + أنماط محفوظة بنطاق معلن + معاينة أجهزة iframe حقيقية + فصل وضع التحرير عن اختبار التفاعل (الإرسال محاكى بلا شبكة)
+- البوابات: typecheck ✓ lint ✓ 105/105 اختبار ✓ — لم يُودع بعد (التزام يلي هذا القسم)
+- ملاحظات: أزلت 3 فحوص HTML خاطئة في سكربت QA (DOM id ليس node.id إلا مع anchorId — بالتصميم)؛ كتلة columns القديمة لم تعد تُعرض في المكتبة لكنها صالحة للمخطط وتُرحّل تلقائيًا عند أي حفظ/نشر/استعادة
+- المرشحات التالية (بأولوية §13): B خاتم تتبع — واجهة إعدادات التتبع العامة + إرسال الرابط بالبريد + تنزيل مرفقات عبر الرابط؛ C تدفق تحرير نصي داخلي (inline)؛ D قوالب صفحات (احفظ الصفحة كقالب) + مكتبة وسائط بألبومات؛ اختبارات تكامل E2E للترحيل داخل CI
+
+---
+Task ID: 29
+Agent: main (Z.ai Code)
+Task: Round 29 — §8 فجوة الإعدادات: واجهة سياسة روابط المتابعة في لوحة الإدارة + نقطة دخول المتابعة من بوابة الحساب (فتح بطاقة المتابعة) — مختبرة متصفحيًا ومودعة
+
+Work Log:
+- فحص صحة أولي: الخادم حي، typecheck نظيف، 105/105 اختبار — حالة Round 28 مستقرة بعد الالتزام b062f57
+- API: وسّعت /api/admin/settings (settings.manage) بمفاتيح سياسة المتابعة الخمسة — track.forceLogin / track.requestsMode / track.inquiriesMode / track.linkTtlDays / track.allowGuestAttachments — بتحقق صارم: أوضاع عبر isTrackMode (400 invalid_track_mode)، TTL عدد صحيح 1-3650 (400 invalid_track_ttl)، المفاتيح الثنائية true/false فقط — أي قيمة غريبة تُرفض لا تُصمت؛ التدقيق القائم يسجل المفاتيح المغيرة تلقائيًا
+- الواجهة: قسم «سياسة روابط المتابعة» في صفحة الإعدادات (settings-client.tsx) — مفتاح فرض الدخول بملاحظة تحذيرية كهرمانية تشرح أولويته القصوى وتعطيل المحددات أثناء تفعيله، منتقي وضع لكل من الطلبات والاستفسارات بالأوضاع الأربعة مع وصف كل وضع، حقل مدة الصلاحية بالأيام (1-3650) مع تلميح نطاق التطبيق (روابط جديدة/تجديد)، مفتاح مرفقات الزوار، و«السلوك الفعلي الآن»: بطاقتا معاينة حية لكل نوع تظهران تأثير التغيير قبل الحفظ (تطّلع/يرد بلا حساب: مسموح/ممنوع بأيقونات) + سطر سلسلة الأولوية (فرض الدخول ← استثناء البطاقة ← وضع النوع)
+- i18n: 20 مفتاحًا جديدًا في admin.settings.track (ar/en/types) — مفاتيح الأوضاع والمعاينة ثنائية اللغة كاملة
+- بوابة الحساب: زر «فتح بطاقة المتابعة» (Radar) في ترويسة تفاصيل الطلب والاستفسار → /{locale}/track?card=request:{id} أو inquiry:{id} — المالك يدخل بطاقته من حسابه دون الرابط الأصلي (الرمز الخام لا يُخزن أصلًا)؛ الزر يختفي في الطباعة (print:hidden) — سلسلة i18n كاملة عبر account.detail + account.inquiries في الملفات الثلاثة (اكتشفت أثناء الدمج أن أول استبدال نماذج نصية أصاب block inquiries في types بينما أصاب detail في ar/en — أصلحت التوزيع وأكد الاختبار البنيوي parity)
+- QA متصفح (admin): صفحة الإعدادات تعرض القسم كاملًا → تغيير وضع الطلبات إلى link_reply → حفظ → إعادة تحميل تؤكد الاستمرار
+- QA سلوك فوري (curl): طلب عام جديد بعد التغيير ← رابط صادر ← تبادل الرمز دون حساب ← رد الزائر 201 ✓ (السياسة الجديدة تُطبق لحظيًا بلا إعادة تشغيل) — ثم أعادة الوضع إلى login_required
+- QA متصفح (client): طلب من بوابة الحساب ← صفحة التفاصيل تعرض «فتح بطاقة المتابعة» ← النقر يفتح بطاقة المتابعة بمرجع الطلب ومحرر رد المالك ✓ (لقطة .qa/client-detail.png — حُذفت بعد التوثيق)
+- تنظيف: طلبا الاختبار (S7-CG5PPCR8 / S7-CHOKUNOP) بكل رسائلهما وروابطهما وإشعاراتهما وتدقيقهما حُذفا؛ الإعدادات عادت لوضع الترحيل الآمن (forceLogin=false, requestsMode=login_required)
+- البوابات: typecheck ✓ lint ✓ 105/105 ✓ — الالتزام يلي هذا القسم
+
+Stage Summary:
+- §8 مكتملة الآن بحلقة كاملة: الأدمن يضبط السياسة من الواجهة (بلا لمس قاعدة البيانات) ← التغيير يسري فورًا على كل عرض/رد/تنزيل قادم ← العميل يرى بطاقته من حسابه دون رابط ← لوحة البطاقة تعرض «المصدر» الصحيح لكل سياسة فعلية
+- بقي من §8/§9: إرسال الرابط بالبريد (مسار outbox في بيئة التطوير) + تنزيل المرفقات عبر الرابط ببوابة السياسة + إشعار بريدي للعميل عند رد الفريق (حتى بلا clientId) + اختبارات تكامل لمصفوفة السياسة (اختبارات 9-21) + دليل سياسة التتبع في README
+- درس: استبدال النصوص متعدد المواضع هش مع الكتل المتشابهة (detail/inquiries) — اعتمد دائمًا على اختبار parity البنيوي لا العدّ اليدوي
+- المرشحات التالية: بريد رابط المتابعة عبر outbox + تنزيل المرفقات ببوابة السياسة + اختبارات 9-21 + توثيق سياسة التتبع
+
+---
+Task ID: 30
+Agent: main (Z.ai Code)
+Task: Round 30 — §8/§9 إكمال حلقة روابط المتابعة: تسليم الرابط بالبريد + إشعار العميل برد الفريق (حتى بلا حساب) + تنزيل المرفقات عبر الرابط ببوابة السياسة + اختبارات المصفوفة + دليل السياسة — مختبر E2E ومودع
+
+Work Log:
+- فحص صحة أولي: الخادم حي، .env سليم (العقد رباعي المفاتيح)، typecheck/lint نظيفان، 105/105 اختبار، صفحة /ar/track تعرض حالة «الرابط غير صالح» الصحيحة للزائر بلا رمز
+- بريد تسليم الرابط (متطلب §8): src/lib/track/notify.ts — emailTrackLink() best-effort عند الإصدار (طلبات/استفسارات/استفسارات الحساب) وعند التجديد من لوحة الطاقم؛ القالب trackLinkMail ثنائي اللغة يحمل الرابط الخام والمرجع ومدة الصلاحية — الرمز في نص الرسالة فقط ولا يُخزن ولا يُدوَّن؛ فشل البريد لا يمس نجاح الحفظ (أُثبت: الحفظ 201 حتى مع صندوق صادر)
+- إشعار العميل برد الفريق (متطلب §9): emailStaffReply() مربوطة في sendRequestMessage (تغطي كل ردود الطاقم للطلبات من أي واجهة) وفي ردود الاستفسارات الإدارية — تُرسل إلى بريد البطاقة حتى بلا clientId؛ الرابط الآمن بالبناء: المالك → /track?card= (جلسة الحساب)، الزائر → صفحة المتابعة العامة؛ ممنوع بنيويًا أن يحوي الرمز الخام فلا يُحيي رابطًا ملغى (اختبار يفحص غياب النمط)
+- تنزيل المرفقات عبر الرابط (متطلب §9): إعادة كتابة /api/attachments/[id] بقناتين — جلسة حساب (مع إصلاح: مالك الاستفسار كان ممنوعًا إن لم يكن الرافع) وحامل رابط فعّال بشرط: السياسة الحالية canViewViaLink (تحظى لحظيًا) + الرابط بنفس البطاقة + المرفق على رسالة علنية (messageId مرجع منطقي — فحص kind عبر الاستعلام، الملاحظات الداخلية والمرفقات اليتيمة مرفوضة 403 صامتًا)؛ ترويسات noindex/no-store/no-referrer + تدقيق track.attachment_downloaded
+- تكملة البنية: POST /api/attachments يدعم inquiryId (المالك أو الطاقم) وmessageId اختياري بتحقق صارم (الرسالة لنفس البطاقة + الرافع مؤلفها أو طاقم) — كان مطلوبًا لأن مرفقات بطاقة المتابعة تُعرض لكل رسالة ولا مسار رفع سابق يربط مرفقًا برسالة
+- إصلاح إنتاجي: storeUpload كان يفشل مع أنواع تحمل معاملات (text/plain;charset=utf-8) — تطبيع النوع (قطع المعاملات + lowercase)
+- الواجهة: صندوق كشف الرمز بعد التجديد يعرض «وصلت نسخة بالبريد إلى …» (MailCheck) + مفاتيح i18n الجديدة في admin.track (ar/en/types مع فحص parity)
+- اختبارات (20 حالة جديدة — الإجمالي 125): مصفوفة الأوضاع الأربعة، أولوية forceLogin فوق كل شيء حتى مع استثناء البطاقة (اختبارتا 13/19)، استثناء البطاقة، isCardClosed، isTrackMode، الرموز (43 محرف base64url، بصمة sha256 حتمية، مقارنة زمنية ثابتة)، جلسات الرابط (دورة/انتهاء 12 ساعة/عبث/مدخلات تالفة)، قوالب البريد (الرمز في تسليم الرابط فقط وغيابه عن الإشعار)
+- E2E شامل (33 فحصًا، سكربت .qa/round30-track-e2e.ts): طلب زائر → رابط + بريد تسليم يحوي الرمز → رد طاقم → بريد إشعار آمن بلا رمز → رفع مرفق برسالة + رفض messageId وهمي → تبادل الرمز → 403 تحت login_required → استثناء link_reply → اطلاع + رد 201 + تنزيل مرفق 200 بترويسات كاملة → link_view (اطلاع وتنزيل مستوى الاطلاع، رد 403) → login_required (رفض لحظي للجلسة المشتقة) → مرفق ملاحظة داخلية 403 حتى تحت link_reply → تنظيف كامل لكل آثار الاختبار
+- QA متصفح: دخول admin → تفاصيل طلب → تجديد الرابط → صندوق الكشف يعرض «وصلت نسخة بالبريد إلى renewqa@…» → صندوق الصادر يعرض رسالتي الإصدار والتجديد بعنوان «رابط متابعتك للطلب S7-…»
+- البوابات: typecheck ✓ lint ✓ 125/125 ✓ git diff --check ✓ — الالتزام 91bf903
+
+Stage Summary:
+- §8 مكتملة الحلقة الآن: إصدار → شاشة نجاح + بريد → استخدام متكرر → تجديد بريدي → إلغاء لحظي؛ §9 مكتملة: رمز/بصمة/جلسة موقعة/تقييم لحظي/ملاحظات داخلية محصنة/تدقيق بلا أسرار/إشعار بريدي للعميل حتى بلا clientId
+- دروس: (1) rg يفسد عرض المحتوى في هذه البيئة (أظهر import { n } وattachment.ln وهميًا) — تحقق دائمًا بnode أو Read قبل أي إصلاح؛ (2) next-auth callback/credentials مع bun fetch يتطلب content-type: application/json فعليًا — الإعلان عن form-urlencoded مع جسم JSON يفشل بصمت؛ (3) حد المعدل داخل الذاكرة يتراكم عبر جولات الاختبار من نفس IP — أعد تشغيل الخادم لمسحه بين الجولات؛ (4) توقع الاختبار الخاطئ يبدو كخلق برمجي — «التنزيل تحت link_view» مسموح لأنه جزء من الاطلاع، الرفض الصحيح يُفحص تحت login_required
+- بقي من §8/§9 (اختياري): تحسين عرض مرفقات الرسائل في واجهة البطاقة للزائر عند الرفع من الواجهات (الواجهة الإدارية ترفع بلا ربط رسالة حاليًا)، اختبارات تكامل إضافية للاستفسارات
+- المرشحات التالية (بأولوية §13): D قوالب الصفحات (احفظ الصفحة كقالب + 6 قوالب جاهزة) و§5 تقييم محرر نص غني؛ ثم E اختبارات E2E للترحيل داخل CI وتوثيق إضافي
+
+---
+Task ID: 31
+Agent: main (Z.ai Code)
+Task: Round 31 — §5 قوالب الصفحات (حلقة كاملة: نموذج بيانات + 6 قوالب مدمجة + API تطبيق آمن + حوار محرر مصقول) + إصلاح bug إنتاجي مكتشف (صفحة «من نحن» منشورة بمحتوى اختباري)
+
+Work Log:
+- فحص صحة أولي: الخادم حي، .env سليم، typecheck/lint نظيفان، 125/125 اختبار، صفحات عامة 200/404 سليمة
+- QA متصفح (agent-browser): دخول admin → قائمة الصفحات → محرر «من نحن» → إضافة قسم من المكتبة → حفظ تلقائي «محفوظة» → تراجع → حفظ — الحلقة تعمل، console بلا أخطاء (استكمالًا لجولة 27 المتوقفة)
+- §5 قوالب الصفحات — التنفيذ:
+  - Prisma: نموذج PageTemplate (مفتاح ثابت للمدمجة، kind builtin|custom، blocksAr/blocksEn، usageCount، علاقة User) — db:push
+  - src/lib/templates/builtin.ts: ستة قوالب (هبوط/من نحن/خدمات/أعمال/آلية عمل/تواصل) بأشجار v1 صالحة للغتين، معرفات ثابتة t-{key}-*، أقسام بخلفيات هوية
+  - src/lib/templates/service.ts: زرع idempotent (إنشاء فقط دون تحديث)، resolveTemplateBlocks بلا احتياط صامت للغة المفقودة، تطبيع مدخل الإنشاء (اسم مطلوب، محتوى واحد على الأقل، يُخزن ناتج validateContent لا الخام)، templateListItem بلا محتوى كامل
+  - API: GET/POST /api/admin/templates (زرع آلي عند أول قائمة) + DELETE [id] (المدمجة builtin_readonly 400) + POST [id]/apply بمرآة أمان استعادة الإصدارات: لغة واحدة فقط، قفل baseRevision إلزامي (409)، لقطة تلقائية auto-backup-before-template، تحديث ذري updateMany، عداد استخدام، تدقيق template.created/applied/deleted
+  - الواجهة: templates-dialog.tsx — تصفية (الكل/مدمج/مخصص)، بطاقات مصقولة (شعار نوع، شارة مدمج/مخصص، عدد العقد لكل لغة، عدد الاستخدامات، المنشئ، التاريخ)، نموذج «حفظ المحتوى الحالي كقالب» للغة النشطة، تأكيد تطبيق بملاحظتي النطاق والنسخ الاحتياطي، حذف المخصصة فقط، هيكلات تحميل وحالة فارغة
+  - المحرر: زر قوالب في الشريط (LayoutTemplate)، onApplied يعيد loadPage() فيصفّر المراجعة والتاريخ من الخادم
+  - i18n: قسم admin.templates كامل (ar/en/types) مع مفتاح editor.templates للزر — فحص parity بنيوي
+  - اختبارات: 27 حالة جديدة (صلاحية أشجار القوالب الستة للغتين عبر validateContent، تفرد المعرفات والمراسات، صرامة resolveTemplateBlocks، تطبيع مدخل الإنشاء) — الإجمالي 152
+- اكتشاف وإصلاح bug إنتاجي أثناء QA:
+  - استعادة الإصدار #1 في تاريخ «من نحن» (أثر اختبار spacer من جولات 23/24) كشفت أن المحتوى المنشور للصفحة أصلًا spacer اختباري منذ 16:16 (نُشر خطأً في اختبار استعادة سابق) — الصفحة العامة كانت فارغة فعليًا
+  - الإصلاح dogfooding: تطبيق قالب «من نحن» المدمج على مسودة AR ثم EN (بزر CDP حقيقي — eval .click() الصناعي لا يبدّل تبويبات Radix) ثم نشر — /ar/about و /en/about عادتا بمحتوى كامل منسق (لقطات .qa/)
+  - التحقق قاعدة البيانات: نسخة احتياطية auto-backup-before-template (#2/#3)، usageCount=1، تدقيق template.applied بمفاتيح القالب
+- جودة: typecheck ✓ lint ✓ 152/152 ✓ git diff --check ✓ — الالتزام بعد هذا القسم
+
+Stage Summary:
+- §5 مكتملة الحلقة الأساسية: طبّق نموذجًا في ثوانٍ مع نسخة احتياطية تلقائية، واحفظ أي صفحة قالبًا يعيد الفريق استخدامه — بلا أي مسار يخزن محتوى غير مطبّع
+- إصلاح إنتاجي: «من نحن» كانت منشورة بمحتوى فارغ/اختباري — أُعيد بناؤها ونشرها بالغتين عبر الميزة الجديدة نفسها
+- دروس: (1) استعادة الإصدارات أثناء الاختبار يجب أن تتم على صفحات مؤقتة لا حقيقية — أثر spacer في تاريخ «من نحن» كاد يبقى منشورًا؛ (2) eval .click() لا يبدّل تبويبات Radix موثوقًا — استخدم click بمرجع CDP حقيقي ثم تحقق بaria-selected؛ (3) انتبه للسباق عند فتح AlertDialog بنقرات برمجية متتالية — انتظر وجود [role=alertdialog] قبل النقر على أزراره
+- قيد معلوم: القوالب المخصصة تُحفظ للغة النشطة فقط (معلن في الواجهة) — القالب ثنائي اللغات يتطلب عمليتين؛ نسخة قالب بعدّاد استخدام لا تزال بلا محرر اسم لاحقًا
+- المرشحات التالية (بأولوية §13): D مكتبة وسائط أقوى (تتبع استخدام الصورة ومنع حذف المستخدمة + مجلدات)؛ D زر «استبعاد التعديلات غير المنشورة» (مسودة→منشور) لإغلاق ثغرة النشر الفارغ التي اكتُشفت اليوم؛ C تدفق تحرير نصي داخلي (inline)؛ E اختبارات E2E للترحيل داخل CI + توثيق القوالب في دليل المحرر
+---
+Task ID: 32
+Agent: main (Z.ai Code)
+Task: Round 32 — §7 مكتبة وسائط محصّنة (تتبع استخدام + حاجز حذف + مجلدات + بحث) + §2 زر «استبعاد التعديلات غير المنشورة» (إغلاق ثغرة النشر الفارغ) — مختبر E2E متصفحيًا ومودع
+
+Work Log:
+- فحص صحة أولي: الخادم حي، .env سليم، typecheck نظيف، 152/152 اختبار — ثم QA متصفح سريع (دخول admin، صفحة الوسائط والمحرر بلا أخطاء console) قبل البناء
+- §7 مكتبة الوسائط — التنفيذ:
+  - src/lib/media-usage.ts (جديد): مطابقة صارمة على حدود المعرف — textReferencesMedia بـ negative lookahead يمنع المطابقة الجزئية (/api/media/abc لا يطابق abcdef)، extractMediaRefs بـ global regex، findMediaUsage يمسح مسودات الصفحات والمنشور وogMediaId وقوالب الصفحات، mediaUsageCounts عدّاد دفعي واحد، normalizeMediaFolder (1-60، تنظيف محارف تحكم، الغائب=general)
+  - API: GET /api/admin/media أصبح يدعم search (اسم/بديل/عنوان) وfolder filter ويرجع folders[] وusageCount لكل عنصر (فحص مسح واحد رخيص)؛ POST يقبل مجلدًا؛ PATCH ينقل بين المجلدات (media.updated في التدقيق)؛ DELETE محمي بحاجز الاستخدام — 409 media_in_use مع قائمة المواضع الكاملة (منشور/مسودة/قالب/صورة مشاركة) ويُدوّن media.delete_blocked
+  - الصفحات المؤرشفة تحمل archived:true في قائمة الاستخدام — تُعرض بوضوح «(مؤرشفة)» لأن استعادتها تعيد الوسيلة (أمان افتراضي: الأرشفة لا تعفي من الحاجز)
+  - الواجهة (media-client.tsx): بحث بترسيب 300ms، شرائح مجلدات بلمسة اختيار، شارة «مستخدمة · N» خضراء أو «غير مستخدمة» على كل بطاقة، حقل مجلد في بطاقة الرفع، Select نقل مجلد لكل عنصر، حوار حاجز الحذف يعرض كل موضع بنوعه ولغته وحالته، EmptyState بتمييز «لا نتائج مطابقة» عن «لا وسائط بعد»
+  - منتقي الوسائط في المحرر: بحث فوري بنفس الواجهة
+- §2 استبعاد التعديلات غير المنشورة — التنفيذ:
+  - POST /api/admin/pages/[id]/discard (pages.edit): حواجز not_discardable (لم تُنشر ضمن نظام المراجعات) / archived / nothing_to_discard / revision_required / conflict — تحديث ذري updateMany بقفل المراجعة، والمسودة تعود حرفيًا للمنشور (الكتل + الإعدادات المنشورة)
+  - قرار تصميمي: draftRevision يعود إلى publishedRevision (لا يزداد) — المسودة صارت مطابقة للمنشور فمؤشر «تعديلات غير منشورة» يطفأ، والحفظ التالي يتسلسل من هذه المراجعة
+  - إصلاحان أثناء الاختبار: (1) publishedBlocksEn=null حالة منشورة سليمة (لغة فارغة عند النشر) فخفف الحاجز إلى publishedRevision/publishedAt فقط؛ (2) نسخ المنشور null إلى مسودة غير قابلة لـ null → ?? "[]"
+  - المحرر: زر كهرماني (Eraser) في الشريط يظهر فقط لصفحة منشورة فيها تعديلات غير منشورة + حوار تأكيد بنطاق واضح + إعادة تحميل كاملة بعد النجاح + محاولة إعادة واحدة تلقائية عند تعارض حفظ تلقائي (آمن بنيويًا لأن الغاية رمي محتوى الخادم نفسه)
+- اختبارات: 14 حالة جديدة في media-usage.test.ts (استخراج/حدود/استعلام/شرطات/عربي/طول/تنظيف) — الإجمالي 166
+- QA خادمي (curl بكوكي admin): رفع بمجلد hero ✓ → إشارة في مسودة صفحة مؤقتة → usageCount=1 → DELETE يُرفض 409 بقائمة المواضع → نشر → الرفض يستشهد بـ published + draft → أرشفة → يستمر الرفض مع archived:true → بحث/filters ✓ → نقل مجلد ✓ → discard: revision_required ثم conflict(999) ثم نجاح (rev 2→1، hasUnpublishedChanges=false، المحتوى عاد) ثم nothing_to_discard → حذف الصفحة المؤقتة → DELETE الوسيلة نجح 200 — التدقيق يسجل الثمانية أفعال بترتيبها
+- QA متصفح (agent-browser): رفع صورة فعلية عبر النموذج بمجلد hero → الشارة «غير مستخدمة» ثم «مستخدمة · 1» بعد الإشارة المنشورة → الحذف عبر نقرة CDP حقيقية → حوار الحاجز يعرض «QA واجهة وسائط (AR) صفحة منشورة» (لقطة .qa/round32-delete-blocked.png) → المحرر: الزر الكهرماني ظاهر + الحوار التأكيدي (لقطة .qa/round32-editor-before-discard.png) → تأكيد → شارة «تعديلات غير منشورة» اختفت + toast «استُبعدت التعديلات…» → usageCount عاد 2 والشارة في المكتبة «مستخدمة · 2» → البحث «لا نتائج مطابقة» → console بلا أخطاء
+- تنظيف: الصفحة المؤقتة والوسيلة التجريبية وأثرهما حُذفا — المكتبة والصفحات في حالتهما الأصلية
+- البوابات: typecheck ✓ lint ✓ 166/166 ✓ git diff --check ✓ — الالتزام d606acb
+
+Stage Summary:
+- §7 مكتملة الحلقة: كل وسيلة تعرف أين تُستخدم، ولا يمكن حذف مستخدمة (منشور/مسودة/قالب/صورة مشاركة) — الحاجز يعرض المواضع بدل خطأ عام، والمجلدات والبحث تجعل المكتبة قابلة للاستخدام فعليًا مع نمو المحتوى
+- §2 أُغلقت ثغرة الجولة 31: المحرر يمتلك زرًا صريحًا لرمي التجارب غير المنشورة والعودة للمنشور حرفيًا — بديل آمن عن النشر الخطأ أو الإصلاح اليدوي
+- دروس: (1) synthetic MouseEvent لا يثير onClick في Radix أحيانًا — نقرة CDP حقيقية عبر refs دائمًا؛ (2) hasUnpublishedChanges= rev>pubRev يجعل أي «إعادة مسودة» تتطلب إعادة محاذاة المراجعة لا زيادتها؛ (3) نشر لغة فارغة يخزن null في publishedBlocks — كل مستهلك لهذه الأعمدة يجب أن يتعامل مع null كسلسلة فارغة لا كحالة خطأ
+- بقي من §7 (اختياري): ألبومات بسحب وإفلات، معاينة SVG مؤمنة في الشبكة موجودة أصلًا عبر /api/media
+- المرشحات التالية (بأولوية §13): C تحرير نصي داخلي (inline) للعناوين والفقرات في الرسم؛ D نسخة قالب بعدّاد استخدام + محرر اسم؛ E اختبارات E2E للترحيل داخل CI + دليل المحرر ثنائي اللغة
+
+---
+Task ID: 33
+Agent: main (Z.ai Code)
+Task: Round 33 — إصلاح 5 انحدارات اختبار بعد إعادة ضبط البيئة + §3 التحرير النصي المباشر (inline editing) داخل لوحة الرسم — مختبر E2E متصفحيًا ومودع
+
+Work Log:
+- فحص صحة أولي: الخادم كان ميتًا (القتل الصامت بين الاستدعاءات — أعيد تشغيله بNODE_OPTIONS=--max-old-space-size=1536)، .env سليم، لكن bun test أعطى 5 إخفاقات
+- إصلاح انحدارات الاختبار (commit b39452c):
+  - bunfig.toml لم يكن متتبعًا فمحاه إعادة الضبط → 4 اختبارات FaqAccordion فقدت DOM — أُعيد إنشاؤه مع tests/jsdom-preload.ts (jsdom كامل + matchMedia/ResizeObserver/PointerEvent/scrollIntoView) وهذه المرة أُوديا في git حتى لا تتكرر الخسارة
+  - درس تقني: استيراد jest-dom الساكن في الـpreload يقيّم screen.js قبل وجود document فيتخزن المتغير الرامي — الحل await import بعد بناء DOM
+  - اختبار سجل الصلاحيات كان يعتمد toHaveProperty("admin.dashboard") الدلالة المنقّطة التي تغيرت مع ترقية runtime — استُبدل بObject.hasOwn (مستقل عن الإصدار)
+- §3 التحرير النصي المباشر (commit ee0b091):
+  - src/lib/blocks/inline-fields.ts: INLINE_EDITABLE_TYPES (heading/text/buttonLink) + الحقل الأساسي لكل نوع + readInlineField/applyInlineField — كتابة حقل واحد داخل props بسلامة، اقتطاع على حدود zod (text 300/kicker 120/label 120/paragraphs 5000)، ورفض صريح للحقول غير المعروفة (href/level ممنوعة الكتابة المباشرة)
+  - src/components/blocks/inline-edit-context.tsx: سياقا الجلسة (لوحة) والنطاق (عقدة) + EditableText — خارج الجلسة نص عادي؛ داخلها contentEditable بلا أبناء React (النص يُملأ عبر ref) حتى لا يقفز المؤشر أثناء الكتابة؛ الإدخال يبث القيمة حية عبر updateProps فتعمل آلية الحفظ التلقائي والتاريخ المجمّع القائمة كما هي؛ Enter يلتزم، Esc يرجع قيمة بدء الجلسة للحقل ويختم، اللصق يُنزع لنص صرف
+  - إصلاح bug أثناء التطوير اكتشف بالاختبار المتصفحي: عند بدء الجلسة كان React يزيل أبناء النص فيبدأ الحقل فارغًا وأول حرف «يستبدل» المحتوى — الحل ملء النص في ref callback قبل التركيز (أُعيد إنتاج العطل ثم التحقق من الإصلاح بنفس السيناريو)
+  - page-renderer: نطاق تحرير لكل عقدة عبر Provider داخل BlockContent (null دائمًا في العرض العام)؛ editor-canvas: نقر مزدوج على الغلاف + زر قلم في شريط الأدوات العائم + حلقة وشارة «تحرير مباشر» أثناء الجلسة + إزالة الغلاف المانع للعقدة قيد التحرير فقط؛ page-editor: جلسة تنتهي بالنقر خارج العقدة/Escape/وضع الاختبار/معاينة iframe/تبديل لغة المسودة، وEnter على ورقية نصية محددة بديل لوحة مفاتيح للنقر المزدوج
+  - إصلاح إنتاجي مصاحب: ButtonLinkBlock في وضع التحرير يرسم span بلا تنقل — قبلها كان النقر على زر أثناء جلسة التحرير يسرّح للرابط
+  - مصفوفة i18n: admin.editor.inlineEdit / inlineEditHint / inlineEditingBadge في ar/en/types
+  - إصلاح صياغة: النقطة الكهرمانية في قائمة الصفحات كانت تلوّن «تغييرات غير محفوظة» والصواب «تعديلات غير منشورة» (te.unpublishedChanges)
+- اختبارات: 12 حالة جديدة في inline-fields.test.ts (أنواع/حقول أساسية/قراءة/كتابة بسلامة/اقتطاع/رفض صريح/قيمة فارغة) — الإجمالي 178
+- QA متصفحي E2E (agent-browser على صفحة مؤقتة حُذفت بعدها): نقر مزدوج → جلسة + تركيز على الحقل الأساسي → كتابة → «محفوظة» تلقائيًا → Enter يلتزم ويبقي الجلسة → نص آخر بلوحة الطاقم (paragraphs:0) → Escape يرجع الحقل ويختم → النقر خارج العقدة يختم → إعادة تحميل تؤكد بقاء العنوان والفقرة على الخادم → Ctrl+Z داخل الحقل = تراجع أصلي للمحارف (بالتصميم، المزامنة عند blur) → صفحات عامة ar/en/about سليمة → حذف صفحة QA والتحقق من 404 → console 0 أخطاء → لقطة .qa/round33-inline-editing.png
+- البوابات: typecheck ✓ lint ✓ 178/178 ✓ git diff --check ✓ — الالتزامان b39452c و ee0b091
+
+Stage Summary:
+- §3 اكتملت الآن بحلقة التحرير المباشر: العنوان/الفقرة/زر-رابط تُحرر حرفيًا في مكانها بنفس الطباعة والحجم، مع الحفظ التلقائي والتاريخ والإلغاء — بلا أي مسار جديد للحفظ (نفس updateProps والمراجعات الذرية)
+- إصلاح بنيوي دائم: بنية اختبارات DOM (bunfig + preload) صارت في المستودع فلا تنكسر مجددًا بإعادة ضبط البيئة
+- دروس: (1) تغيّر دلالات toHaveProperty المنقّطة بين إصدارات runtime — الفحوص على مفاتيح تحوي نقاطًا تستخدم Object.hasOwn؛ (2) تحويل عنصر نصي إلى contentEditable يجب أن يملأ النص عبر ref لا أبناء React؛ (3) dispatching dblclick الصناعي مباشرة بعد mousedown يسبق إعادة رسم React — بين الجلسات انتظر re-render قبل الفحص
+- بقي من §3 (اختياري): تحرير مباشر لحقول إضافية (kicker من المحرر حين يكون فارغًا، عناوين أعمدة columns)؛ إنشاء فقرة جديدة بEnter داخل نص متعدد
+- المرشحات التالية (بأولوية §13): D نسخة قالب بعدّاد استخدام + محرر اسم؛ D جدولة النشر / كشف وسائط بلا استخدام في القوالب؛ E اختبارات E2E للترحيل داخل CI + دليل المحرر ثنائي اللغة يوثق التحرير المباشر
+
+---
+Task ID: 34
+Agent: main (Z.ai Code)
+Task: Round 34 — تقييم الحالة + QA متصفحي شامل، ثم §D: إعادة تسمية القوالب المخصصة (PATCH + تدقيق) + إصلاح مطابقة العدد العربية في عدّادات القوالب
+
+Work Log:
+- تقييم أولي: .env سليم (4 مفاتيح)، قاعدة البيانات كاملة (3 مستخدمين/10 صفحات/5 أدوار/6 قوالب/9 إصدارات/74 تدقيق)، 178/178 اختبار، typecheck/lint ✓
+- QA متصفحي: تسجيل دخول admin ✓، تحرير «من نحن» ✓، حوار القوالب يعمل — كشف خلاله **عطل صياغي حقيقي**: «استُخدم 3 مرة» و«4 عنصرًا» (مخالفة لمطابقة العدد والمعدود العربية). ملاحظة تشخيصية: aria-snapshot يطوي النصوص الوسيطة — تحقق الـDOM عبر eval كشف أن الحوار كان يعرض كل شيء (شارة النوع/الأعداد/التاريخ) فلم يكن العطل انحدار واجهة بل صياغة فقط
+- §D إعادة التسمية (commit جديد):
+  - src/lib/i18n/ar-plural.ts: arabicCountPhrase — تصريف العدد (1 مفرد/2 مثنى/3–10 جمع/11+ مفرد منصوب/0 جمع) بصيغ عبارات كاملة مع {n} اختياري، اقتطاع وآمن لغير النهائي
+  - parseUpdateTemplateInput في templates/service.ts: دلالات واضحة — الاسم الغائب/الفارغ يُبقي الحالي، الوصف الغائب يُبقي والحاضر الفارغ يمسح صراحة (null)، اسم فارغ تمامًا مرفوض name_required، لا تغيير → nothing_to_update، اقتطاع 120/400
+  - PATCH /api/admin/templates/[id]: pages.edit، builtin → 400 builtin_readonly (مختبَر بالـAPI)، invalid_json 400، التدقيق template.updated بسجل changed (nameAr/nameEn بلا محتوى)
+  - حوار القوالب: زر «إعادة تسمية» للقوالب المخصصة فقط + حوار حقول ثنائية اللغة معبّأة مسبقًا + تحديث البطاقة في مكانها بعد الحفظ (استبدال العنصر فقط دون إعادة تحميل)
+  - i18n: usageCountOne/Two/Few/Many + nodesCountOne/Two/Few/Many في ar/en/types (الإنجليزية صيغتين فعليتين)
+- اختبارات: 18 حالة جديدة في ar-plural.test.ts (تصريف كامل + دلالات التحديث) — الإجمالي 196
+- QA متصفحي E2E كامل: إنشاء قالب مخصص من المحتوى الحالي «قالب تجربة الجولة 34» → إعادة تسمية «قالب تجربة — مُعاد تسميته»/«Renamed QA Template» → البطاقة تحدثت فورًا → GET API يُظهر الاسم الجديد → AuditLog: template.updated بchanged[nameAr,nameEn] → PATCH على قالب مدمج 400 builtin_readonly → حذف القالب التجريبي بتأكيد → اختفى من القائمة والقاعدة + تدقيق template.deleted → console بلا أخطاء → لقطات .qa/round34-*.png
+- حوادث بيئة: الخادم مات مرتين أثناء الجولة (قتل صامت — المراجعة الدورية cron تضرب نفس dev.log) — التشغيل المستقر بـ(setsid env NODE_OPTIONS=--max-old-space-size=1536 bun run dev &) داخل subshell مفصول كليًا؛ استقر عبر استدعاءات الأدوات بعد ذلك
+- البوابات: typecheck ✓ lint ✓ 196/196 ✓ git diff --check ✓ — الالتزام الأخير بإعادة التسمية والصياغة
+
+Stage Summary:
+- §D انطلقت: القوالب المخصصة صارت تُدار دورة كاملة (إنشاء → إعادة تسمية → تطبيق → حذف) والقوالب المدمجة محمية من الكتابة بgate مزدوج (واجهة + API)
+- العدّادات العربية في القوالب صحيحة نحويًا الآن عبر أداة قابلة لإعادة الاستخدام (arabicCountPhrase) — تنفع لأي عدّاد قادم في اللوحة
+- دروس: (1) aria-snapshot يطوي span النصية — لا تستنتج «العنصر غير مرسوم» قبل فحص DOM بeval؛ (2) تطبيق لغة واحدة على الحقول في التحديث (لا fallback بين اللغتين) يحمي أسماء اللغة الأخرى من الضياع؛ (3) setsid داخل subshell مزدوج هو الشكل الوحيد المستقر ليدوي تشغيل dev في هذه البيئة
+- بقي من §D: جدولة النشر (publishAt)؛ كشف وسائط القوالب بلا استخدام؛ قوالب مخصصة بمعاينة مصغرة
+- المرشحات التالية (أولوية §13): E اختبارات E2E للترحيل داخل CI + دليل المحرر ثنائي اللغة (يضيف الآن وثيقة إعادة التسمية)؛ D جدولة النشر
+
+---
+Task ID: 35
+Agent: main (Z.ai Code)
+Task: Round 35 — تقييم الحالة + QA متصفحي، ثم §D جدولة النشر (publishAt) بحلقة كاملة: نواة نشر مشتركة + منفّذ دوري + API + حوار محرر + شارات قائمة + تدقيق وإشعارات — مختبرة E2E متصفحيًا و API ومودعة
+
+Work Log:
+- تقييم أولي: .env سليم (4 مفاتيح)، 196/196 اختبار، typecheck/lint نظيفان، تسجيل دخول admin متصفحيًا + جميع الصفحات العامة 200 (فحص /ar /en /about /services /contact /track)
+- §D جدولة النشر — التنفيذ (commit feat(pages)):
+  - Prisma: Page.scheduledPublishAt/scheduledRevision/scheduledPublishById + فهرس scheduledPublishAt — db:push
+  - src/lib/pages/publish-core.ts: نواة نشر مشتركة استُخرجت حرفيًا من مسار النشر (تحقق خادمي، لقطة إعدادات، معاملة ذرية، إصدارات عند التغيير فقط، تحويلات روابط، إعادة تحقق، تدقيق، إشعارات) — مسار واحد للنشر اليدوي والمجدول؛ مسار /publish صار بوابة صلاحية + فك طلب + قفل مراجعة فقط
+  - safeRevalidate داخل النواة: revalidatePath يرمي خارج سياق طلب ("static generation store missing") — اكتُشف أول تشغيل فعلي للجدولة (النشر نجح لكن التدقيق والإشعارات تجاوزا) فأُصلح بالتقاط آمن مع تسجيل
+  - src/lib/pages/schedule.ts: parseScheduleInput (ISO، مهلة دنيا 30ث، أفق أقصى سنتان) + decideScheduledPublish (مرتبط بالمراجعة، الأرشيف مسقط) — دوال خالصة مختبرة؛ runScheduledPublishes بعزل أخطاء لكل صفحة وضمان مسح الجدولة في كل الحالات (لا إطلاق مزدوج)
+  - src/instrumentation.ts: دورة كل دقيقة بعد 15ث من الإقلاع، nodejs فقط، قفل globalThis ضد تكرار HMR — أثبت التحميل بسجلين [instrumentation] nodejs/edge
+  - POST /api/admin/pages/[id]/schedule: pages.publish، الجدولة مرتبطة بbaseRevision (409 عند الانحراف)، الإلغاء غير مرتبط بالمراجعة (آمن دائمًا)، أرشفة 409، تدقيق schedule_set/schedule_cancelled
+  - الإشعارات: نوع content_schedule جديد (CalendarClock بنفسجي في واجهتي الطاقم والحساب + labels ar/en بخرائط types الأربع)
+  - المحرر: زر CalendarClock في الشريط (يتلون بنفسجي عند وجود جدولة)، حوار schedule-dialog (بطاقة «الجدولة الحالية» + إلغاء، datetime-local بحد أدنى الآن وافتراضي غدًا 09:00، ملاحظة الربط بمراجعة #، أزرار بنجّة بنفسجية)، شارة «مجدولة» بنفسجية في شريط معلومات الجلسة
+  - قائمة الصفحات: شارة بنفسجية CalendarClock بزمن نسبي («خلال أقل من دقيقة») وtitle بالتاريخ المطلق
+- اختبارات: 9 حالات في schedule.test.ts (parse بحدودها الثلاثة + قرار التنفيذ بأربعة مسارات) — الإجمالي 205
+- QA E2E كامل (curl + agent-browser):
+  - مصفوفة التحقق: revision_required / conflict(serverRevision) / past_time / nothing_scheduled ✓
+  - جدولة عبر الواجهة: الحوار يفتح بالافتراضي غدًا 09:00 + ملاحظة #المراجعة → تأكيد → toast «جُدول النشر الآلي في…» + شارة «مجدولة» + قاعدة البيانات محدثة ✓
+  - التنفيذ الآلي: [scheduler] published=1 → publishedRevision محدث، scheduledPublishAt=null، تدقيق page.published بvia:"scheduled" وإصدارات ar/en، إشعار «نُفّذ النشر المجدول» ✓
+  - مسار التعارض: جدولة ثم تعديل المسودة → [scheduler] skipped=1 + تدقيق schedule_skipped بreason:revision_conflict + إشعار «أُسقط النشر المجدول — تغيّرت المسودة» ✓
+  - الإلغاء من الحوار: بطاقة «الجدولة الحالية» → إلغاء → toast + قاعدة البيانات null ✓
+  - شارة القائمة البنفسجية ظاهرة قبل الموعد («خلال أقل من دقيقة») ✓ — لقطات .qa/round35-*.png
+  - تنظيف: صفحة QA حُذفت (أرشفة ثم حذف، عامة 404) ✓
+- حوادث بيئة: الخادم مات صامتًا منتصف الجولة (المعروف) — أعيد بsetsid وNODE_OPTIONS؛ عمليتا restart مقصودتان لتحميل instrumentation وعميل Prisma الجديد
+- البوابات: typecheck ✓ lint ✓ 205/205 ✓ git diff --check ✓ — الالتزام feat(pages) جدولة النشر
+
+Stage Summary:
+- §D اكتملت حلقة الجدولة: المحرر يجدول موعدًا مرتبطًا بمراجعة محفوظة، المنفّذ الدوري ينفّذ بنواة النشر نفسها (لا مسار نشر ثانٍ)، التعارض يُسقط النشر بشفافية (تدقيق + إشعار)، والإلغاء آمن دائمًا — بلا أي مسار يخالف قواعد §2
+- إصلاح بنيوي: revalidatePath أصبح آمنًا خارج سياق الطلب داخل النواة المشتركة — أي مستهلك خلفي قادم للنواة لن يصطدم بالحادثة نفسها
+- مشكلة معروفة (سابقة لا من هذه الجولة): تنبيه hydration بصف Radix aria-controls في AdminShell (Sheet trigger) يظهر على كل صفحات الإدارة حتى غير المعدلة — تزييني فقط، يصلح React فورًا؛ يُرشح لجولة لاحقة
+- دروس: (1) fill على datetime-local لا يحدّث حالة React (وكلاء الأتمتة يعينون القيمة مباشرة) — اختبار onChange يتطلب native setter + input event، والواجهة نفسها سليمة؛ (2) instrumentation يُستدعى مرتين (nodejs+edge) في dev — فلتر NEXT_RUNTIME ضروري قبل أي مؤقت؛ (3) الخادم الميت صامتًا يفسد اختبارات «الانتظار» — تحقق من [scheduler] في dev.log قبل استنتاج فشل المنفّذ
+- المرشحات التالية (بأولوية §13): E اختبارات E2E للترحيل داخل CI + دليل المحرر ثنائي اللغة (الجدولة والتسمية والتحرير المباشر)؛ D كشف وسائط القوالب غير المستخدمة؛ D معاينة مصغرة للقوالب المخصصة؛ إصلاح hydration Radix في AdminShell
+
+---
+Task ID: 36
+Agent: main (Z.ai Code)
+Task: Round 36 — تقييم الحالة + تحقيق في «تحذير hydration» (انكشف كاذب: ضجيج HMR)، ثم §E دليل المحرر داخل التطبيق ثنائي اللغة (F1/؟/زر الشريط) بأقسام قابلة للفلترة وجدول اختصارات حقيقية — مختبر متصفحيًا بالغتين ومودع
+
+Work Log:
+- تقييم أولي: .env سليم، 205/205 اختبار، typecheck/lint نظيفان — الخادم مات صامتًا مرة أخرى عند بداية QA وأعيد تشغيله
+- تحقيق في تحذير hydration الموثق في الجولة 35:
+  - اكتشاف أن console الخاص بagent-browser تراكمي عبر التنقلات — عدّ التحذير «1» في كل مسار كان تلوثًا من جلسة سابقة لا تحذيرًا جديدًا (أعيد الاختبار بجلسات نظيفة: 0 في login وعامة والإدارة)
+  - التحذير يظهر فقط عند HMR/Fast Refresh أثناء تعديل ملفات والتنقل في نفس الوقت — «full reload» يهدرّج مقابل HTML قديم
+  - جرّب حلًا بمعرف صريح على SheetContent ثم اكتشفت أن Radix يولد aria-controls من useId الداخلي (يقرأ context.contentId لا معرف DOM) — أُعيد التراجع عن التعديل ليبقى المستودع صادقًا
+  - الخلاصة: لا bug حقيقي — توثيق كاذب موجب؛ الدرس المهم: فحص hydration يتطلب جلسة نظيفة بلا تعديلات جارية
+- شبه حادثة: rg أظهر «const eaderItems» في layout.tsx (تبدو تلفًا) — تحققت بRead/Edit وnode ثم تأكدت أنه تلف عرض bidi معروف في هذه البيئة؛ Edit الفاشل على السلسلة حمّاني من «إصلاح» ملف سليم — درس متكرر يستحق التثبيت
+- §E دليل المحرر داخل التطبيق — التنفيذ:
+  - src/components/admin/editor/editor-guide.tsx: Dialog بأكورديون من 6 أقسام (نظرة عامة، المكتبة والرسم، التحرير النصي المباشر، الحفظ التلقائي والمراجعات، الإصدارات والقوالب، النشر والجدولة) بأيقونات ملونة بلهجة الهوية (skydrop/violet/emerald/amber/rose/brand)
+  - فلترة بكلمة مفتاحية تخفي الأقسام وصفوف الاختصارات غير المطابقة وتفتح المطابقة تلقائيًا (key={q} + defaultValue بالكل عند البحث) وحالة «لا نتائج»
+  - جدول اختصارات فعلية مُتحقق منها من معالجات keydown: Ctrl+Z/Ctrl+Shift+Z/Ctrl+Y/Ctrl+S/Ctrl+ // Enter/Escape/نقر مزدوج/F1
+  - أزرار kbd بتنسيق ltr-isolate يحترم RTL، ورأس بتدرج brand-soft وشارة الاختصار
+  - الفتح: زر BookOpen في الشريط (title يجمع الاختصارين) + F1 من أي موضع + ؟ خارج حقول الكتابة — مع إضافة guideOpen لقائمة حرس Escape حتى لا يُلغى التحديد خلف الحوار
+  - i18n: قسم admin.editorGuide كامل (ar/en/types) — typecheck يفرض التوازي بنيويًا
+- QA متصفحي E2E: F1 يفتح الحوار، القسم الأول مفتوح افتراضيًا، فلترة «جدولة» تُظهر القسمين المطابقين وتخفي صفوف الاختصارات غير المطابقة، الإغلاق بEscape وإعادة الفتح بزر الشريط و؟، الغة الإنجليزية: كل الأقسام والاختصارات تُرسم (7 عناوين متحقق منها)، console بلا أخطاء — لقطات .qa/round36-editor-guide-ar.png و-en.png
+- البوابات: typecheck ✓ lint ✓ 205/205 ✓ git diff --check ✓ — الالتزام feat(editor) دليل المحرر
+
+Stage Summary:
+- §E انطلقت بجزئها التوثيقي التفاعلي: دليل المحرر صار داخل التطبيق بالغتين يواكب الكود (نفس مصدر i18n) بدل وثيقة خارجية تنتهك الحقيقة — ويغطي الجولات 27–35 كلها (التحرير المباشر، القوالب، الجدولة، الاستبعاد، التعارض)
+- توثيق سلامة: «تحذير hydration» في الجولة 35 كان ضجيج HMR — لا يوجد عطل؛ وأداة قراءة المحتوى (rg/ Bash) قد تلف عرض الملفات ثنائية الاتجاه ولا تعني تلفًا فعليًا
+- دروس: (1) console في agent-browser تراكمي — أي عدّ للأخطاء يتطلب agent-browser close ثم جلسة نظيفة؛ (2) Radix aria-controls يأتي من useId الداخلي ولا يتأثر بمعرف DOM صريح؛ (3) لا «إصلاح» على سلسلة لم يطابقها Edit — تحقق بRead أولًا
+- المرشحات التالية (بأولوية §13): E اختبارات E2E للترحيل داخل CI + وثيقة تشغيل للجدولة (كيف يُراقب المنفّذ الدوري في الإنتاج)؛ D كشف وسائط القوالب غير المستخدمة + معاينة مصغرة للقوالب المخصصة؛ أي تحسين جودة إضافي حسب الحاجة
+
+---
+Task ID: 37
+Agent: main (Z.ai Code)
+Task: Round 37 — تقييم الحالة وQA متصفحي (سليم بلا أخطاء)، ثم §D: معاينات تخطيطية مصغرة للقوالب (wireframe) + تصفية الوسائط بحالة الاستخدام مع شارة الإجمالي — مختبران متصفحيًا ومودعان
+
+Work Log:
+- تقييم أولي: .env سليم (4 مفاتيح)، typecheck/lint نظيفان، 205/205 اختبار، الصفحات العامة 200، دخول admin متصفحيًا وقائمة الصفحات بشاراتها سليمة، console بلا أخطاء — لا bug يُصلح، فاتجه للمتطلبات الجديدة من قائمة أولويات الجولة 36
+- §D معاينات القوالب المصغرة — التنفيذ (commit feat(templates,media)):
+  - src/lib/templates/service.ts: templatePreview() تستخرج بصمة أنواع الكتل العلوية بترتيبها (حد أقصى 14 — TEMPLATE_PREVIEW_MAX) بلا نصوص ولا معرفات؛ templateListItem يعيد arPreview/enPreview — بلا محتوى كامل فتبقى استجابة القائمة خفيفة وآمنة
+  - src/components/admin/editor/template-preview.tsx: مكون رسم تخطيطي (wireframe) بنمط بصري مميز لكل عائلة كتل (27 نوعًا): البطل تدرج كحلي بسطرين، الشبكات بطاقات، المعرض بلاطات، الخطوات دوائر مرقمة بخط واصل، الأسئلة صفوف أكورديون، النموذج حقول وزر، الجدول شبكة خطوط، الفواصل والمسافات… — ألوان الهوية فقط (navy/brand/skydrop/emerald/amber)، صف 18px بارتفاع ثابت وقص بتلاشٍ سفلي (mask-image) للقوالب الأطول، role=img + aria-label مترجم
+  - حوار القوالب: شريط المعاينة بعرض كامل أسفل كل بطاقة بعد فاصل متقطع مع تسمية «بنية القالب» وأيقونة Eye — المحرر يميز القوالب بنظرة قبل التطبيق
+- §D تصفية الوسائط بحالة الاستخدام — التنفيذ:
+  - GET /api/admin/media: بارامتر usage=all|in_use|unused (قيم مجهولة تسقط إلى all بلا 400) + unusedTotal عبر كل المجلدات يغذي شارة التصفية؛ الفلترة على عداد الاستخدام المحسوب مسبقًا (mediaUsageCounts) بلا استعلامات إضافية
+  - مكتبة الوسائط: صف حبوب تصفية (كل الوسائط/المستخدمة/غير المستخدمة) بأسلوب حبوب المجلدات، «غير المستخدمة» بلون كهرماني مميز نشطًا وغير نشط مع شارة عدّ tabular-nums، وحالة «لا نتائج» تراعي التصفية
+- i18n: previewLabel/previewCaption (templates) + usageFilterLabel/All/InUse/Unused (media) في ar/en/types — توازٍ بنيوي مفرض بالنوع
+- اختبارات: 4 حالات templatePreview جديدة (الترتيب، سقف 14، المدخلات الفاسدة بهدوء، تجاهل الأبناء) — الإجمالي 209
+- حوادث بيئة: الخادم مات صامتًا منتصف QA (المعروف) — أعيد بsetsid وNODE_OPTIONS وتابعت الجولة
+- QA متصفحي E2E:
+  - حوار القوالب: كل القوالب الستة المدمجة ترسم معاينتها بـ aria-label عربي صحيح، آلية العمل تُظهر الدوائر المرقمة، من نحن تُظهر البطل والترويسة والنصوص، تمرير داخلي وتلاشٍ سفلي يعملان، console بلا أخطاء — لقطات .qa/round37-*.png
+  - مكتبة الوسائط: رفع صورة اختبار عبر الواجهة → شارة «غير المستخدمة 1» على الحبة الكهرمانية فورًا + شارة «غير مستخدمة» على البطاقة → فلتر in_use/unused يقلب النتائج → حذف الوسيلة غير المستخدمة نجح (يؤكد مسار الحذف) وعادت المكتبة فارغة
+- البوابات: typecheck ✓ lint ✓ 209/209 ✓ git diff --check ✓ — الالتزام feat(templates,media)
+
+Stage Summary:
+- جولتان من قائمة أولويات §D أُنجزتا في جولة واحدة: القوالب صارت مرئية الهيكل بنظرة (بلا جلب محتوى كامل — بصمة أنواع فقط)، والوسائط صارت قابلة للتصفية بحالة الاستخدام (التنظيف أصبح سير عمل: فلتر كهرماني → مراجعة → حذف محمي بالحاجز القائم)
+- درس إضافي: (1) استبدال كتل كود بأكملها عبر Bash/rg مهدود بعرض bidi — التحرير عبر python بمراسي فريدة أدق من Edit متعدد الأسطر على هذا الملف؛ (2) التمرير داخل حوارات Radix يتطلب eval على الحاوية نفسها (scroll/scrollintovview يصيبان الصفحة)؛ (3) console التراكمي في agent-browser — أغلقت الجلسة قبل كل عدّ
+- المرشحات التالية (بأولوية §13): E اختبارات E2E للترحيل داخل CI + وثيقة تشغيل الجدولة؛ D كشف وسائط القوالب غير المستخدمة (مدمج الآن جزئيًا عبر تصفية usage=unused التي تشمل القوالب)؛ مرشح متبقٍ: معاينة مصغرة في مكتبة الوسائط للصور داخل القوالب؛ تحسينات جودة إضافية حسب الحاجة

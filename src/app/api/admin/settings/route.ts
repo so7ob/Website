@@ -6,6 +6,7 @@ import { type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { guardApi, json } from "@/lib/auth/session";
 import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
+import { isTrackMode } from "@/lib/track/policy";
 
 const ALLOWED_KEYS = [
   "contact.email",
@@ -23,6 +24,12 @@ const ALLOWED_KEYS = [
   "announcement.variant",
   "announcement.startAt",
   "announcement.endAt",
+  // سياسة روابط المتابعة (§8) — فرض الدخول مفتاح مستقل بأولوية قصوى
+  "track.forceLogin",
+  "track.requestsMode",
+  "track.inquiriesMode",
+  "track.linkTtlDays",
+  "track.allowGuestAttachments",
 ];
 
 const ANNOUNCEMENT_VARIANTS = ["info", "warning", "success", "brand"];
@@ -79,6 +86,19 @@ export async function PATCH(req: NextRequest) {
       }
       if (key === "announcement.enabled" && value !== "true" && value !== "false") {
         return json({ ok: false, code: "invalid" }, 400);
+      }
+      // سياسة المتابعة: قيم صارمة — أي قيمة غير معروفة تُرفض (لا صمت)
+      if ((key === "track.forceLogin" || key === "track.allowGuestAttachments") && value !== "true" && value !== "false") {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
+      if ((key === "track.requestsMode" || key === "track.inquiriesMode") && !isTrackMode(value)) {
+        return json({ ok: false, code: "invalid_track_mode" }, 400);
+      }
+      if (key === "track.linkTtlDays") {
+        const ttl = Number.parseInt(value, 10);
+        if (!Number.isFinite(ttl) || String(ttl) !== value || ttl < 1 || ttl > 3650) {
+          return json({ ok: false, code: "invalid_track_ttl" }, 400);
+        }
       }
       // جدولة الشريط: تاريخ صالح أو فارغ (بلا جدولة)
       if (

@@ -10,7 +10,8 @@
  * قيم تعدادات الخدمات تأتي من خرائط محتوى الموقع (form.services) وتسميات
  * أنواع الأعمال من works.statuses — نفس مصدر العرض العام.
  */
-import { blockSchemas, type BlockType } from "@/lib/blocks/types";
+import { type BlockType } from "@/lib/blocks/types";
+import { BLOCK_REGISTRY } from "@/lib/blocks/tree";
 import { SERVICE_TYPES } from "@/lib/validation";
 import { ar as siteAr } from "@/content/ar";
 import { en as siteEn } from "@/content/en";
@@ -66,6 +67,27 @@ const VARIANT_OPTIONS = [
 const ALIGN_OPTIONS = [
   { value: "start", label: L("بداية السطر", "Start") },
   { value: "center", label: L("وسط", "Center") },
+];
+
+const GAP_OPTIONS = [
+  { value: "xs", label: L("ضئيل", "Extra small") },
+  { value: "sm", label: L("صغير", "Small") },
+  { value: "md", label: L("متوسط", "Medium") },
+  { value: "lg", label: L("كبير", "Large") },
+];
+
+const ROW_COLUMNS_OPTIONS = [
+  { value: "2", label: L("عمودان", "2 columns") },
+  { value: "3", label: L("ثلاثة أعمدة", "3 columns") },
+  { value: "4", label: L("أربعة أعمدة", "4 columns") },
+];
+
+const COLUMN_SPAN_OPTIONS = [
+  { value: "auto", label: L("تلقائي", "Auto") },
+  { value: "1", label: L("عمود واحد", "1 column") },
+  { value: "2", label: L("عمودان", "2 columns") },
+  { value: "3", label: L("ثلاثة أعمدة", "3 columns") },
+  { value: "4", label: L("أربعة أعمدة", "4 columns") },
 ];
 
 const CHANNEL_KIND_OPTIONS = [
@@ -516,6 +538,35 @@ export const PROP_FIELDS: Record<BlockType, FieldDef[]> = {
       ],
     },
   ],
+
+  // ——— عقد البنية (الحاويات) — خصائص البنية فقط؛ المظهر من محرر الأنماط ———
+
+  section: [],
+
+  container: [],
+
+  row: [
+    { key: "gap", label: L("التباعد بين الأعمدة", "Column gap"), type: "select", options: GAP_OPTIONS },
+    {
+      key: "columns",
+      label: L("أعمدة الشبكة (حاسوب)", "Grid columns (desktop)"),
+      type: "select",
+      numeric: true,
+      optional: true,
+      options: ROW_COLUMNS_OPTIONS,
+    },
+  ],
+
+  column: [
+    { key: "gap", label: L("التباعد بين العناصر", "Item gap"), type: "select", options: GAP_OPTIONS },
+    {
+      key: "span",
+      label: L("امتداد العمود (حاسوب)", "Column span (desktop)"),
+      type: "select",
+      options: COLUMN_SPAN_OPTIONS,
+    },
+    { key: "align", label: LB.align, type: "select", options: ALIGN_OPTIONS },
+  ],
 };
 
 // ─── قوالب الصفحة الجديدة (تسميات أداة المحرر — inline كما في السجل) ───
@@ -579,6 +630,11 @@ export const DEFAULT_PROPS: Record<BlockType, Record<string, unknown>> = {
   simpleTable: { headers: [""], rows: [[""]] },
   divider: {},
   spacer: { size: "md" },
+  // الحاويات — نفس الشكل الذي تنتجه مخططات zod الافتراضية (tree.ts)
+  section: {},
+  container: {},
+  row: { gap: "md" },
+  column: { gap: "md", span: "auto", align: "start" },
 };
 
 /** نسخة خصائص افتراضية عميقة (كل إضافة كتلة تحصل على نسختها) */
@@ -586,11 +642,12 @@ export function defaultProps(type: BlockType): Record<string, unknown> {
   return JSON.parse(JSON.stringify(DEFAULT_PROPS[type])) as Record<string, unknown>;
 }
 
-/** تحقق تطوري (dev فقط): كل DEFAULT_PROPS يطابق مخطط zod الخاص به */
+/** تحقق تطوري (dev فقط): كل DEFAULT_PROPS يطابق مخطط zod الخاص به من BLOCK_REGISTRY */
 export function assertDefaultProps(): void {
   if (process.env.NODE_ENV !== "development") return;
   for (const [type, props] of Object.entries(DEFAULT_PROPS)) {
-    const schema = blockSchemas[type as BlockType];
+    const schema = BLOCK_REGISTRY[type as BlockType]?.schema;
+    if (!schema) continue;
     const result = schema.safeParse({ id: `b-${type}-assert`, type, props });
     if (!result.success) {
       const issue = result.error.issues[0];

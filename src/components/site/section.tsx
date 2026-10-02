@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useIsNestedBlock } from "@/components/blocks/nested-context";
 
 /** ترويسة قسم موحدة: شارة علوية + عنوان + وصف اختياري، بمحاذاة تعتمد الاتجاه */
 export function SectionHeading({
@@ -41,8 +44,18 @@ function KickerDot() {
   return <span className="inline-block h-1.5 w-1.5 rounded-full bg-skydrop" aria-hidden="true" />;
 }
 
-/** غلاف قسم موحد بعرض محتوى مريح وطول أسطر مضبوط */
+/** غلاف قسم موحد بعرض محتوى مريح وطول أسطر مضبوط.
+ *  داخل حاوية شجرة المحتوى يُرسم عاريًا (بلا حشوة/عرض أقصى ذاتي) —
+ *  مسؤولية التباعد للحاوية الأم وحدها. */
 export function Section({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
+  const nested = useIsNestedBlock();
+  if (nested) {
+    return (
+      <div id={id} className={className}>
+        {children}
+      </div>
+    );
+  }
   return (
     <section id={id} className={`py-16 sm:py-20 lg:py-24 ${className}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>

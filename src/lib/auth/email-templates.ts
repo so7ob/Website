@@ -57,3 +57,48 @@ export function newRequestStaffMail(locale: string, { refCode, name }: { refCode
     text: `وصل طلب مشروع جديد.\n\nالرقم المرجعي: ${refCode}\nمن: ${name}\n\nافتح لوحة الإدارة لمراجعته والرد عليه.`,
   };
 }
+
+// ————————————————————————————————————————————————————————————————
+// روابط المتابعة — تسليم الرابط وإشعار الرد
+// ————————————————————————————————————————————————————————————————
+
+/** تسليم رابط المتابعة عند الإصدار/التجديد — الرمز الخام يظهر في البريد فقط ولا يُخزن */
+export function trackLinkMail(
+  locale: string,
+  { url, refCode, expiresInDays }: { url: string; refCode: string; expiresInDays: number }
+) {
+  if (locale === "en") {
+    return {
+      subject: `Your follow-up link for ${refCode} — so7ob`,
+      text: `Your follow-up link for ${refCode} is ready:\n\n${url}\n\nThe link stays valid for ${expiresInDays} day(s) and can be reused until it expires or is revoked.\n\nKeep this email — the link is your key to view the card and its conversation. If it is ever revoked or expires, contact us to issue a new one after verifying your identity.`,
+    };
+  }
+  return {
+    subject: `رابط متابعتك للطلب ${refCode} — سُحُب التقنية`,
+    text: `رابط متابعة الطلب ${refCode}:\n\n${url}\n\nالرابط صالح لمدة ${expiresInDays} يومًا ويمكن استخدامه مرارًا حتى انتهاء صلاحيته أو إلغائه.\n\nاحتفظ بهذه الرسالة — الرابط هو مفتاحك للاطلاع على البطاقة ومحادثتها. إن أُلغي أو انتهت صلاحيته فتواصل معنا لإصدار رابط جديد بعد التحقق من هويتك.`,
+  };
+}
+
+export interface StaffReplyMailInput {
+  refCode: string;
+  /** رابط آمن لا يُحيي رابطًا ملغى: إما بطاقة الحساب (يتطلب دخول المالك) أو صفحة المتابعة العامة */
+  url: string;
+  /** مقتطف من نص الرد — اختياري وبلا ملاحظات داخلية أبدًا */
+  preview?: string;
+}
+
+/** إشعار العميل برد الفريق — يعمل حتى بلا حساب مرتبط (نرسل إلى بريد البطاقة) */
+export function staffReplyMail(locale: string, { refCode, url, preview }: StaffReplyMailInput) {
+  const previewLine = preview ? `\n\n— مقتطف من الرد —\n${preview}\n` : "";
+  const previewLineEn = preview ? `\n\n— Reply preview —\n${preview}\n` : "";
+  if (locale === "en") {
+    return {
+      subject: `New reply on ${refCode} — so7ob`,
+      text: `A new reply was added to your card ${refCode}.${previewLineEn}\nOpen your follow-up card:\n${url}\n\nIf your follow-up link was revoked or expired, sign in to your account or contact us to get a new link.`,
+    };
+  }
+  return {
+    subject: `رد جديد على ${refCode} — سُحُب التقنية`,
+    text: `أُضيف رد جديد على بطاقتك ${refCode}.${previewLine}\nافتح بطاقة المتابعة:\n${url}\n\nإن كان رابط المتابعة ملغى أو منتهي الصلاحية فسجّل الدخول إلى حسابك أو تواصل معنا للحصول على رابط جديد.`,
+  };
+}

@@ -203,6 +203,22 @@ export async function sendRequestMessage(opts: {
         }))
       );
     }
+
+    // بريد إشعار العميل برد الفريق — حتى بلا حساب مرتبط (متطلب §9)
+    // الرابط آمن: مالك الحساب → بطاقة ?card=، زائر → صفحة المتابعة العامة (لا يُحيي رابطًا ملغى)
+    // فشل البريد لا يفسد نجاح الرد
+    if (isStaffReply && request.email) {
+      const { emailStaffReply } = await import("@/lib/track/notify");
+      await emailStaffReply({
+        scope: "request",
+        cardId: requestId,
+        to: request.email,
+        locale: request.locale || "ar",
+        refCode: request.refCode,
+        replyPreview: trimmed,
+        hasAccount: Boolean(request.clientId),
+      });
+    }
   }
 
   return { ok: true, message };

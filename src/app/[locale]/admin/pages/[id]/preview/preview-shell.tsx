@@ -6,10 +6,10 @@
  */
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, Monitor, Smartphone, Tablet } from "lucide-react";
+import { Pencil, Monitor, Smartphone, Tablet, FileWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPortalContent } from "@/content/portal";
-import type { Block } from "@/lib/blocks/types";
+import type { ContentNode } from "@/lib/blocks/tree";
 import type { Locale } from "@/lib/i18n";
 import { PageRenderer } from "@/components/blocks/page-renderer";
 import { cn } from "@/lib/utils";
@@ -23,13 +23,15 @@ const DEVICE_WIDTHS: Record<PreviewDevice, string> = {
 
 interface PreviewShellProps {
   pageId: string;
-  blocks: Block[];
+  nodes: ContentNode[];
+  /** خطأ تحقق المحتوى — يُعرض صريحًا بدل صفحة فارغة صامتة */
+  loadError?: string | null;
   locale: Locale; // لغة المحتوى المعروض
   uiLocale: Locale; // لغة واجهة المعاينة
   initialDevice: PreviewDevice;
 }
 
-export function PreviewShell({ pageId, blocks, locale, uiLocale, initialDevice }: PreviewShellProps) {
+export function PreviewShell({ pageId, nodes, loadError, locale, uiLocale, initialDevice }: PreviewShellProps) {
   const t = getPortalContent(uiLocale);
   const te = t.admin.editor;
   const tp = t.admin.pages;
@@ -42,13 +44,20 @@ export function PreviewShell({ pageId, blocks, locale, uiLocale, initialDevice }
         className="mx-auto w-full max-w-7xl bg-white shadow-sm transition-[max-width] duration-300"
       >
         <div className={cn("mx-auto w-full", DEVICE_WIDTHS[device])}>
-          {blocks.length === 0 ? (
+          {loadError ? (
+            <div className="flex min-h-64 flex-col items-center justify-center gap-2 p-8 text-center">
+              <FileWarning className="size-8 text-amber-500" aria-hidden="true" />
+              <p className="text-sm font-semibold text-navy">{uiLocale === "en" ? "Content could not be rendered" : "تعذّر عرض المحتوى"}</p>
+              <p dir="ltr" className="max-w-md text-xs leading-6 text-muted-foreground">{loadError}</p>
+            </div>
+          ) : nodes.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center gap-2 p-8 text-center">
               <p className="text-sm font-semibold text-navy">{tp.empty}</p>
               <p className="max-w-xs text-xs leading-6 text-muted-foreground">{tp.emptyBody}</p>
             </div>
           ) : (
-            <PageRenderer blocks={blocks} locale={locale} />
+            /* وضع test — المعاينة للمراجعة: النماذج تُحاكى ولا يصل أي طلب حقيقي */
+            <PageRenderer nodes={nodes} locale={locale} mode="test" />
           )}
         </div>
       </div>

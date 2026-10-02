@@ -12,6 +12,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import {
   Archive,
+  CalendarClock,
   Copy,
   ExternalLink,
   FileText,
@@ -60,7 +61,7 @@ import { getPortalContent } from "@/content/portal";
 import { can } from "@/lib/auth/permissions";
 import { isValidSlug, type Block } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
-import { apiErrorMessage, apiGet, apiSend, ApiError, buildQuery, fmtRelative } from "@/components/admin/helpers";
+import { apiErrorMessage, apiGet, apiSend, ApiError, buildQuery, fmtDateTime, fmtRelative } from "@/components/admin/helpers";
 import { EmptyState } from "@/components/admin/empty-state";
 import { useDebounced } from "@/components/admin/use-debounced";
 import type { Me } from "@/components/admin/types";
@@ -347,7 +348,16 @@ export function PagesClient({ me, locale }: PagesClientProps) {
                       <div className="flex items-center gap-1.5">
                         <Badge className={STATUS_TONES[row.status] ?? STATUS_TONES.draft}>{statusLabel(row.status)}</Badge>
                         {row.hasUnpublishedChanges && (
-                          <span className="size-2 shrink-0 rounded-full bg-amber-500" title={te.unsaved} aria-label={te.unsaved} />
+                          <span className="size-2 shrink-0 rounded-full bg-amber-500" title={te.unpublishedChanges} aria-label={te.unpublishedChanges} />
+                        )}
+                        {row.scheduledPublishAt && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-800"
+                            title={tp.scheduledFor.replace("{time}", fmtDateTime(row.scheduledPublishAt, locale))}
+                          >
+                            <CalendarClock className="size-3" aria-hidden="true" />
+                            {fmtRelative(row.scheduledPublishAt, locale)}
+                          </span>
                         )}
                       </div>
                     </TableCell>

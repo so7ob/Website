@@ -70,3 +70,4 @@ backups/
 *.db-journal
 *.sqlite-wal
 *.sqlite-shm
+.qa/

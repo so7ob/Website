@@ -4,6 +4,7 @@ import { BlockContainer } from "./block-container";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
+import { EditableText } from "./inline-edit-context";
 
 export type HeadingBlockProps = z.input<typeof blockSchemas.heading>["props"];
 
@@ -27,10 +28,21 @@ export function HeadingBlock({ props }: { props: HeadingBlockProps; locale: Loca
         {props.kicker && (
           <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-sm font-semibold text-brand-strong">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-skydrop" aria-hidden="true" />
-            {props.kicker}
+            <EditableText
+              field="kicker"
+              value={props.kicker}
+              as="span"
+              className="rounded-sm outline-none"
+            />
           </p>
         )}
-        <Tag className={HEADING_CLASSES[level]}>{props.text}</Tag>
+        <EditableText
+          field="text"
+          value={props.text}
+          as={Tag}
+          primary
+          className={HEADING_CLASSES[level]}
+        />
       </div>
     </BlockContainer>
   );

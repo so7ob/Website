@@ -21,6 +21,7 @@ import type { Locale } from "@/lib/i18n";
 import { StatusBadge } from "@/components/admin/badges";
 import { EmptyState } from "@/components/admin/empty-state";
 import { MessageBubble, ReplyComposer } from "@/components/admin/conversation";
+import { TrackPanel } from "@/components/admin/track/track-panel";
 import { apiGet, apiSend, ApiError, apiErrorMessage, fmtDateTime } from "@/components/admin/helpers";
 import type { InquiryDetail, InquiryDetailResponse, Me, MessageRow, RequestsResponse, StaffOption } from "../types";
 
@@ -419,6 +420,11 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
               </Button>
             ) : null}
           </section>
+
+          {/* رابط المتابعة — لوحة الطاقم المشتركة (خفية عند الطباعة) */}
+          <div className="print:hidden">
+            <TrackPanel scope="inquiry" cardId={detail.id} locale={locale} t={t.admin.track} />
+          </div>
         </aside>
       </div>
     </div>

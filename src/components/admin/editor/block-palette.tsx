@@ -24,9 +24,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getPortalContent } from "@/content/portal";
-import { BLOCK_LIBRARY, type BlockType } from "@/lib/blocks/types";
+import { type BlockType } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
-import { TYPE_ICONS } from "./block-library";
+import { LIBRARY_ENTRIES, TYPE_ICONS } from "./block-library";
 
 interface BlockPaletteProps {
   locale: Locale;
@@ -40,12 +40,12 @@ export function BlockPalette({ locale, open, onOpenChange, onAdd }: BlockPalette
   const te = getPortalContent(locale).admin.editor;
   const [query, setQuery] = useState("");
 
-  // بحث ثنائي اللغة: يقارن الاسمين معًا ويحفظ ترتيب BLOCK_LIBRARY
+  // بحث ثنائي اللغة: يقارن الاسمين معًا ويحفظ ترتيب المكتبة (من BLOCK_REGISTRY)
   const q = query.trim().toLowerCase();
   const results =
     q === ""
-      ? BLOCK_LIBRARY
-      : BLOCK_LIBRARY.filter(
+      ? LIBRARY_ENTRIES
+      : LIBRARY_ENTRIES.filter(
           (entry) => entry.ar.toLowerCase().includes(q) || entry.en.toLowerCase().includes(q)
         );
 

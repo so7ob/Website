@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, Send } from "lucide-react";
+import { Check, CheckCircle2, Copy, ExternalLink, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getPortalContent } from "@/content/portal";
 import type { Locale } from "@/lib/i18n";
 import type { PortalContent } from "@/content/portal/types";
 import { createInquiry } from "./api";
@@ -40,7 +41,17 @@ export function NewInquiryDialog({
   const [category, setCategory] = useState<string>("general");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [created, setCreated] = useState<{ ref: string; id?: string } | null>(null);
+  const [created, setCreated] = useState<{ ref: string; id?: string; trackUrl: string | null } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trackT = getPortalContent(locale).track;
+
+  useEffect(
+    () => () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    },
+    []
+  );
 
   // تحقق مطابق للواجهة الخادمية — الموضوع ≥ ٣ والرسالة ≥ ١٠ محارف
   const subjectValid = subject.trim().length >= 3;
@@ -55,6 +66,7 @@ export function NewInquiryDialog({
       setMessage("");
       setSending(false);
       setCreated(null);
+      setCopied(false);
     }
     onOpenChange(next);
   }
@@ -80,7 +92,11 @@ export function NewInquiryDialog({
     setSending(false);
 
     if (result.ok && result.data.ok && result.data.ref) {
-      setCreated({ ref: result.data.ref, id: result.data.id });
+      setCreated({
+        ref: result.data.ref,
+        id: result.data.id,
+        trackUrl: typeof result.data.trackUrl === "string" ? result.data.trackUrl : null,
+      });
       // تحديث عدادات لوحة الحساب خلف الحوار
       router.refresh();
       return;
@@ -94,6 +110,45 @@ export function NewInquiryDialog({
       return;
     }
     toast.error(authErrors.invalid);
+  }
+
+  /** الرابط المطلق للحالة الراهنة — من معالجات النقر فقط (آمن للترطيب) */
+  function absoluteTrackUrl(): string {
+    const path = created?.trackUrl;
+    if (!path) return "";
+    if (!path.startsWith("/")) return path;
+    return typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+  }
+
+  function copyTracking() {
+    const absolute = absoluteTrackUrl();
+    if (!absolute) return;
+    // احتياطي النسخ عبر textarea عند غياب/رفض واجهة الحافظة — فشل نهائي صامت
+    const legacyCopy = () => {
+      try {
+        const area = document.createElement("textarea");
+        area.value = absolute;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        document.body.removeChild(area);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    navigator.clipboard
+      .writeText(absolute)
+      .then(() => setCopied(true))
+      .catch(() => {
+        if (legacyCopy()) setCopied(true);
+        else console.warn("clipboard copy unavailable");
+      });
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -114,6 +169,33 @@ export function NewInquiryDialog({
             >
               {created.ref}
             </p>
+            {created.trackUrl ? (
+              <div className="rounded-2xl border border-brand/30 bg-accent/50 p-4 text-start">
+                <p className="text-sm leading-7 text-muted-foreground">{trackT.trackingHint}</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    onClick={() => {
+                      const url = absoluteTrackUrl();
+                      if (url) window.open(url, "_blank", "noopener,noreferrer");
+                    }}
+                    className="min-h-11 rounded-full bg-primary px-5 font-semibold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong focus-visible:ring-2 focus-visible:ring-ring/40"
+                  >
+                    <ExternalLink className="size-4" aria-hidden="true" />
+                    {trackT.openTracking}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={copyTracking}
+                    className="min-h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40"
+                  >
+                    {copied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
+                    {copied ? trackT.copied : trackT.copyTracking}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm leading-7 text-muted-foreground">{trackT.trackingUnavailable}</p>
+            )}
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button
                 onClick={openConversation}

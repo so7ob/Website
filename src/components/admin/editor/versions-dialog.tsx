@@ -42,10 +42,11 @@ interface VersionsDialogProps {
   pageId: string;
   locale: Locale;
   me: Me;
+  baseRevision: number; // مراجعة المسودة الحالية
   onRestored: () => void; // يعيد المحرر تحميل المسودة بعد الاستعادة
 }
 
-export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onRestored }: VersionsDialogProps) {
+export function VersionsDialog({ open, onOpenChange, pageId, locale, me, baseRevision, onRestored }: VersionsDialogProps) {
   const t = getPortalContent(locale);
   const tp = t.admin.pages;
   const te = t.admin.editor;
@@ -84,16 +85,26 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
 
   const versions = (data?.versions ?? []).filter((v) => v.locale === tab);
 
-  const restore = async (version: number) => {
+  /** الاستعادة للغة المختارة من التبويب فقط — استعادة اللغتين تحتاج اختيارًا صريحًا */
+  const restore = async (version: number, both: boolean) => {
     setRestoring(true);
     try {
-      await apiSend<RestoreResponse>(`/api/admin/pages/${pageId}/versions/${version}/restore`, "POST");
-      toast.success(tp.restore);
+      await apiSend<RestoreResponse>(`/api/admin/pages/${pageId}/versions/${version}/restore`, "POST", {
+        locales: both ? ["ar", "en"] : [tab],
+        baseRevision: baseRevision,
+      });
+      toast.success(both ? tp.restoreBoth : tp.restore);
       setConfirmVersion(null);
       onRestored(); // يعيد المحرر جلب المسودة المستعادة ويصفّر التاريخ
       onOpenChange(false);
     } catch (err) {
-      toast.error(apiErrorMessage(err, t.auth.errors));
+      if (err instanceof ApiError && err.code === "version_not_found") {
+        toast.error(tp.versionNotFound);
+      } else if (err instanceof ApiError && (err.code === "conflict" || err.code === "revision_required")) {
+        toast.error(te.conflictTitle);
+      } else {
+        toast.error(apiErrorMessage(err, t.auth.errors));
+      }
     } finally {
       setRestoring(false);
     }
@@ -182,21 +193,37 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-bold text-navy">{tp.restoreVersion}</AlertDialogTitle>
             <AlertDialogDescription>
-              #{confirmVersion} — {te.leaveWarning}
+              #{confirmVersion} — {te.restoreScopeHint}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <AlertDialogCancel disabled={restoring}>{t.admin.users.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={restoring}
-              onClick={(e) => {
-                e.preventDefault();
-                if (confirmVersion !== null) void restore(confirmVersion);
-              }}
-            >
-              {restoring && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              {tp.restore}
-            </AlertDialogAction>
+            {canRestore && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={restoring}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirmVersion !== null) void restore(confirmVersion, true);
+                  }}
+                >
+                  {restoring && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                  {tp.restoreBoth}
+                </Button>
+                <AlertDialogAction
+                  disabled={restoring}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirmVersion !== null) void restore(confirmVersion, false);
+                  }}
+                >
+                  {restoring && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                  {tp.restoreThisLocale} ({tab === "ar" ? te.ar : te.en})
+                </AlertDialogAction>
+              </>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

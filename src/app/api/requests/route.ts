@@ -148,5 +148,25 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, ref: code }, { status: 201 });
+  // رابط متابعة — يُعرض فورًا في شاشة النجاح؛ فشل الإصدار لا يمس نجاح الحفظ
+  let trackUrl: string | null = null;
+  try {
+    const { issueTrackLink } = await import("@/lib/track/service");
+    const { emailTrackLink } = await import("@/lib/track/notify");
+    const { getTrackPolicySettings } = await import("@/lib/track/policy");
+    const createdId = (await db.projectRequest.findUnique({ where: { refCode: code }, select: { id: true } }))?.id;
+    if (createdId) {
+      const issued = await issueTrackLink("request", createdId, authUser?.id ?? null);
+      if (issued) {
+        trackUrl = `/${data.locale}/track?t=${encodeURIComponent(issued.token)}`;
+        // تسليم الرابط بالبريد — best-effort: فشله لا يمس نجاح الحفظ ولا شاشة النجاح
+        const ttl = (await getTrackPolicySettings()).linkTtlDays;
+        await emailTrackLink({ scope: "request", to: email, locale: data.locale, token: issued.token, refCode: code, expiresInDays: ttl });
+      }
+    }
+  } catch (e) {
+    console.error("[requests] track-link issue failed", e);
+  }
+
+  return NextResponse.json({ ok: true, ref: code, trackUrl }, { status: 201 });
 }

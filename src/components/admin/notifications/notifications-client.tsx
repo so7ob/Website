@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  CalendarClock,
   CheckCheck,
   ChevronLeft,
   ChevronRight,
@@ -40,6 +41,7 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   info_requested: Info,
   status_changed: Bell,
   content_published: FileText,
+  content_schedule: CalendarClock,
   account: User,
 };
 

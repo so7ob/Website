@@ -62,5 +62,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await notify({ userId: inquiry.clientId, type: "reply_received", payload: { ref: inquiry.refCode }, link: `/${inquiry.locale}/account/inquiries/${id}` });
   }
 
+  // بريد إشعار صاحب الاستفسار برد الفريق — حتى بلا حساب مرتبط (متطلب §9)
+  // الرابط آمن ولا يُحيي رابط متابعة ملغى؛ فشل البريد لا يفسد نجاح الرد
+  if (kind === "message" && inquiry.email) {
+    const { emailStaffReply } = await import("@/lib/track/notify");
+    await emailStaffReply({
+      scope: "inquiry",
+      cardId: id,
+      to: inquiry.email,
+      locale: inquiry.locale || "ar",
+      refCode: inquiry.refCode,
+      replyPreview: text,
+      hasAccount: Boolean(inquiry.clientId),
+    });
+  }
+
   return json({ ok: true, message }, 201);
 }

@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Paperclip,
   Printer,
+  Radar,
   Send,
   ShieldX,
   User,
@@ -225,10 +226,21 @@ export function RequestDetailView({
           <StatusBadge status={request.status} label={statusLabel} className="text-sm print:border print:border-border print:break-inside-avoid" />
         </div>
         <Button
+          asChild
+          variant="outline"
+          aria-label={d.openTracking}
+          className="ms-auto h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40 print:hidden"
+        >
+          <Link href={`/${locale}/track?card=request:${request.id}`}>
+            <Radar className="h-4 w-4 text-brand" aria-hidden="true" />
+            {d.openTracking}
+          </Link>
+        </Button>
+        <Button
           variant="outline"
           onClick={() => window.print()}
           aria-label={d.print}
-          className="ms-auto h-11 rounded-full px-5 font-semibold print:hidden"
+          className="h-11 rounded-full px-5 font-semibold print:hidden"
         >
           <Printer className="h-4 w-4" aria-hidden="true" />
           {d.print}

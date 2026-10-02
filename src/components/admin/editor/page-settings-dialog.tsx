@@ -1,13 +1,14 @@
 "use client";
 
 /**
- * حوار إعدادات الصفحة — العنوانان الإداريان، المسار (مع تحقق محلي)، الترتيب،
- * الظهور (عام/مسجل/أدوار) مع الأدوار المسموحة من SYSTEM_ROLES، وعناوين ووصف
- * محركات البحث لكل لغة. الحفظ PATCH فوري (إعدادات لا تنتظر الحفظ التلقائي).
+ * حوار إعدادات الصفحة — يعدّل إعدادات المسودة العامة (العنوان الظاهر، المسار، الترتيب،
+ * الظهور والأدوار، SEO لكل لغة). كل هذه الحقول لا تصل الزوار إلا عند النشر،
+ * والحفظ بقفل مراجعة (baseRevision) — التعارض يفتح حوار التعارض في المحرر.
+ * العنوان الإداري الداخلي يبقى حقلا منفصلًا (غير علني).
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Info, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -38,55 +39,54 @@ interface PageSettingsDialogProps {
   page: PageDetail;
   locale: Locale;
   me: Me;
-  draftUpdatedAt: string | null; // طابع التعارض الذي بنينا عليه
-  onSaved: (patch: { slug?: string; loadedStamp?: string | null }) => void;
+  baseRevision: number; // مراجعة المسودة التي بنينا عليها
+  onSaved: (patch: { slug?: string; draftSettings?: PageDetail["draftSettings"]; draftRevision: number }) => void;
   onConflict: () => void;
 }
 
-export function PageSettingsDialog({
-  open,
-  onOpenChange,
-  page,
-  locale,
-  me,
-  draftUpdatedAt,
-  onSaved,
-  onConflict,
-}: PageSettingsDialogProps) {
+export function PageSettingsDialog({ open, onOpenChange, page, locale, me, baseRevision, onSaved, onConflict }: PageSettingsDialogProps) {
   const t = getPortalContent(locale);
   const tp = t.admin.pages;
   const te = t.admin.editor;
+  const s = page.draftSettings;
 
-  const [titleAr, setTitleAr] = useState(page.titleAr);
-  const [titleEn, setTitleEn] = useState(page.titleEn);
-  const [slug, setSlug] = useState(page.slug);
-  const [order, setOrder] = useState(String(page.order));
-  const [visibility, setVisibility] = useState(page.visibility);
-  const [allowedRoles, setAllowedRoles] = useState<string[]>(page.allowedRoles);
-  const [seoTitleAr, setSeoTitleAr] = useState(page.seoTitleAr ?? "");
-  const [seoTitleEn, setSeoTitleEn] = useState(page.seoTitleEn ?? "");
-  const [seoDescAr, setSeoDescAr] = useState(page.seoDescAr ?? "");
-  const [seoDescEn, setSeoDescEn] = useState(page.seoDescEn ?? "");
+  const [titleAr, setTitleAr] = useState(s.titleAr);
+  const [titleEn, setTitleEn] = useState(s.titleEn);
+  const [slug, setSlug] = useState(s.slug);
+  const [order, setOrder] = useState(String(s.order));
+  const [visibility, setVisibility] = useState(s.visibility);
+  const [allowedRoles, setAllowedRoles] = useState<string[]>(s.allowedRoles);
+  const [seoTitleAr, setSeoTitleAr] = useState(s.seoTitleAr ?? "");
+  const [seoTitleEn, setSeoTitleEn] = useState(s.seoTitleEn ?? "");
+  const [seoDescAr, setSeoDescAr] = useState(s.seoDescAr ?? "");
+  const [seoDescEn, setSeoDescEn] = useState(s.seoDescEn ?? "");
+  const [adminTitleAr, setAdminTitleAr] = useState(page.titleAr);
+  const [adminTitleEn, setAdminTitleEn] = useState(page.titleEn);
   const [saving, setSaving] = useState(false);
 
   // مزامنة الحالة عند فتح الحوار (قد تكون الصفحة أعيد تحميلها)
   useEffect(() => {
     if (!open) return;
-    setTitleAr(page.titleAr);
-    setTitleEn(page.titleEn);
-    setSlug(page.slug);
-    setOrder(String(page.order));
-    setVisibility(page.visibility);
-    setAllowedRoles(page.allowedRoles);
-    setSeoTitleAr(page.seoTitleAr ?? "");
-    setSeoTitleEn(page.seoTitleEn ?? "");
-    setSeoDescAr(page.seoDescAr ?? "");
-    setSeoDescEn(page.seoDescEn ?? "");
-  }, [open, page]);
+    setTitleAr(s.titleAr);
+    setTitleEn(s.titleEn);
+    setSlug(s.slug);
+    setOrder(String(s.order));
+    setVisibility(s.visibility);
+    setAllowedRoles(s.allowedRoles);
+    setSeoTitleAr(s.seoTitleAr ?? "");
+    setSeoTitleEn(s.seoTitleEn ?? "");
+    setSeoDescAr(s.seoDescAr ?? "");
+    setSeoDescEn(s.seoDescEn ?? "");
+    setAdminTitleAr(page.titleAr);
+    setAdminTitleEn(page.titleEn);
+  }, [open, s, page.titleAr, page.titleEn]);
 
   const slugValid = isValidSlug(slug);
-  const slugChanged = slug !== page.slug;
+  const slugChanged = slug !== s.slug;
   const orderNumber = Math.trunc(Number(order));
+  const publishedSettings = page.publishedSettings;
+  const willApplyAtPublish =
+    publishedSettings && (slug !== publishedSettings.slug || visibility !== publishedSettings.visibility);
 
   const toggleRole = (key: string, checked: boolean) => {
     setAllowedRoles((prev) => (checked ? [...prev, key] : prev.filter((r) => r !== key)));
@@ -97,26 +97,34 @@ export function PageSettingsDialog({
     setSaving(true);
     try {
       const body: Record<string, unknown> = {
-        titleAr,
-        titleEn,
-        order: Number.isFinite(orderNumber) ? Math.max(0, Math.min(999, orderNumber)) : page.order,
-        visibility,
-        allowedRoles,
-        seoTitleAr,
-        seoTitleEn,
-        seoDescAr,
-        seoDescEn,
+        baseRevision,
+        titleAr: adminTitleAr,
+        titleEn: adminTitleEn,
+        draftSettings: {
+          slug,
+          visibility,
+          allowedRoles,
+          titleAr,
+          titleEn,
+          seoTitleAr: seoTitleAr || null,
+          seoTitleEn: seoTitleEn || null,
+          seoDescAr: seoDescAr || null,
+          seoDescEn: seoDescEn || null,
+          order: Number.isFinite(orderNumber) ? Math.max(0, Math.min(999, orderNumber)) : s.order,
+        },
       };
-      if (slugChanged) body.slug = slug;
-      if (draftUpdatedAt) body.draftUpdatedAt = draftUpdatedAt;
 
       const res = await apiSend<PatchPageResponse>(`/api/admin/pages/${page.id}`, "PATCH", body);
-      onSaved({ slug: res.page.slug, loadedStamp: res.page.draftUpdatedAt });
+      onSaved({ slug: res.page.slug, draftSettings: res.page.draftSettings, draftRevision: res.page.draftRevision });
       onOpenChange(false);
       toast.success(t.admin.users.saved);
     } catch (err) {
-      if (err instanceof ApiError && err.code === "conflict") {
+      if (err instanceof ApiError && (err.code === "conflict" || err.code === "revision_required")) {
         onConflict(); // يفتح حوار التعارض في المحرر — إعادة التحميل تجلب الأحدث
+      } else if (err instanceof ApiError && err.code === "slug_taken") {
+        toast.error(tp.slugTaken);
+      } else if (err instanceof ApiError && err.code === "invalid_slug") {
+        toast.error(tp.slugInvalid);
       } else {
         toast.error(apiErrorMessage(err, t.auth.errors));
       }
@@ -137,16 +145,35 @@ export function PageSettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {willApplyAtPublish && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+            <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            {te.settingsDraftOnly}
+          </div>
+        )}
+
         <div className="space-y-5">
-          {/* العنوانان */}
+          {/* العنوانان الظاهران (عامان — يصلان الزوار عند النشر) */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="ps-title-ar">{t.admin.menus.labelAr}</Label>
+              <Label htmlFor="ps-title-ar">{te.publicTitleAr}</Label>
               <Input id="ps-title-ar" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} dir="rtl" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ps-title-en">{t.admin.menus.labelEn}</Label>
+              <Label htmlFor="ps-title-en">{te.publicTitleEn}</Label>
               <Input id="ps-title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} dir="ltr" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
+            </div>
+          </div>
+
+          {/* العنوان الإداري الداخلي */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="ps-admin-title-ar">{te.adminTitleAr}</Label>
+              <Input id="ps-admin-title-ar" value={adminTitleAr} onChange={(e) => setAdminTitleAr(e.target.value)} dir="rtl" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ps-admin-title-en">{te.adminTitleEn}</Label>
+              <Input id="ps-admin-title-en" value={adminTitleEn} onChange={(e) => setAdminTitleEn(e.target.value)} dir="ltr" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
             </div>
           </div>
 
@@ -163,7 +190,7 @@ export function PageSettingsDialog({
                 placeholder="about"
               />
               <p className={cn("text-[11px] leading-5", slugValid ? "text-muted-foreground" : "text-destructive")}>
-                {tp.slugHint}
+                {page.isHome ? tp.homeSlugHint : slugChanged ? te.slugDraftHint : tp.slugHint}
               </p>
             </div>
             <div className="space-y-1.5">
