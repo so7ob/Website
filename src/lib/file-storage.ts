@@ -4,9 +4,12 @@
  */
 import { randomBytes } from "crypto";
 import { mkdirSync, writeFileSync, existsSync, readFileSync, unlinkSync } from "fs";
-import { join, extname } from "path";
+import { join, extname, basename } from "path";
+import { dataDirectory } from "./data-paths";
 
-const UPLOADS_DIR = join(process.cwd(), "db", "uploads");
+function uploadsDirectory(): string {
+  return join(dataDirectory(), "uploads");
+}
 
 /** أنواع مسموحة للمرفقات الخاصة — ترفض التنفيذي والمضغوط الخطير */
 const ATTACHMENT_MIME: Record<string, string> = {
@@ -45,6 +48,7 @@ export interface StoredFile {
 }
 
 function ensureDir(): string {
+  const UPLOADS_DIR = uploadsDirectory();
   if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
   return UPLOADS_DIR;
 }
@@ -76,7 +80,9 @@ export async function storeUpload(file: File, kind: "attachment" | "media"): Pro
 }
 
 export function readFileBuffer(storedName: string): Buffer | null {
-  const safe = storedName.replace(/[/\\]/g, "");
+  if (!storedName || basename(storedName) !== storedName || /[\\\0]/.test(storedName) || storedName === "." || storedName === "..") return null;
+  const UPLOADS_DIR = uploadsDirectory();
+  const safe = storedName;
   const path = join(UPLOADS_DIR, safe);
   if (!path.startsWith(UPLOADS_DIR) || !existsSync(path)) return null;
   return readFileSync(path);
@@ -84,7 +90,9 @@ export function readFileBuffer(storedName: string): Buffer | null {
 
 export function deleteStoredFile(storedName: string): void {
   try {
-    const safe = storedName.replace(/[/\\]/g, "");
+    if (!storedName || basename(storedName) !== storedName || /[\\\0]/.test(storedName) || storedName === "." || storedName === "..") return;
+    const UPLOADS_DIR = uploadsDirectory();
+    const safe = storedName;
     const path = join(UPLOADS_DIR, safe);
     if (path.startsWith(UPLOADS_DIR) && existsSync(path)) unlinkSync(path);
   } catch {
