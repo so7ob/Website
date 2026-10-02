@@ -13,6 +13,7 @@ import {
   Loader2,
   MessageSquare,
   Paperclip,
+  Printer,
   Send,
   ShieldX,
   User,
@@ -204,8 +205,14 @@ export function RequestDetailView({
 
   return (
     <div className="space-y-6">
+      {/* ترويسة الطباعة — تظهر على الورق فقط: العلامة + التاريخ */}
+      <div className="hidden print:block print:border-b print:border-border print:pb-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          {content.meta.siteName} · {new Date().toLocaleDateString(locale)}
+        </p>
+      </div>
       <header className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="ghost" className="h-11 rounded-full px-4 font-semibold text-muted-foreground">
+        <Button asChild variant="ghost" className="h-11 rounded-full px-4 font-semibold text-muted-foreground print:hidden">
           <Link href={`/${locale}/account/requests`}>
             {locale === "ar" ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
             {t.title}
@@ -215,11 +222,20 @@ export function RequestDetailView({
           {request.refCode}
         </h1>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={request.status} label={statusLabel} className="text-sm" />
+          <StatusBadge status={request.status} label={statusLabel} className="text-sm print:border print:border-border print:break-inside-avoid" />
         </div>
+        <Button
+          variant="outline"
+          onClick={() => window.print()}
+          aria-label={d.print}
+          className="ms-auto h-11 rounded-full px-5 font-semibold print:hidden"
+        >
+          <Printer className="h-4 w-4" aria-hidden="true" />
+          {d.print}
+        </Button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] print:block print:space-y-6">
         {/* المحادثة */}
         <div className="min-w-0 space-y-4">
           <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
@@ -233,7 +249,7 @@ export function RequestDetailView({
 
             <div
               ref={conversationRef}
-              className="mt-4 max-h-[28rem] space-y-4 overflow-y-auto rounded-xl bg-muted/30 p-4"
+              className="mt-4 max-h-[28rem] space-y-4 overflow-y-auto rounded-xl bg-muted/30 p-4 print:max-h-none print:overflow-visible print:bg-transparent"
               aria-live="polite"
             >
               {request.messages.length === 0 ? (
@@ -241,7 +257,7 @@ export function RequestDetailView({
               ) : (
                 request.messages.map((message) =>
                   message.kind === "system" ? (
-                    <div key={message.id} className="flex items-center gap-3" role="note">
+                    <div key={message.id} className="flex items-center gap-3 print:break-inside-avoid" role="note">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                         <Info className="h-4 w-4" aria-hidden="true" />
                       </span>
@@ -256,10 +272,10 @@ export function RequestDetailView({
                       </div>
                     </div>
                   ) : (
-                    <div key={message.id} className={cn("flex", message.authorType === "client" ? "justify-end" : "justify-start")}>
+                    <div key={message.id} className={cn("flex print:break-inside-avoid", message.authorType === "client" ? "justify-end" : "justify-start")}>
                       <div
                         className={cn(
-                          "max-w-[85%] rounded-2xl border px-4 py-3 text-sm leading-7 shadow-sm sm:max-w-[75%]",
+                          "max-w-[85%] rounded-2xl border px-4 py-3 text-sm leading-7 shadow-sm sm:max-w-[75%] print:border-border print:bg-transparent print:text-foreground print:shadow-none",
                           message.authorType === "client"
                             ? "rounded-se-sm border-brand/10 bg-accent/60 text-foreground"
                             : "rounded-ss-sm border-navy bg-navy text-white shadow-navy/10"
@@ -268,14 +284,14 @@ export function RequestDetailView({
                         <p
                           className={cn(
                             "mb-1 text-xs font-bold",
-                            message.authorType === "client" ? "text-brand-strong" : "text-skydrop"
+                            message.authorType === "client" ? "text-brand-strong" : "text-skydrop print:text-navy"
                           )}
                         >
                           {message.authorType === "client" ? d.you : d.staff}
                           <span
                             className={cn(
                               "ms-2 font-normal",
-                              message.authorType === "client" ? "text-muted-foreground/80" : "text-white/60"
+                              message.authorType === "client" ? "text-muted-foreground/80" : "text-white/60 print:text-muted-foreground"
                             )}
                           >
                             {formatRelative(message.createdAt, locale)}
@@ -290,8 +306,8 @@ export function RequestDetailView({
             </div>
           </section>
 
-          {/* ملحن الرد */}
-          <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
+          {/* ملحن الرد — مخفي عند الطباعة */}
+          <section className="rounded-2xl border border-border bg-white p-4 sm:p-6 print:hidden">
             {conversationLocked ? (
               <div role="status" className="flex flex-col gap-2 rounded-xl bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                 <p className="font-semibold text-foreground">{statusLabel}</p>
@@ -345,7 +361,7 @@ export function RequestDetailView({
           <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
             <h2 className="text-lg font-bold text-navy">{d.requestInfo}</h2>
             <dl className="mt-4 space-y-3 text-sm">
-              <InfoRow label={t.status} value={<StatusBadge status={request.status} label={statusLabel} />} />
+              <InfoRow label={t.status} value={<StatusBadge status={request.status} label={statusLabel} className="print:border print:border-border print:break-inside-avoid" />} />
               <InfoRow label={t.service} value={t.services[request.serviceType] ?? request.serviceType} />
               <InfoRow label={d.priority} value={priorities[request.priority] ?? request.priority} />
               <InfoRow label={d.assignedTo} value={request.assignee?.name ?? d.unassigned} icon={<User className="h-3.5 w-3.5" aria-hidden="true" />} />
@@ -377,7 +393,7 @@ export function RequestDetailView({
             {canCancel && (
               <Button
                 variant="outline"
-                className="mt-5 h-11 w-full rounded-full font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 hover:text-red-800"
+                className="mt-5 h-11 w-full rounded-full font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 hover:text-red-800 print:hidden"
                 onClick={() => setCancelOpen(true)}
               >
                 {t.cancelEdit} · {statusLabel}
@@ -390,7 +406,7 @@ export function RequestDetailView({
               <h2 className="text-lg font-bold text-navy">{d.attachments}</h2>
               <ul className="mt-4 space-y-2">
                 {request.attachments.map((file) => (
-                  <li key={file.id}>
+                  <li key={file.id} className="print:break-inside-avoid">
                     <a
                       href={`/api/attachments/${file.id}`}
                       download={file.filename}
@@ -399,7 +415,7 @@ export function RequestDetailView({
                       <Paperclip className="h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
                       <span className="min-w-0 flex-1 truncate font-medium text-navy">{file.filename}</span>
                       <span className="shrink-0 text-xs text-muted-foreground">{formatBytes(file.size, locale)}</span>
-                      <Download className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <Download className="h-4 w-4 shrink-0 text-muted-foreground print:hidden" aria-hidden="true" />
                     </a>
                   </li>
                 ))}
@@ -413,7 +429,7 @@ export function RequestDetailView({
               {request.statusHistory.map((event, index) => {
                 const latest = index === request.statusHistory.length - 1;
                 return (
-                  <li key={event.id} className="relative ps-6">
+                  <li key={event.id} className="relative ps-6 print:break-inside-avoid">
                     {index < request.statusHistory.length - 1 && (
                       <span className="absolute start-[0.3125rem] top-3 bottom-[-1.25rem] w-px bg-border" aria-hidden="true" />
                     )}

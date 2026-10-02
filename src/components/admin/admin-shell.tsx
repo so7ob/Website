@@ -5,7 +5,7 @@
  * تُخفى ترويسة/تذييل الموقع العام عند وجود هذا الهيكل (body:has) لأن اللوحة
  * تطبيق قائم بذاته، والعودة للموقع متاحة من أسفل الشريط الجانبي.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,6 +23,7 @@ import {
   Home,
   LogOut,
   Menu,
+  Search,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -36,6 +37,7 @@ import type { Permission } from "@/lib/auth/permissions";
 import { localeMeta, swapLocalePath, type Locale } from "@/lib/i18n";
 import { roleLabel } from "./badges";
 import type { Me } from "./types";
+import { CommandPalette } from "./command-palette";
 import { cn } from "@/lib/utils";
 
 interface AdminShellProps {
@@ -52,13 +54,26 @@ interface NavItem {
   permission?: Permission;
 }
 
+/** اشتراك فارغ — قيمة «هل هذا ماك؟» تُقرأ عند التصيير عبر useSyncExternalStore
+ *  (لقطة خادمية false ثم القيمة الفعلية بعد الإغراق، بلا عدم تطابق) */
+const subscribePlatform = () => () => {};
+
 export function AdminShell({ me, locale, siteName, children }: AdminShellProps) {
   const pathname = usePathname() ?? `/${locale}/admin`;
   const [mobileOpen, setMobileOpen] = useState(false);
+  // لوحة البحث الشاملة (Ctrl+K) — الحالة هنا ليصل إليها الزر ومستمع المفاتيح داخلها
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const t = getPortalContent(locale).admin.nav;
   const tn = getPortalContent(locale).admin.notifications;
+  const ts = getPortalContent(locale).admin.search;
   const openMenuLabel = (locale === "en" ? siteEn : siteAr).common.openMenu;
+  // اكتشاف ماك لعرض «⌘ K» بدل «Ctrl K» في رقاقة الاختصار
+  const isMac = useSyncExternalStore(
+    subscribePlatform,
+    () => /mac|iphone|ipad|ipod/i.test(navigator.platform),
+    () => false
+  );
 
   // نقطة إشعارات الفريق: جلب فوري ثم كل 30 ثانية، وتحديث عند تغيير الصفحة
   useEffect(() => {
@@ -227,6 +242,31 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
           <h2 className="truncate text-sm font-semibold text-navy sm:text-base">{titleFor(pathname)}</h2>
 
           <div className="ms-auto flex items-center gap-2">
+            {/* زر لوحة البحث الشامل — سطح المكتب: حبة تحمل الاختصار، الجوال: أيقونة */}
+            <Button
+              variant="outline"
+              onClick={() => setPaletteOpen(true)}
+              aria-keyshortcuts={isMac ? "Meta+k" : "Control+k"}
+              className="hidden h-10 min-h-10 items-center gap-2 rounded-full px-3 focus-visible:ring-2 focus-visible:ring-ring/40 sm:flex"
+            >
+              <Search className="size-4 text-muted-foreground" aria-hidden="true" />
+              <span className="text-xs font-semibold text-muted-foreground">{ts.trigger}</span>
+              <span className="ltr-isolate" aria-hidden="true">
+                <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                  {isMac ? "⌘ K" : "Ctrl K"}
+                </kbd>
+              </span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPaletteOpen(true)}
+              aria-label={ts.trigger}
+              aria-keyshortcuts={isMac ? "Meta+k" : "Control+k"}
+              className="size-10 sm:hidden"
+            >
+              <Search className="size-5" aria-hidden="true" />
+            </Button>
             <Button asChild variant="ghost" size="icon" className="relative size-10 rounded-full">
               <Link
                 href={`/${locale}/admin/notifications`}
@@ -256,6 +296,9 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
             </div>
           </div>
         </header>
+
+        {/* لوحة الأوامر الشاملة — تُفتح من الزر أعلاه أو Ctrl+K / ⌘K / «/» */}
+        <CommandPalette me={me} locale={locale} open={paletteOpen} onOpenChange={setPaletteOpen} />
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">{children}</div>

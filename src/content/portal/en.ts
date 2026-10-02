@@ -156,6 +156,7 @@ export const portalEn: PortalContent = {
       currency: "Currency",
       contactPref: "Preferred contact",
       reference: "Reference link",
+      print: "Print request",
     },
     notifications: {
       title: "Notifications",
@@ -217,6 +218,16 @@ export const portalEn: PortalContent = {
       outbox: "Email outbox",
       backSite: "Public site",
       logout: "Sign out",
+    },
+    search: {
+      trigger: "Global search",
+      placeholder: "Search users, requests, inquiries, pages…",
+      quickNav: "Quick navigation",
+      results: "Results",
+      searching: "Searching…",
+      noResults: "No matching results",
+      noResultsHint: "Try a different term or a reference code (e.g. S7-)",
+      openHint: "Open to view result",
     },
     dashboard: {
       title: "Admin dashboard",
@@ -377,6 +388,7 @@ export const portalEn: PortalContent = {
       overdueReply: "Reply overdue",
       agingHours: "{n}h",
       agingDays: "{n}d",
+      print: "Print request",
     },
     inquiries: {
       title: "Inquiries",

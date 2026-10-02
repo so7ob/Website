@@ -20,6 +20,7 @@ import {
   ArchiveRestore,
   Inbox,
   Loader2,
+  Printer,
   RotateCcw,
   History,
   Building2,
@@ -65,6 +66,8 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
   const tr = t.admin.requests;
   const td = t.account.detail;
   const siteForm = locale === "en" ? siteEn.form : siteAr.form;
+  // اسم الموقع لسطر الترويسة الطِباعية فقط (لا نصوص ثابتة هنا)
+  const siteMeta = locale === "en" ? siteEn.meta : siteAr.meta;
 
   const [detail, setDetail] = useState<RequestDetail | null>(null);
   const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
@@ -294,9 +297,15 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
 
   return (
     <div className="space-y-5">
+      {/* ترويسة الطباعة — تظهر على الورق فقط: العلامة + التاريخ */}
+      <div className="hidden print:block print:border-b print:border-border print:pb-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          {siteMeta.siteName} · {new Date().toLocaleDateString(locale)}
+        </p>
+      </div>
       {/* الترويسة */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="min-h-11 rounded-full">
+        <Button asChild variant="ghost" size="sm" className="min-h-11 rounded-full print:hidden">
           <Link href={`/${locale}/admin/requests`}>
             <BackIcon className="size-4" aria-hidden="true" />
             <span className="sr-only">{tr.title}</span>
@@ -305,8 +314,8 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
         </Button>
         <h1 className="font-mono text-xl font-bold text-navy ltr-isolate">{detail.refCode}</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={detail.status} label={statusLabel} />
-          <PriorityBadge priority={detail.priority} label={tr.priorities[detail.priority] ?? detail.priority} />
+          <StatusBadge status={detail.status} label={statusLabel} className="print:break-inside-avoid print:border-border" />
+          <PriorityBadge priority={detail.priority} label={tr.priorities[detail.priority] ?? detail.priority} className="print:break-inside-avoid print:border-border" />
           {detail.archivedAt ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
               <Archive className="size-3" aria-hidden="true" />
@@ -314,22 +323,34 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
             </span>
           ) : null}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setClientView((v) => !v)}
-          aria-pressed={clientView}
-          className="ms-auto min-h-11 rounded-full"
-        >
-          {clientView ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
-          {tr.clientView}
-        </Button>
+        <div className="ms-auto flex flex-wrap items-center gap-2 print:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            aria-label={tr.print}
+            className="min-h-11 rounded-full"
+          >
+            <Printer className="size-4" aria-hidden="true" />
+            {tr.print}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setClientView((v) => !v)}
+            aria-pressed={clientView}
+            className="min-h-11 rounded-full"
+          >
+            {clientView ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+            {tr.clientView}
+          </Button>
+        </div>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] print:block print:space-y-6">
         {/* المحادثة + الملحن */}
         <div className="space-y-4">
-          <section aria-label={tr.conversation} className="rounded-2xl border border-border bg-muted/30 p-4 sm:p-5">
+          <section aria-label={tr.conversation} className="rounded-2xl border border-border bg-muted/30 p-4 sm:p-5 print:bg-transparent">
             <h2 className="mb-3 text-sm font-semibold text-navy">
               {tr.conversation}
               <span className="ms-2 font-normal text-muted-foreground">
@@ -340,48 +361,56 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
             {visibleMessages.length === 0 && !detail.description ? (
               <EmptyState icon={Inbox} title={td.noMessages} />
             ) : (
-              <div className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto pe-1">
+              <div className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto pe-1 print:max-h-none print:overflow-visible">
                 {/* نص الطلب الأصلي كفقاعة افتتاحية من العميل */}
                 {detail.description ? (
-                  <MessageBubble
-                    locale={locale}
-                    message={{
-                      id: "opening",
-                      authorId: null,
-                      authorType: "client",
-                      kind: "message",
-                      body: detail.description,
-                      editedAt: null,
-                      createdAt: detail.createdAt,
-                      author: null,
-                    }}
-                    labels={{
-                      client: detail.name,
-                      staff: td.staff,
-                      system: td.system,
-                      internalHint: tr.internalNoteHint,
-                      statuses: tr.statuses,
-                    }}
-                  />
+                  <div className="print:break-inside-avoid print:[&_div]:bg-transparent print:[&_div]:text-foreground print:[&_div]:shadow-none">
+                    <MessageBubble
+                      locale={locale}
+                      message={{
+                        id: "opening",
+                        authorId: null,
+                        authorType: "client",
+                        kind: "message",
+                        body: detail.description,
+                        editedAt: null,
+                        createdAt: detail.createdAt,
+                        author: null,
+                      }}
+                      labels={{
+                        client: detail.name,
+                        staff: td.staff,
+                        system: td.system,
+                        internalHint: tr.internalNoteHint,
+                        statuses: tr.statuses,
+                      }}
+                    />
+                  </div>
                 ) : null}
                 {visibleMessages.map((message) => (
-                  <MessageBubble
+                  <div
                     key={message.id}
-                    message={message}
-                    locale={locale}
-                    labels={{
-                      client: tr.client,
-                      staff: td.staff,
-                      system: td.system,
-                      internalHint: tr.internalNoteHint,
-                      statuses: tr.statuses,
-                    }}
-                  />
+                    className="print:break-inside-avoid print:[&_div]:bg-transparent print:[&_div]:text-foreground print:[&_div]:shadow-none"
+                  >
+                    <MessageBubble
+                      message={message}
+                      locale={locale}
+                      labels={{
+                        client: tr.client,
+                        staff: td.staff,
+                        system: td.system,
+                        internalHint: tr.internalNoteHint,
+                        statuses: tr.statuses,
+                      }}
+                    />
+                  </div>
                 ))}
               </div>
             )}
           </section>
 
+          {/* الملحن — مخفي عند الطباعة */}
+          <div className="print:hidden">
           <ReplyComposer
               canReply={mayReply}
               canNote={!clientView && mayNote}
@@ -407,6 +436,7 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
                 attachFile: td.attachFile,
               }}
             />
+          </div>
         </div>
 
         {/* عمود المعلومات */}
@@ -451,7 +481,7 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
               ) : null}
             </dl>
             {detail.clientId ? (
-              <Button asChild variant="outline" size="sm" className="mt-3 min-h-10 w-full rounded-xl">
+              <Button asChild variant="outline" size="sm" className="mt-3 min-h-10 w-full rounded-xl print:hidden">
                 <Link href={`/${locale}/admin/users${buildQuery({ q: detail.email })}`}>
                   {t.admin.users.title}
                 </Link>
@@ -467,6 +497,13 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
                 <dt className="text-muted-foreground">{tr.requestType}</dt>
                 <dd className="border-s-2 border-border/60 ps-3 font-medium text-navy">
                   {detail.requestType === "quote" ? tr.quote : tr.discussion}
+                </dd>
+              </div>
+              {/* المعيَّن — سطر طِباعي فقط (نموذج التعيين التفاعلي مخفي في الطباعة) */}
+              <div className="hidden print:flex items-start justify-between gap-3">
+                <dt className="text-muted-foreground">{tr.filterAssignee}</dt>
+                <dd className="border-s-2 border-border/60 ps-3 font-medium text-navy">
+                  {detail.assignee?.name ?? tr.unassigned}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-3">
@@ -511,8 +548,8 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
             </dl>
           </section>
 
-          {/* الإدارة: تعيين/أولوية/حالة/أرشفة */}
-          <section className="space-y-4 rounded-2xl border border-border bg-white p-4">
+          {/* الإدارة: تعيين/أولوية/حالة/أرشفة — مخفية عند الطباعة (المعيَّن يظهر في بيانات الطلب) */}
+          <section className="space-y-4 rounded-2xl border border-border bg-white p-4 print:hidden">
             {mayAssign ? (
               <div className="space-y-2">
                 <Label>{tr.filterAssignee}</Label>
@@ -643,7 +680,7 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
             ) : (
               <ul className="mt-3 space-y-1.5">
                 {detail.attachments.map((file: AttachmentRow) => (
-                  <li key={file.id}>
+                  <li key={file.id} className="print:break-inside-avoid">
                     <a
                       href={`/api/attachments/${file.id}`}
                       className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm transition-colors hover:border-brand hover:bg-accent/40"
@@ -651,7 +688,7 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
                       <Paperclip className="size-3.5 shrink-0 text-brand" aria-hidden="true" />
                       <span className="min-w-0 flex-1 truncate ltr-isolate">{file.filename}</span>
                       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatBytes(file.size)}</span>
-                      <Download className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <Download className="size-3.5 shrink-0 text-muted-foreground print:hidden" aria-hidden="true" />
                     </a>
                   </li>
                 ))}
@@ -670,7 +707,7 @@ export function RequestDetailClient({ me, locale, requestId }: RequestDetailClie
             ) : (
               <ol className="mt-3 space-y-0">
                 {detail.statusHistory.map((event) => (
-                  <li key={event.id} className="relative border-s-2 border-border ps-4 pb-4 last:pb-0">
+                  <li key={event.id} className="relative border-s-2 border-border ps-4 pb-4 last:pb-0 print:break-inside-avoid">
                     <span
                       className={cn(
                         "absolute -start-[5px] top-1 size-2 rounded-full",

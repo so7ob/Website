@@ -139,6 +139,7 @@ export interface PortalContent {
       currency: string;
       contactPref: string;
       reference: string;
+      print: string;
     };
     notifications: {
       title: string;
@@ -192,6 +193,16 @@ export interface PortalContent {
       outbox: string;
       backSite: string;
       logout: string;
+    };
+    search: {
+      trigger: string;
+      placeholder: string;
+      quickNav: string;
+      results: string;
+      searching: string;
+      noResults: string;
+      noResultsHint: string;
+      openHint: string;
     };
     dashboard: {
       title: string;
@@ -331,6 +342,7 @@ export interface PortalContent {
       overdueReply: string;
       agingHours: string;
       agingDays: string;
+      print: string;
     };
     inquiries: {
       title: string;

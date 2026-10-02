@@ -156,6 +156,7 @@ export const portalAr: PortalContent = {
       currency: "العملة",
       contactPref: "قناة التواصل المفضلة",
       reference: "رابط مرجعي",
+      print: "طباعة الطلب",
     },
     notifications: {
       title: "الإشعارات",
@@ -217,6 +218,16 @@ export const portalAr: PortalContent = {
       outbox: "صندوق الصادر",
       backSite: "الموقع العام",
       logout: "تسجيل الخروج",
+    },
+    search: {
+      trigger: "بحث شامل",
+      placeholder: "ابحث في المستخدمين والطلبات والاستفسارات والصفحات…",
+      quickNav: "تنقل سريع",
+      results: "النتائج",
+      searching: "جارٍ البحث…",
+      noResults: "لا نتائج مطابقة لبحثك",
+      noResultsHint: "جرّب كلمة مختلفة أو رقم مرجع (مثل S7-)",
+      openHint: "افتح لعرض النتيجة",
     },
     dashboard: {
       title: "لوحة الإدارة",
@@ -377,6 +388,7 @@ export const portalAr: PortalContent = {
       overdueReply: "رد متأخر",
       agingHours: "{n} ساعة",
       agingDays: "{n} يوم",
+      print: "طباعة الطلب",
     },
     inquiries: {
       title: "الاستفسارات",

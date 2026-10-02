@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
-import { Laptop, Loader2, Lock, LogOut, MonitorSmartphone, ShieldCheck, ShieldOff } from "lucide-react";
+import { KeyRound, Laptop, Loader2, LogOut, MonitorSmartphone, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,20 +133,22 @@ export function SecurityView({
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
           <ShieldCheck className="size-5" aria-hidden="true" />
         </span>
-        <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* تغيير كلمة المرور */}
         <section className="rounded-2xl border border-border bg-white p-6">
-          <h2 className="flex items-center gap-2.5 text-lg font-bold text-navy">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-brand-strong">
-              <Lock className="size-4" aria-hidden="true" />
+          <h2 className="flex items-center gap-2.5 text-base font-semibold text-navy">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+              <KeyRound className="size-4" aria-hidden="true" />
             </span>
             {t.changePassword}
           </h2>
           {formError && (
-            <div role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+            <div role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
               {formError}
             </div>
           )}
@@ -178,7 +180,7 @@ export function SecurityView({
             <Button
               type="submit"
               disabled={saving}
-              className="h-12 w-full rounded-full bg-primary text-base font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
+              className="h-12 w-full rounded-full bg-primary text-base font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               {saving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-5 w-5" aria-hidden="true" />}
               {t.changePassword}
@@ -189,8 +191,8 @@ export function SecurityView({
         {/* الجلسات النشطة */}
         <section className="rounded-2xl border border-border bg-white p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2.5 text-lg font-bold text-navy">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-brand-strong">
+            <h2 className="flex items-center gap-2.5 text-base font-semibold text-navy">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
                 <MonitorSmartphone className="size-4" aria-hidden="true" />
               </span>
               {t.sessions}
@@ -198,7 +200,7 @@ export function SecurityView({
             {others.length > 0 && (
               <Button
                 variant="outline"
-                className="h-10 rounded-full px-4 text-sm font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 hover:text-red-800"
+                className="h-10 rounded-full px-4 text-sm font-semibold text-rose-700 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:ring-2 focus-visible:ring-ring/40"
                 onClick={revokeAll}
                 disabled={revokingAll}
               >
@@ -209,34 +211,36 @@ export function SecurityView({
           </div>
 
           {sessions === null ? (
-            <div className="mt-5 space-y-3" aria-busy="true" aria-label={t.sessions}>
+            <ul className="mt-5 divide-y divide-border rounded-xl border border-border/70" aria-busy="true" aria-label={t.sessions}>
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <Skeleton className="animate-shimmer h-10 w-10 rounded-full" />
+                <li key={i} className="flex items-center gap-4 px-4 py-4">
+                  <Skeleton className="animate-shimmer size-9 rounded-xl" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="animate-shimmer h-4 w-36" />
                     <Skeleton className="animate-shimmer h-3 w-24" />
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : sessions.length === 0 ? (
-            <p className="mt-6 text-sm text-muted-foreground">{t.noSessions}</p>
+            <p className="mt-5 rounded-xl border border-border/70 px-4 py-4 text-sm text-muted-foreground">{t.noSessions}</p>
           ) : (
-            <ul className="mt-5 space-y-3">
+            <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl border border-border/70">
               {sessions.map((session) => (
                 <li
                   key={session.id}
-                  className={`flex flex-wrap items-center gap-4 rounded-xl border p-4 transition-colors ${
-                    session.current ? "border-brand/40 bg-accent/30" : "border-border hover:bg-muted/50"
+                  className={`flex flex-wrap items-center gap-4 py-4 pe-4 transition-colors ${
+                    session.current
+                      ? "border-s-2 border-s-brand bg-accent/40 ps-3.5"
+                      : "hover:bg-muted/50 ps-4"
                   }`}
                 >
                   <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
                       session.current ? "bg-brand-soft text-brand-strong" : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    <Laptop className="h-5 w-5" aria-hidden="true" />
+                    <Laptop className="size-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-navy">
@@ -257,7 +261,7 @@ export function SecurityView({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 rounded-full px-4 text-xs font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 hover:text-red-800"
+                    className="h-9 rounded-full px-4 text-xs font-semibold text-rose-700 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:ring-2 focus-visible:ring-ring/40"
                     onClick={() => void revoke(session.id)}
                     disabled={revokingId === session.id}
                   >
@@ -267,7 +271,7 @@ export function SecurityView({
                 </li>
               ))}
               {others.length === 0 && sessions.length > 0 && (
-                <li className="text-sm text-muted-foreground">{t.noSessions}</li>
+                <li className="px-4 py-4 text-sm text-muted-foreground">{t.noSessions}</li>
               )}
             </ul>
           )}
@@ -306,10 +310,10 @@ function PasswordField({
         required
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40 ${error ? "border-red-400" : ""}`}
+        className={`min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40 ${error ? "border-rose-400" : ""}`}
       />
       {error && (
-        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-red-700">
+        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-rose-700">
           {error}
         </p>
       )}
