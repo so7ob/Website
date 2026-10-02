@@ -187,10 +187,12 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
           </Link>
         </Button>
         <h1 className="font-mono text-lg font-bold text-navy ltr-isolate">{detail.refCode}</h1>
-        <StatusBadge status={detail.status} label={ti.statuses[detail.status] ?? detail.status} />
-        <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-brand-strong">
-          {ti.categories[detail.category] ?? detail.category}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={detail.status} label={ti.statuses[detail.status] ?? detail.status} />
+          <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-brand-strong">
+            {ti.categories[detail.category] ?? detail.category}
+          </span>
+        </div>
       </div>
 
       <h2 className="text-lg font-semibold text-navy">{detail.subject}</h2>
@@ -248,11 +250,11 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-muted-foreground">{t.account.profile.name}</dt>
-                <dd className="text-end font-medium text-navy">{detail.client?.name ?? detail.name}</dd>
+                <dd className="border-s-2 border-border/60 ps-3 font-medium text-navy">{detail.client?.name ?? detail.name}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-muted-foreground">{t.admin.settings.email}</dt>
-                <dd className="min-w-0 truncate text-end">
+                <dd className="min-w-0 truncate border-s-2 border-border/60 ps-3">
                   <a href={`mailto:${detail.email}`} className="break-all text-brand transition-colors hover:text-brand-strong ltr-isolate">
                     {detail.email}
                   </a>
@@ -260,7 +262,7 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-muted-foreground">{t.admin.users.createdAt}</dt>
-                <dd className="text-end">{fmtDateTime(detail.createdAt, locale)}</dd>
+                <dd className="border-s-2 border-border/60 ps-3 font-medium text-navy">{fmtDateTime(detail.createdAt, locale)}</dd>
               </div>
             </dl>
           </section>

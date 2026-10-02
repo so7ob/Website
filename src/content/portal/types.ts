@@ -107,6 +107,8 @@ export interface PortalContent {
       noResults: string;
       clearSearch: string;
       awaitingYou: string;
+      awaitingHours: string;
+      awaitingDays: string;
     };
     detail: {
       conversation: string;
@@ -209,6 +211,12 @@ export interface PortalContent {
       viewAll: string;
       noData: string;
       last7days: string;
+      rangeLabel: string;
+      range7: string;
+      range30: string;
+      range90: string;
+      overdueReplies: string;
+      overdueHint: string;
     };
     users: {
       title: string;

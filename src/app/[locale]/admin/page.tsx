@@ -10,6 +10,7 @@ import {
   Hourglass,
   MessageSquareText,
   FileText,
+  Timer,
   ArrowUpRight,
   type LucideIcon,
 } from "lucide-react";
@@ -34,6 +35,19 @@ interface StatDef {
   bar: string;
 }
 
+/** مدى الرسم البياني — القيم المسموحة لـ ?range= */
+const RANGE_DAYS = [7, 30, 90] as const;
+type RangeDays = (typeof RANGE_DAYS)[number];
+
+/** عمود في الرسم العمودي — label بلا قيمة يعني خانة فارغة تحفظ المحاذاة */
+interface ChartBar {
+  key: string;
+  count: number;
+  label: string | null;
+  /** نص التلميح الكامل (تاريخ اليوم أو مدى الأسبوع) */
+  title: string;
+}
+
 /** تدرجات أشرطة الحالة — نفس عائلات ألوان شارات الحالة */
 const STATUS_BAR: Record<string, string> = {
   new: "bg-gradient-to-r from-skydrop to-brand",
@@ -45,13 +59,31 @@ const STATUS_BAR: Record<string, string> = {
   cancelled: "bg-gradient-to-r from-rose-300 to-rose-500",
 };
 
-export default async function AdminDashboardPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function AdminDashboardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { locale: raw } = await params;
+  const sp = await searchParams;
   const locale = (locales.includes(raw as Locale) ? raw : "ar") as Locale;
   const t = getPortalContent(locale).admin.dashboard;
   const requestLabels = getPortalContent(locale).admin.requests;
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // المدى الزمني للرسم: 7 (الافتراضي) | 30 | 90 — أي قيمة أخرى تسقط إلى 7
+  const rangeParam = Array.isArray(sp.range) ? sp.range[0] : sp.range;
+  const rangeDays: RangeDays = rangeParam === "30" ? 30 : rangeParam === "90" ? 90 : 7;
+  const rangeLabel = rangeDays === 7 ? t.range7 : rangeDays === 30 ? t.range30 : t.range90;
+  const rangeOptions: { days: RangeDays; label: string }[] = [
+    { days: 7, label: t.range7 },
+    { days: 30, label: t.range30 },
+    { days: 90, label: t.range90 },
+  ];
+
+  const rangeStart = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000);
+  const overdueCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const openStatuses = ["new", "in_review", "awaiting_info", "in_progress", "responded"];
 
   const [
@@ -67,7 +99,8 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
     statusGroups,
     recentRequests,
     recentAudit,
-    weekRows,
+    rangeRows,
+    overdueRows,
   ] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { status: "active" } }),
@@ -86,24 +119,77 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
       select: { id: true, refCode: true, name: true, status: true, serviceType: true, createdAt: true, assignee: { select: { name: true } } },
     }),
     db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 10, include: { actor: { select: { name: true } } } }),
-    db.projectRequest.findMany({ where: { createdAt: { gte: weekAgo } }, select: { createdAt: true } }),
+    db.projectRequest.findMany({ where: { createdAt: { gte: rangeStart } }, select: { createdAt: true } }),
+    // مرشّح الردود المتأخرة: مفتوحة وغير مؤرشفة وآخر كلام فيها للعميل قبل 24 ساعة+
+    // (المقارنة بين عمودين غير مدعومة في مرشِّح Prisma — نجلب المرشّحات ثم نطابق في الذاكرة)
+    db.projectRequest.findMany({
+      where: {
+        status: { in: openStatuses },
+        archivedAt: null,
+        OR: [
+          { lastClientReplyAt: { not: null, lt: overdueCutoff } },
+          { lastClientReplyAt: null, lastStaffReplyAt: null, createdAt: { lt: overdueCutoff } },
+        ],
+      },
+      select: { lastClientReplyAt: true, lastStaffReplyAt: true },
+    }),
   ]);
 
-  // سلسلة آخر 7 أيام للرسم العمودي
-  const last7days: { date: string; count: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const day = new Date();
-    day.setHours(0, 0, 0, 0);
-    day.setDate(day.getDate() - i);
-    const next = new Date(day);
-    next.setDate(day.getDate() + 1);
-    last7days.push({
-      date: day.toISOString().slice(0, 10),
-      count: weekRows.filter((r) => r.createdAt >= day && r.createdAt < next).length,
-    });
+  // ردود متأخرة: طلبات مفتوحة بانتظار رد الفريق أكثر من 24 ساعة
+  // (رد عميل بلا رد فريق بعده، أو طلب بلا أي رد فريق إطلاقًا)
+  const overdueReplies = overdueRows.filter((r) =>
+    r.lastClientReplyAt === null
+      ? r.lastStaffReplyAt === null
+      : r.lastStaffReplyAt === null || r.lastClientReplyAt > r.lastStaffReplyAt
+  ).length;
+
+  // سلسلة المدى المختار للرسم العمودي: أيام (7/30) أو أسابيع (90)
+  const chartBars: ChartBar[] = [];
+  if (rangeDays === 90) {
+    // 13 مجموعة أسبوعية تبدأ قبل 89 يومًا — آخرها يغطي الأيام الجارية
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let week = 0; week < 13; week++) {
+      const start = new Date(today);
+      start.setDate(today.getDate() - 89 + week * 7);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 7);
+      const lastDay = new Date(end);
+      lastDay.setDate(end.getDate() - 1);
+      const startIso = start.toISOString();
+      chartBars.push({
+        key: `w${week}-${startIso.slice(0, 10)}`,
+        count: rangeRows.filter((r) => r.createdAt >= start && r.createdAt < end).length,
+        label: fmtDate(startIso, locale, "d/M"),
+        title: `${fmtDate(startIso, locale)} – ${fmtDate(lastDay.toISOString(), locale)}`,
+      });
+    }
+  } else {
+    for (let i = rangeDays - 1; i >= 0; i--) {
+      const day = new Date();
+      day.setHours(0, 0, 0, 0);
+      day.setDate(day.getDate() - i);
+      const next = new Date(day);
+      next.setDate(day.getDate() + 1);
+      const dayIso = day.toISOString();
+      // في مدى 30 يومًا: رقم اليوم كل 5 أعمدة وفي العمود الأخير فقط
+      const index = rangeDays - 1 - i;
+      const dailyLabel =
+        rangeDays === 7
+          ? fmtDayLabel(dayIso.slice(0, 10), locale)
+          : index % 5 === 0 || index === rangeDays - 1
+            ? fmtDate(dayIso, locale, "d")
+            : null;
+      chartBars.push({
+        key: dayIso.slice(0, 10),
+        count: rangeRows.filter((r) => r.createdAt >= day && r.createdAt < next).length,
+        label: dailyLabel,
+        title: fmtDate(dayIso, locale),
+      });
+    }
   }
-  const weekTotal = last7days.reduce((sum, d) => sum + d.count, 0);
-  const maxDay = Math.max(1, ...last7days.map((d) => d.count));
+  const rangeTotal = chartBars.reduce((sum, bar) => sum + bar.count, 0);
+  const maxBar = Math.max(1, ...chartBars.map((bar) => bar.count));
 
   const byStatus = REQUEST_STATUSES.map((status) => ({
     status,
@@ -114,20 +200,41 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
   const stats: StatDef[] = [
     { icon: Users, value: totalUsers, label: t.totalUsers, hint: `${activeUsers} · ${t.activeUsers}`, chip: "bg-accent text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop" },
     { icon: Clock, value: pendingUsers, label: t.pendingUsers, chip: "bg-purple-100 text-purple-800", bar: "bg-gradient-to-r from-purple-400 to-purple-500" },
-    { icon: Inbox, value: openRequests, label: t.openRequests, hint: `${weekTotal} · ${t.last7days}`, chip: "bg-skydrop/20 text-brand-strong", bar: "bg-gradient-to-r from-navy to-skydrop" },
+    { icon: Inbox, value: openRequests, label: t.openRequests, hint: `${rangeTotal} · ${rangeDays === 7 ? t.last7days : rangeLabel}`, chip: "bg-skydrop/20 text-brand-strong", bar: "bg-gradient-to-r from-navy to-skydrop" },
     { icon: Hourglass, value: awaitingInfo, label: t.awaitingInfo, chip: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300" },
+    { icon: Timer, value: overdueReplies, label: t.overdueReplies, hint: t.overdueHint, chip: "bg-rose-100 text-rose-800", bar: "bg-gradient-to-r from-rose-300 to-rose-500" },
     { icon: MessageSquareText, value: openInquiries, label: t.openInquiries, chip: "bg-emerald-100 text-emerald-800", bar: "bg-gradient-to-r from-emerald-400 to-emerald-300" },
     { icon: FileText, value: publishedPages, label: t.publishedPages, hint: `${draftPages} · ${t.draftPages}`, chip: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand-strong to-brand" },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
+        {/* مبدّل المدى الزمني — تنقل خادمي يعيد رسم اللوحة والمخطط */}
+        <div role="group" aria-label={t.rangeLabel} className="flex items-center gap-1 rounded-full bg-muted p-1">
+          {rangeOptions.map((option) => {
+            const active = option.days === rangeDays;
+            return (
+              <Link
+                key={option.days}
+                href={`/${locale}/admin?range=${option.days}`}
+                scroll={false}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "inline-flex min-h-9 items-center rounded-full px-4 text-xs font-semibold transition-colors",
+                  active ? "bg-navy text-white" : "text-muted-foreground hover:bg-white/60"
+                )}
+              >
+                {option.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      {/* بطاقات المؤشرات */}
-      <section aria-label={t.title} className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+      {/* بطاقات المؤشرات — 7 بطاقات: صف 4+3 على الشاشات الواسعة */}
+      <section aria-label={t.title} className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -178,27 +285,34 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
           )}
         </section>
 
-        {/* آخر 7 أيام — أعمدة مصغرة */}
+        {/* المدى المختار — أعمدة مصغرة (أيام لـ 7/30، أسابيع لـ 90) */}
         <section className="rounded-2xl border border-border bg-white p-5">
-          <h2 className="text-sm font-semibold text-navy">{t.last7days}</h2>
-          {weekTotal === 0 ? (
+          <h2 className="text-sm font-semibold text-navy">{rangeLabel}</h2>
+          {rangeTotal === 0 ? (
             <EmptyState icon={Inbox} title={t.noData} className="py-8" />
           ) : (
-            <div className="mt-4 flex h-28 items-end gap-2 sm:gap-3">
-              {last7days.map((day) => (
-                <div key={day.date} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-                  <p className="text-[10px] font-semibold tabular-nums text-muted-foreground" title={fmtDate(day.date, locale)}>
-                    {day.count > 0 ? day.count : ""}
+            <div className={cn("mt-4 flex h-28 items-end", rangeDays === 30 ? "gap-1" : "gap-2 sm:gap-3")}>
+              {chartBars.map((bar) => (
+                <div key={bar.key} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                  <p className="text-[10px] font-semibold tabular-nums text-muted-foreground" title={bar.title}>
+                    {bar.count > 0 ? bar.count : ""}
                   </p>
                   <div
-                    title={fmtDate(day.date, locale)}
+                    title={bar.title}
                     className={cn(
-                      "w-full max-w-10 rounded-t-lg transition duration-200 hover:brightness-125",
-                      day.count === 0 ? "bg-muted hover:brightness-100" : "bg-gradient-to-t from-navy to-skydrop"
+                      "rounded-t-lg transition duration-200 hover:brightness-125",
+                      rangeDays === 30 ? "w-full" : "w-full max-w-10",
+                      bar.count === 0 ? "bg-muted hover:brightness-100" : "bg-gradient-to-t from-navy to-skydrop"
                     )}
-                    style={{ height: `${Math.max(4, Math.round((day.count / maxDay) * 64))}px` }}
+                    style={{ height: `${Math.max(4, Math.round((bar.count / maxBar) * 64))}px` }}
                   />
-                  <p className="text-[10px] text-muted-foreground">{fmtDayLabel(day.date, locale)}</p>
+                  {bar.label !== null ? (
+                    <p className="text-[10px] tabular-nums text-muted-foreground">{bar.label}</p>
+                  ) : (
+                    <p aria-hidden="true" className="text-[10px] text-muted-foreground">
+                      &nbsp;
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

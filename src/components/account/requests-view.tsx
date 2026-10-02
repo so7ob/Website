@@ -24,6 +24,44 @@ const STATUS_KEYS = ["new", "in_review", "awaiting_info", "in_progress", "respon
 
 type ClaimBanner = { kind: "ok" | "invalid" | "login_required"; ref?: string };
 
+/** شارة «بانتظار ردك» بجانب الحالة — محايدة تحت 24 ساعة، كهرمانية بعدها (بلغة شارات لوحة الإدارة) */
+function AwaitingYouChip({
+  since,
+  label,
+  plainLabel,
+  hoursLabel,
+  daysLabel,
+}: {
+  since: string | null;
+  label: string;
+  plainLabel: string;
+  hoursLabel: string;
+  daysLabel: string;
+}) {
+  if (since === null) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+        {plainLabel}
+      </span>
+    );
+  }
+  const ageMs = Date.now() - new Date(since).getTime();
+  const days = Math.max(0, Math.floor(ageMs / 86_400_000));
+  const hours = Math.max(0, Math.floor(ageMs / 3_600_000));
+  if (days >= 1) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-amber-900">
+        {label} · {daysLabel.replace("{n}", String(days))}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+      {label} · {hoursLabel.replace("{n}", String(hours))}
+    </span>
+  );
+}
+
 /** قائمة طلبات العميل: تصفية بالحالة + جدول + ربط طلب سابق + لوائح نتائج الربط */
 export function RequestsView({
   locale,
@@ -305,10 +343,12 @@ export function RequestsView({
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusBadge status={r.status} label={t.statuses[r.status] ?? r.status} />
                           {r.awaitingClientReply && (
-                            <span
-                              title={awaitingLabel}
-                              aria-label={awaitingLabel}
-                              className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"
+                            <AwaitingYouChip
+                              since={r.lastStaffReplyAt}
+                              label={t.awaitingYou}
+                              plainLabel={awaitingLabel}
+                              hoursLabel={t.awaitingHours}
+                              daysLabel={t.awaitingDays}
                             />
                           )}
                         </div>

@@ -192,9 +192,19 @@ export function MenusClient({ me, locale }: MenusClientProps) {
       ) : null}
 
       <Tabs value={location} onValueChange={(v) => setLocation(v as Location)}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="header">{tm.header}</TabsTrigger>
-          <TabsTrigger value="footer">{tm.footer}</TabsTrigger>
+        <TabsList className="h-auto w-max flex-wrap gap-1 rounded-full bg-muted/60 p-1">
+          <TabsTrigger
+            value="header"
+            className="min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none"
+          >
+            {tm.header}
+          </TabsTrigger>
+          <TabsTrigger
+            value="footer"
+            className="min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none"
+          >
+            {tm.footer}
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -205,7 +215,11 @@ export function MenusClient({ me, locale }: MenusClientProps) {
       ) : (
         <ul className="space-y-3">
           {items.map((item, index) => (
-            <li key={index} className="rounded-2xl border border-border bg-white p-4">
+            <li key={index} className="rounded-xl border border-border/70 bg-white p-4 transition-colors hover:bg-muted/50">
+              <div className="mb-3 flex items-center gap-2" aria-hidden="true">
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">{index + 1}</span>
+                <span className="h-px flex-1 bg-border/60" />
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor={`label-ar-${index}`} className="text-xs text-muted-foreground">{tm.labelAr}</Label>
@@ -256,7 +270,7 @@ export function MenusClient({ me, locale }: MenusClientProps) {
                     value={item.pageSlug ?? undefined}
                     onValueChange={(v) => updateItem(index, { pageSlug: valueToSlug(v) })}
                   >
-                    <SelectTrigger id={`page-slug-${index}`} className="min-h-11">
+                    <SelectTrigger id={`page-slug-${index}`} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40">
                       <SelectValue placeholder={tm.pagesPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>

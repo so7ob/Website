@@ -124,6 +124,8 @@ export const portalAr: PortalContent = {
       noResults: "لا نتائج مطابقة لبحثك",
       clearSearch: "مسح البحث",
       awaitingYou: "بانتظار ردك",
+      awaitingHours: "{n} ساعة",
+      awaitingDays: "{n} يوم",
     },
     detail: {
       conversation: "المحادثة",
@@ -234,6 +236,12 @@ export const portalAr: PortalContent = {
       viewAll: "عرض الكل",
       noData: "لا بيانات بعد",
       last7days: "آخر 7 أيام",
+      rangeLabel: "اختيار المدى الزمني",
+      range7: "آخر 7 أيام",
+      range30: "آخر 30 يومًا",
+      range90: "آخر 90 يومًا",
+      overdueReplies: "ردود متأخرة",
+      overdueHint: "بانتظار رد الفريق أكثر من 24 ساعة",
     },
     users: {
       title: "المستخدمون",

@@ -80,6 +80,14 @@ const STATUS_TONES: Record<string, string> = {
   archived: "border-transparent bg-slate-200 text-slate-500",
 };
 
+/** شارة أيقونة ملونة حسب حالة الصفحة (تشخيص بصرية بجانب الشارة النصية) */
+const STATUS_CHIP_TONES: Record<string, string> = {
+  published: "bg-emerald-100 text-emerald-800",
+  draft: "bg-amber-100 text-amber-800",
+  in_review: "bg-skydrop/20 text-brand-strong",
+  archived: "bg-muted text-muted-foreground",
+};
+
 const DUPLICATE_ATTEMPTS = 5;
 
 export function PagesClient({ me, locale }: PagesClientProps) {
@@ -260,10 +268,10 @@ export function PagesClient({ me, locale }: PagesClientProps) {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tp.title} className="min-h-10 ps-9" aria-label={tp.title} />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tp.title} className="min-h-10 ps-9 focus-visible:ring-2 focus-visible:ring-ring/40" aria-label={tp.title} />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="min-h-10 w-40" aria-label={tp.status}>
+          <SelectTrigger className="min-h-10 w-40 focus-visible:ring-2 focus-visible:ring-ring/40" aria-label={tp.status}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -308,6 +316,15 @@ export function PagesClient({ me, locale }: PagesClientProps) {
                   <TableRow key={row.id} className={cn("group/row transition-colors hover:bg-muted/50", archived && "opacity-60")}>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                            STATUS_CHIP_TONES[row.status] ?? STATUS_CHIP_TONES.draft
+                          )}
+                        >
+                          <FileText className="size-4" aria-hidden="true" />
+                        </span>
                         {row.isHome ? (
                           <Star className="size-4 shrink-0 fill-amber-400 text-amber-500" aria-hidden="true" />
                         ) : null}

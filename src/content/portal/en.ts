@@ -124,6 +124,8 @@ export const portalEn: PortalContent = {
       noResults: "No results match your search",
       clearSearch: "Clear search",
       awaitingYou: "Awaiting your reply",
+      awaitingHours: "{n}h",
+      awaitingDays: "{n}d",
     },
     detail: {
       conversation: "Conversation",
@@ -234,6 +236,12 @@ export const portalEn: PortalContent = {
       viewAll: "View all",
       noData: "No data yet",
       last7days: "Last 7 days",
+      rangeLabel: "Choose time range",
+      range7: "7 days",
+      range30: "30 days",
+      range90: "90 days",
+      overdueReplies: "Overdue replies",
+      overdueHint: "Awaiting team reply for 24h+",
     },
     users: {
       title: "Users",

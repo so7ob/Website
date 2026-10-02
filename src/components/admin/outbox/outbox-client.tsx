@@ -60,10 +60,15 @@ export function OutboxClient({ me, locale }: OutboxClientProps) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">{to.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{to.subtitle}</p>
-      </div>
+      <header className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <Send className="size-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h1 className="text-2xl font-bold text-navy">{to.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{to.subtitle}</p>
+        </div>
+      </header>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white">
         <div className="overflow-x-auto">
@@ -96,8 +101,8 @@ export function OutboxClient({ me, locale }: OutboxClientProps) {
               ) : (
                 emails.map((email) => (
                   <TableRow key={email.id} className="align-top transition-colors hover:bg-muted/50">
-                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(email.createdAt, locale)}</TableCell>
-                    <TableCell className="max-w-56 truncate text-sm text-navy ltr-isolate">{email.to}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{fmtDateTime(email.createdAt, locale)}</TableCell>
+                    <TableCell className="max-w-56 truncate font-mono text-xs text-navy ltr-isolate">{email.to}</TableCell>
                     <TableCell>
                       <p className="max-w-96 truncate text-sm text-foreground">{email.subject}</p>
                       {email.error ? <p className="max-w-96 truncate text-xs text-destructive">{email.error}</p> : null}
