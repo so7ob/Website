@@ -4,6 +4,7 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { MEDIA_MIME } from "@/lib/upload-validation";
 import { readFileBuffer } from "@/lib/file-storage";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!/^[a-zA-Z0-9]{1,40}$/.test(id)) return new NextResponse("Not found", { status: 404 });
 
   const item = await db.mediaItem.findUnique({ where: { id } });
-  if (!item) return new NextResponse("Not found", { status: 404 });
+  if (!item || !Object.hasOwn(MEDIA_MIME, item.mimeType)) return new NextResponse("Not found", { status: 404 });
 
   const buffer = readFileBuffer(item.storedName);
   if (!buffer) return new NextResponse("Not found", { status: 404 });
