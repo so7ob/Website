@@ -1,0 +1,130 @@
+[
+  {
+    "role": "content_editor",
+    "locale": "ar",
+    "width": 375,
+    "status": 200,
+    "lang": "ar",
+    "dir": "rtl",
+    "scrollWidth": 375,
+    "headings": [
+      "اللوحة",
+      "لوحة الإدارة"
+    ],
+    "errors": []
+  },
+  {
+    "role": "content_editor",
+    "locale": "ar",
+    "width": 1280,
+    "status": 200,
+    "lang": "ar",
+    "dir": "rtl",
+    "scrollWidth": 1280,
+    "headings": [
+      "اللوحة",
+      "لوحة الإدارة"
+    ],
+    "errors": []
+  },
+  {
+    "role": "content_editor",
+    "locale": "en",
+    "width": 375,
+    "status": 200,
+    "lang": "en",
+    "dir": "ltr",
+    "scrollWidth": 375,
+    "headings": [
+      "Dashboard",
+      "Admin dashboard"
+    ],
+    "errors": []
+  },
+  {
+    "role": "content_editor",
+    "locale": "en",
+    "width": 1280,
+    "status": 200,
+    "lang": "en",
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "headings": [
+      "Dashboard",
+      "Admin dashboard"
+    ],
+    "errors": []
+  },
+  {
+    "role": "super_admin",
+    "locale": "ar",
+    "width": 375,
+    "status": 200,
+    "lang": "ar",
+    "dir": "rtl",
+    "scrollWidth": 375,
+    "headings": [
+      "اللوحة",
+      "لوحة الإدارة",
+      "الطلبات حسب الحالة",
+      "آخر 7 أيام",
+      "أحدث الطلبات",
+      "أحدث الأحداث"
+    ],
+    "errors": []
+  },
+  {
+    "role": "super_admin",
+    "locale": "ar",
+    "width": 1280,
+    "status": 200,
+    "lang": "ar",
+    "dir": "rtl",
+    "scrollWidth": 1280,
+    "headings": [
+      "اللوحة",
+      "لوحة الإدارة",
+      "الطلبات حسب الحالة",
+      "آخر 7 أيام",
+      "أحدث الطلبات",
+      "أحدث الأحداث"
+    ],
+    "errors": []
+  },
+  {
+    "role": "super_admin",
+    "locale": "en",
+    "width": 375,
+    "status": 200,
+    "lang": "en",
+    "dir": "ltr",
+    "scrollWidth": 375,
+    "headings": [
+      "Dashboard",
+      "Admin dashboard",
+      "Requests by status",
+      "7 days",
+      "Recent requests",
+      "Recent activity"
+    ],
+    "errors": []
+  },
+  {
+    "role": "super_admin",
+    "locale": "en",
+    "width": 1280,
+    "status": 200,
+    "lang": "en",
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "headings": [
+      "Dashboard",
+      "Admin dashboard",
+      "Requests by status",
+      "7 days",
+      "Recent requests",
+      "Recent activity"
+    ],
+    "errors": []
+  }
+]

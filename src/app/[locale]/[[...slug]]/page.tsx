@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getAuthUser } from "@/lib/auth/session";
-import { isStaff } from "@/lib/auth/permissions";
+import { canAccessPage } from "@/lib/auth/resource-access";
 import { PageRenderer } from "@/components/blocks/page-renderer";
 import { locales, type Locale } from "@/lib/i18n";
 import type { Block } from "@/lib/blocks/types";
@@ -48,6 +48,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const locale = raw as Locale;
   const page = await getPage(resolveSlug(slug));
   if (!page) return {};
+  const viewer = page.visibility === "public" ? null : await getAuthUser();
+  if (!canAccessPage(viewer, page)) return { robots: { index: false, follow: false } };
 
   const isAr = locale === "ar";
   const title = (isAr ? page.seoTitleAr : page.seoTitleEn) ?? (isAr ? page.titleAr : page.titleEn);
@@ -96,16 +98,7 @@ export default async function CmsPage({ params }: Params) {
     if (!user) {
       redirect(`/${locale}/auth/login?next=/${locale}${target ? `/${target}` : ""}`);
     }
-    if (page.visibility === "role") {
-      let allowedRoles: string[] = [];
-      try {
-        allowedRoles = JSON.parse(page.allowedRoles);
-      } catch {
-        allowedRoles = [];
-      }
-      const allowed = user.roleKey === "super_admin" || allowedRoles.includes(user.roleKey) || isStaff(user);
-      if (!allowed) notFound();
-    }
+    if (!canAccessPage(user, page)) notFound();
   }
 
   const blocksJson = locale === "ar" ? page.publishedBlocksAr : page.publishedBlocksEn;

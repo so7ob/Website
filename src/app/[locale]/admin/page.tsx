@@ -3,6 +3,9 @@
  * استدعاء واجهتنا الخاصة ويتجنب حلقة المصادقة. كل الأرقام حقيقية.
  */
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getAuthUser, can } from "@/lib/auth/session";
+import { dashboardAccess } from "@/lib/auth/resource-access";
 import {
   Users,
   Clock,
@@ -31,6 +34,7 @@ export const dynamic = "force-dynamic";
 
 interface StatDef {
   icon: LucideIcon;
+  permitted: boolean;
   value: number;
   label: string;
   hint?: string;
@@ -79,6 +83,9 @@ export default async function AdminDashboardPage({
   const { locale: raw } = await params;
   const sp = await searchParams;
   const locale = (locales.includes(raw as Locale) ? raw : "ar") as Locale;
+  const user = await getAuthUser();
+  if (!user || user.status === "suspended" || !can(user, "admin.dashboard")) notFound();
+  const access = dashboardAccess(user);
   const t = getPortalContent(locale).admin.dashboard;
   const requestLabels = getPortalContent(locale).admin.requests;
 
@@ -112,27 +119,27 @@ export default async function AdminDashboardPage({
     rangeRows,
     overdueRows,
   ] = await Promise.all([
-    db.user.count(),
-    db.user.count({ where: { status: "active" } }),
-    db.user.count({ where: { status: "pending_verification" } }),
-    db.projectRequest.count({ where: { status: { in: openStatuses }, archivedAt: null } }),
-    db.projectRequest.count({ where: { status: "new", archivedAt: null } }),
-    db.projectRequest.count({ where: { status: "awaiting_info", archivedAt: null } }),
-    db.inquiry.count({ where: { status: { in: ["new", "in_review", "awaiting_info", "responded"] }, archivedAt: null } }),
-    db.page.count({ where: { status: "published" } }),
-    db.page.count({ where: { status: { in: ["draft", "in_review"] } } }),
-    db.projectRequest.groupBy({ by: ["status"], where: { archivedAt: null }, _count: true }),
-    db.projectRequest.findMany({
+    (access.users ? db.user.count() : Promise.resolve(0)),
+    (access.users ? db.user.count({ where: { status: "active" } }) : Promise.resolve(0)),
+    (access.users ? db.user.count({ where: { status: "pending_verification" } }) : Promise.resolve(0)),
+    (access.requests ? db.projectRequest.count({ where: { status: { in: openStatuses }, archivedAt: null } }) : Promise.resolve(0)),
+    (access.requests ? db.projectRequest.count({ where: { status: "new", archivedAt: null } }) : Promise.resolve(0)),
+    (access.requests ? db.projectRequest.count({ where: { status: "awaiting_info", archivedAt: null } }) : Promise.resolve(0)),
+    (access.inquiries ? db.inquiry.count({ where: { status: { in: ["new", "in_review", "awaiting_info", "responded"] }, archivedAt: null } }) : Promise.resolve(0)),
+    (access.pages ? db.page.count({ where: { status: "published" } }) : Promise.resolve(0)),
+    (access.pages ? db.page.count({ where: { status: { in: ["draft", "in_review"] } } }) : Promise.resolve(0)),
+    (access.requests ? db.projectRequest.groupBy({ by: ["status"], where: { archivedAt: null }, _count: true }) : Promise.resolve([])),
+    (access.requests ? db.projectRequest.findMany({
       where: { archivedAt: null },
       orderBy: { createdAt: "desc" },
       take: 8,
       select: { id: true, refCode: true, name: true, status: true, serviceType: true, createdAt: true, assignee: { select: { name: true } } },
-    }),
-    db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 10, include: { actor: { select: { name: true } } } }),
-    db.projectRequest.findMany({ where: { createdAt: { gte: rangeStart } }, select: { createdAt: true } }),
+    }) : Promise.resolve([])),
+    (access.audit ? db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 10, include: { actor: { select: { name: true } } } }) : Promise.resolve([])),
+    (access.requests ? db.projectRequest.findMany({ where: { createdAt: { gte: rangeStart } }, select: { createdAt: true } }) : Promise.resolve([])),
     // مرشّح الردود المتأخرة: مفتوحة وغير مؤرشفة وآخر كلام فيها للعميل قبل 24 ساعة+
     // (المقارنة بين عمودين غير مدعومة في مرشِّح Prisma — نجلب المرشّحات ثم نطابق في الذاكرة)
-    db.projectRequest.findMany({
+    (access.requests ? db.projectRequest.findMany({
       where: {
         status: { in: openStatuses },
         archivedAt: null,
@@ -142,7 +149,7 @@ export default async function AdminDashboardPage({
         ],
       },
       select: { lastClientReplyAt: true, lastStaffReplyAt: true },
-    }),
+    }) : Promise.resolve([])),
   ]);
 
   // ردود متأخرة: طلبات مفتوحة بانتظار رد الفريق أكثر من 24 ساعة
@@ -210,6 +217,7 @@ export default async function AdminDashboardPage({
   const stats: StatDef[] = [
     {
       icon: Users,
+      permitted: access.users,
       value: totalUsers,
       label: t.totalUsers,
       hint: `${activeUsers} · ${t.activeUsers}`,
@@ -219,6 +227,7 @@ export default async function AdminDashboardPage({
     },
     {
       icon: Clock,
+      permitted: access.users,
       value: pendingUsers,
       label: t.pendingUsers,
       href: `/${locale}/admin/users?status=pending_verification`,
@@ -227,6 +236,7 @@ export default async function AdminDashboardPage({
     },
     {
       icon: Inbox,
+      permitted: access.requests,
       value: openRequests,
       label: t.openRequests,
       hint: `${rangeTotal} · ${rangeDays === 7 ? t.last7days : rangeLabel}`,
@@ -236,6 +246,7 @@ export default async function AdminDashboardPage({
     },
     {
       icon: Hourglass,
+      permitted: access.requests,
       value: awaitingInfo,
       label: t.awaitingInfo,
       href: `/${locale}/admin/requests?status=awaiting_info`,
@@ -244,6 +255,7 @@ export default async function AdminDashboardPage({
     },
     {
       icon: Timer,
+      permitted: access.requests,
       value: overdueReplies,
       label: t.overdueReplies,
       hint: t.overdueHint,
@@ -253,6 +265,7 @@ export default async function AdminDashboardPage({
     },
     {
       icon: MessageSquareText,
+      permitted: access.inquiries,
       value: openInquiries,
       label: t.openInquiries,
       // «open» مرشّح مركّب في واجهة الاستفسارات: الحالات غير المغلقة وغير المؤرشفة —
@@ -263,6 +276,7 @@ export default async function AdminDashboardPage({
     },
     {
       icon: FileText,
+      permitted: access.pages,
       value: publishedPages,
       label: t.publishedPages,
       hint: `${draftPages} · ${t.draftPages}`,
@@ -282,7 +296,7 @@ export default async function AdminDashboardPage({
         </div>
         {/* مبدّل المدى الزمني — تنقل خادمي يعيد رسم اللوحة والمخطط
             (حبوب بحدود بلغة مرشّحات القوائم — تُخفى عند الطباعة) */}
-        <div role="group" aria-label={t.rangeLabel} className="flex flex-wrap items-center gap-2 print:hidden">
+        {access.requests && <div role="group" aria-label={t.rangeLabel} className="flex flex-wrap items-center gap-2 print:hidden">
           {rangeOptions.map((option) => {
             const active = option.days === rangeDays;
             return (
@@ -302,13 +316,13 @@ export default async function AdminDashboardPage({
               </Link>
             );
           })}
-        </div>
+        </div>}
       </div>
 
       {/* بطاقات المؤشرات — 7 بطاقات: صف 4+3 على الشاشات الواسعة؛
           ذات الرابط تفتح القائمة المفلترة المقابلة (روابط اللوحة العميقة) */}
       <section aria-label={t.title} className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {stats.map((stat) => {
+        {stats.filter(stat => stat.permitted).map((stat) => {
           const card = (
             <>
               <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-1", stat.bar)} />
@@ -339,7 +353,7 @@ export default async function AdminDashboardPage({
         })}
       </section>
 
-      <div className="grid gap-4 print:block print:space-y-4 lg:grid-cols-2">
+      {access.requests && <div className="grid gap-4 print:block print:space-y-4 lg:grid-cols-2">
         {/* الطلبات حسب الحالة — أشرطة أفقية */}
         <section className="rounded-2xl border border-border bg-white p-5">
           <div className="flex items-center gap-2.5">
@@ -420,11 +434,11 @@ export default async function AdminDashboardPage({
             </div>
           )}
         </section>
-      </div>
+      </div>}
 
       <div className="grid gap-4 print:block print:space-y-4 lg:grid-cols-2">
         {/* أحدث الطلبات */}
-        <section className="rounded-2xl border border-border bg-white">
+        {access.requests && <section className="rounded-2xl border border-border bg-white">
           <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
@@ -462,10 +476,10 @@ export default async function AdminDashboardPage({
               ))}
             </ul>
           )}
-        </section>
+        </section>}
 
         {/* أحدث الأحداث (سجل التدقيق) */}
-        <section className="rounded-2xl border border-border bg-white">
+        {access.audit && <section className="rounded-2xl border border-border bg-white">
           <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
@@ -496,7 +510,7 @@ export default async function AdminDashboardPage({
               ))}
             </ul>
           )}
-        </section>
+        </section>}
       </div>
     </div>
   );
