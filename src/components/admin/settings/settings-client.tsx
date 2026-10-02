@@ -32,6 +32,8 @@ const FIELDS = [
   "announcement.ctaLabelEn",
   "announcement.ctaUrl",
   "announcement.variant",
+  "announcement.startAt",
+  "announcement.endAt",
 ] as const;
 type FieldKey = (typeof FIELDS)[number];
 type FormState = Record<FieldKey, string>;
@@ -50,9 +52,16 @@ const EMPTY_FORM: FormState = {
   "announcement.ctaLabelEn": "",
   "announcement.ctaUrl": "",
   "announcement.variant": "info",
+  "announcement.startAt": "",
+  "announcement.endAt": "",
 };
 
 const ANNOUNCEMENT_VARIANT_KEYS = ["info", "warning", "success", "brand"] as const;
+
+/** قيمة مدخل التاريخ: يوم صالح فقط — ما عداه يظهر فارغًا (بلا جدولة) */
+function asDateValue(raw: string | undefined): string {
+  return /^\d{4}-\d{2}-\d{2}/.test(raw ?? "") ? (raw ?? "").slice(0, 10) : "";
+}
 
 interface SettingsClientProps {
   me: Me;
@@ -81,6 +90,9 @@ export function SettingsClient({ me, locale }: SettingsClientProps) {
       if (!(ANNOUNCEMENT_VARIANT_KEYS as readonly string[]).includes(next["announcement.variant"])) {
         next["announcement.variant"] = "info";
       }
+      // مدخلات التاريخ تقبل YYYY-MM-DD — قيم ISO الكاملة تُختصر ليومها
+      next["announcement.startAt"] = asDateValue(res.settings["announcement.startAt"]);
+      next["announcement.endAt"] = asDateValue(res.settings["announcement.endAt"]);
       setForm(next);
       setInitial(next);
     } catch (err) {
@@ -374,6 +386,32 @@ export function SettingsClient({ me, locale }: SettingsClientProps) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-start" className="text-muted-foreground">
+                {ts.announcementStart}
+              </Label>
+              <Input
+                id="announcement-start"
+                type="date"
+                dir="ltr"
+                value={form["announcement.startAt"]}
+                onChange={(e) => setField("announcement.startAt", e.target.value)}
+                className="min-h-11 ltr-isolate"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-end" className="text-muted-foreground">
+                {ts.announcementEnd}
+              </Label>
+              <Input
+                id="announcement-end"
+                type="date"
+                dir="ltr"
+                value={form["announcement.endAt"]}
+                onChange={(e) => setField("announcement.endAt", e.target.value)}
+                className="min-h-11 ltr-isolate"
+              />
             </div>
           </div>
         </div>

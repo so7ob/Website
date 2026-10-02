@@ -123,6 +123,7 @@ export const portalEn: PortalContent = {
       searchPlaceholder: "Search by reference, service or status…",
       noResults: "No results match your search",
       clearSearch: "Clear search",
+      awaitingYou: "Awaiting your reply",
     },
     detail: {
       conversation: "Conversation",
@@ -205,6 +206,7 @@ export const portalEn: PortalContent = {
       users: "Users",
       requests: "Requests",
       inquiries: "Inquiries",
+      notifications: "Notifications",
       pages: "Pages",
       media: "Media",
       menus: "Menus",
@@ -362,6 +364,10 @@ export const portalEn: PortalContent = {
       clientView: "Preview what the client sees",
       export: "Export CSV",
       exportOk: "Requests file exported",
+      awaitingTeam: "Awaiting team reply",
+      overdueReply: "Reply overdue",
+      agingHours: "{n}h",
+      agingDays: "{n}d",
     },
     inquiries: {
       title: "Inquiries",
@@ -389,6 +395,22 @@ export const portalEn: PortalContent = {
       },
       export: "Export CSV",
       exportOk: "Inquiries file exported",
+    },
+    notifications: {
+      title: "Notifications",
+      subtitle: "Request, inquiry and content updates for the team",
+      markRead: "Mark as read",
+      markAllRead: "Mark all as read",
+      empty: "No notifications",
+      types: {
+        new_request: "New request",
+        request_assigned: "Request assigned",
+        reply_received: "New reply",
+        info_requested: "Info requested",
+        status_changed: "Status changed",
+        content_published: "Content published",
+        account: "Account",
+      },
     },
     pages: {
       title: "Pages",
@@ -551,6 +573,8 @@ export const portalEn: PortalContent = {
         brand: "Brand",
       },
       announcementEnabled: "Enabled",
+      announcementStart: "Start date (optional)",
+      announcementEnd: "End date (optional)",
     },
     audit: {
       title: "Audit log",

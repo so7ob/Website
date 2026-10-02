@@ -41,6 +41,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
+import type { PortalContent } from "@/content/portal/types";
 import { can } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n";
 import { StatusBadge, PriorityBadge } from "@/components/admin/badges";
@@ -62,6 +63,25 @@ import { cn } from "@/lib/utils";
 interface RequestsClientProps {
   me: Me;
   locale: Locale;
+}
+
+/** شارة عمر الانتظار — منذ آخر رسالة عميل: محايدة تحت 24 ساعة، تحذير كهرماني بعدها */
+function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["requests"] }) {
+  const ageMs = Date.now() - new Date(since).getTime();
+  const hours = Math.max(0, Math.floor(ageMs / 3_600_000));
+  const days = Math.max(0, Math.floor(ageMs / 86_400_000));
+  if (days >= 1) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+        {tr.overdueReply} · {tr.agingDays.replace("{n}", String(days))}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      {tr.awaitingTeam} · {tr.agingHours.replace("{n}", String(hours))}
+    </span>
+  );
 }
 
 export function RequestsClient({ me, locale }: RequestsClientProps) {
@@ -311,7 +331,7 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 {mayArchive ? (
                   <TableHead className="w-10">
                     <Checkbox
@@ -354,7 +374,7 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
                   <TableRow
                     key={row.id}
                     data-state={selected.has(row.id) ? "selected" : undefined}
-                    className={cn("transition-colors hover:bg-muted/40", busyId === row.id && "opacity-60")}
+                    className={cn("transition-colors hover:bg-muted/50", busyId === row.id && "opacity-60")}
                   >
                     {mayArchive ? (
                       <TableCell>
@@ -368,7 +388,7 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
                     <TableCell>
                       <Link
                         href={`/${locale}/admin/requests/${row.id}`}
-                        className="inline-flex items-center gap-1.5 font-mono text-sm font-bold text-navy transition-colors hover:text-brand ltr-isolate"
+                        className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-navy transition-colors hover:text-brand ltr-isolate"
                       >
                         {row.requestType === "quote" ? (
                           <FileText className="size-3.5 shrink-0 text-brand" aria-hidden="true" />
@@ -384,7 +404,12 @@ export function RequestsClient({ me, locale }: RequestsClientProps) {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{tr.services[row.serviceType] ?? row.serviceType}</TableCell>
                     <TableCell><PriorityBadge priority={row.priority} label={tr.priorities[row.priority] ?? row.priority} /></TableCell>
-                    <TableCell><StatusBadge status={row.status} label={tr.statuses[row.status] ?? row.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={row.status} label={tr.statuses[row.status] ?? row.status} />
+                        {row.awaitingSince ? <AgingBadge since={row.awaitingSince} tr={tr} /> : null}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {row.assigneeName ?? <span className="text-muted-foreground/60">{tr.unassigned}</span>}
                     </TableCell>

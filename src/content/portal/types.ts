@@ -106,6 +106,7 @@ export interface PortalContent {
       searchPlaceholder: string;
       noResults: string;
       clearSearch: string;
+      awaitingYou: string;
     };
     detail: {
       conversation: string;
@@ -180,6 +181,7 @@ export interface PortalContent {
       users: string;
       requests: string;
       inquiries: string;
+      notifications: string;
       pages: string;
       media: string;
       menus: string;
@@ -316,6 +318,10 @@ export interface PortalContent {
       clientView: string;
       export: string;
       exportOk: string;
+      awaitingTeam: string;
+      overdueReply: string;
+      agingHours: string;
+      agingDays: string;
     };
     inquiries: {
       title: string;
@@ -331,6 +337,14 @@ export interface PortalContent {
       statuses: Record<string, string>;
       export: string;
       exportOk: string;
+    };
+    notifications: {
+      title: string;
+      subtitle: string;
+      markRead: string;
+      markAllRead: string;
+      empty: string;
+      types: Record<string, string>;
     };
     pages: {
       title: string;
@@ -483,6 +497,8 @@ export interface PortalContent {
       announcementVariant: string;
       announcementVariants: Record<string, string>;
       announcementEnabled: string;
+      announcementStart: string;
+      announcementEnd: string;
     };
     audit: {
       title: string;

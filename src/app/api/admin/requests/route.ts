@@ -60,33 +60,63 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
+  // ——— بانتظار رد الفريق ———
+  // آخر رسالة ظاهرة (kind=message) لكل طلب في الصفحة الحالية، بترتيب تصاعدي
+  // فيفوز آخر سجل لكل طلب داخل الخريطة — استعلام واحد للصفحة كاملة.
+  const ids = rows.map((r) => r.id);
+  const lastMessages = ids.length
+    ? await db.requestMessage.findMany({
+        where: { requestId: { in: ids }, kind: "message" },
+        orderBy: { createdAt: "asc" },
+        select: { requestId: true, authorType: true, createdAt: true },
+      })
+    : [];
+  const lastByRequest = new Map<string, { authorType: string; createdAt: Date }>();
+  for (const message of lastMessages) lastByRequest.set(message.requestId, message);
+
   return json({
     ok: true,
     total,
     page,
     pageSize,
     staff,
-    requests: rows.map((r) => ({
-      id: r.id,
-      refCode: r.refCode,
-      requestType: r.requestType,
-      serviceType: r.serviceType,
-      status: r.status,
-      priority: r.priority,
-      name: r.client?.name ?? r.name,
-      email: r.client?.email ?? r.email,
-      clientId: r.clientId,
-      assigneeId: r.assigneeId,
-      assigneeName: r.assignee?.name ?? null,
-      messageCount: r._count.messages,
-      createdAt: r.createdAt,
-      lastActivityAt: r.lastActivityAt,
-      lastClientReplyAt: r.lastClientReplyAt,
-      lastStaffReplyAt: r.lastStaffReplyAt,
-      archivedAt: r.archivedAt,
-      // يحتاج ردًا من الطاقم؟ (آخر رد من العميل أو لا ردود بعد)
-      needsStaffReply:
-        r.lastStaffReplyAt === null || (r.lastClientReplyAt !== null && r.lastClientReplyAt > r.lastStaffReplyAt),
-    })),
+    requests: rows.map((r) => {
+      // بانتظار الطاقم: آخر رسالة ظاهرة من العميل، أو طلب جديد بلا أي رد بعد
+      // (الوصف الافتتاحي نفسه تواصل من العميل) — والطلب غير مغلق/ملغى
+      const last = lastByRequest.get(r.id) ?? null;
+      const awaitingSince =
+        r.status !== "closed" && r.status !== "cancelled"
+          ? last
+            ? last.authorType === "client"
+              ? last.createdAt.toISOString()
+              : null
+            : r.lastStaffReplyAt === null
+              ? r.createdAt.toISOString()
+              : null
+          : null;
+      return {
+        id: r.id,
+        refCode: r.refCode,
+        requestType: r.requestType,
+        serviceType: r.serviceType,
+        status: r.status,
+        priority: r.priority,
+        name: r.client?.name ?? r.name,
+        email: r.client?.email ?? r.email,
+        clientId: r.clientId,
+        assigneeId: r.assigneeId,
+        assigneeName: r.assignee?.name ?? null,
+        messageCount: r._count.messages,
+        createdAt: r.createdAt,
+        lastActivityAt: r.lastActivityAt,
+        lastClientReplyAt: r.lastClientReplyAt,
+        lastStaffReplyAt: r.lastStaffReplyAt,
+        archivedAt: r.archivedAt,
+        awaitingSince,
+        // يحتاج ردًا من الطاقم؟ (آخر رد من العميل أو لا ردود بعد)
+        needsStaffReply:
+          r.lastStaffReplyAt === null || (r.lastClientReplyAt !== null && r.lastClientReplyAt > r.lastStaffReplyAt),
+      };
+    }),
   });
 }

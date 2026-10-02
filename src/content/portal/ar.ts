@@ -123,6 +123,7 @@ export const portalAr: PortalContent = {
       searchPlaceholder: "ابحث بالرقم المرجعي أو الخدمة أو الحالة…",
       noResults: "لا نتائج مطابقة لبحثك",
       clearSearch: "مسح البحث",
+      awaitingYou: "بانتظار ردك",
     },
     detail: {
       conversation: "المحادثة",
@@ -205,6 +206,7 @@ export const portalAr: PortalContent = {
       users: "المستخدمون",
       requests: "الطلبات",
       inquiries: "الاستفسارات",
+      notifications: "الإشعارات",
       pages: "الصفحات",
       media: "الوسائط",
       menus: "القوائم",
@@ -362,6 +364,10 @@ export const portalAr: PortalContent = {
       clientView: "معاينة ما يراه العميل",
       export: "تصدير CSV",
       exportOk: "صُدّر ملف الطلبات",
+      awaitingTeam: "بانتظار رد الفريق",
+      overdueReply: "رد متأخر",
+      agingHours: "{n} ساعة",
+      agingDays: "{n} يوم",
     },
     inquiries: {
       title: "الاستفسارات",
@@ -389,6 +395,22 @@ export const portalAr: PortalContent = {
       },
       export: "تصدير CSV",
       exportOk: "صُدّر ملف الاستفسارات",
+    },
+    notifications: {
+      title: "الإشعارات",
+      subtitle: "تحديثات الطلبات والاستفسارات والمحتوى الموجهة للفريق",
+      markRead: "تعليم كمقروء",
+      markAllRead: "تعليم الكل كمقروء",
+      empty: "لا إشعارات",
+      types: {
+        new_request: "طلب جديد",
+        request_assigned: "تعيين طلب",
+        reply_received: "رد جديد",
+        info_requested: "طلب معلومات",
+        status_changed: "تغيير حالة",
+        content_published: "نشر محتوى",
+        account: "الحساب",
+      },
     },
     pages: {
       title: "الصفحات",
@@ -551,6 +573,8 @@ export const portalAr: PortalContent = {
         brand: "هوية",
       },
       announcementEnabled: "مفعّل",
+      announcementStart: "تاريخ البدء (اختياري)",
+      announcementEnd: "تاريخ الانتهاء (اختياري)",
     },
     audit: {
       title: "سجل التدقيق",

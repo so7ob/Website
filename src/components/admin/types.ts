@@ -123,6 +123,8 @@ export interface RequestRow {
   lastStaffReplyAt: string | null;
   archivedAt: string | null;
   needsStaffReply: boolean;
+  /** وقت آخر رسالة عميل ظاهرة والطلب ينتظر رد الفريق (null إن لم يكن بانتظار) */
+  awaitingSince: string | null;
 }
 export interface RequestsResponse {
   ok: boolean;
@@ -207,6 +209,24 @@ export interface RequestDetail {
 export interface RequestDetailResponse {
   ok: boolean;
   request: RequestDetail;
+}
+
+// ——— إشعارات الفريق ———
+export interface AdminNotification {
+  id: string;
+  type: string;
+  payload: Record<string, string>;
+  link: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+export interface NotificationsResponse {
+  ok: boolean;
+  total: number;
+  unread: number;
+  page: number;
+  pageSize: number;
+  notifications: AdminNotification[];
 }
 
 // ——— الاستفسارات ———

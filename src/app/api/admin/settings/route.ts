@@ -21,9 +21,14 @@ const ALLOWED_KEYS = [
   "announcement.ctaLabelEn",
   "announcement.ctaUrl",
   "announcement.variant",
+  "announcement.startAt",
+  "announcement.endAt",
 ];
 
 const ANNOUNCEMENT_VARIANTS = ["info", "warning", "success", "brand"];
+
+/** تاريخ مجدول: YYYY-MM-DD أو ISO كامل (فارغ = بلا جدولة) */
+const SCHEDULE_DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
 
 export async function GET(req: NextRequest) {
   const guard = await guardApi(req, "settings.manage");
@@ -73,6 +78,13 @@ export async function PATCH(req: NextRequest) {
         return json({ ok: false, code: "invalid" }, 400);
       }
       if (key === "announcement.enabled" && value !== "true" && value !== "false") {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
+      // جدولة الشريط: تاريخ صالح أو فارغ (بلا جدولة)
+      if (
+        (key === "announcement.startAt" || key === "announcement.endAt") &&
+        value && !SCHEDULE_DATE_RE.test(value)
+      ) {
         return json({ ok: false, code: "invalid" }, 400);
       }
       updates.push({ key, value });

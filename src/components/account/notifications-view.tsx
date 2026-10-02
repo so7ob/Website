@@ -25,14 +25,14 @@ import { apiFetch } from "./api";
 import { formatRelative } from "./format";
 import type { AccountNotification, NotificationsResponse } from "./types";
 
-const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  new_request: FilePlus2,
-  request_assigned: UserCheck,
-  reply_received: MessageSquare,
-  info_requested: Info,
-  status_changed: Bell,
-  content_published: FileText,
-  account: User,
+const TYPE_META: Record<string, { icon: React.ComponentType<{ className?: string }>; chip: string }> = {
+  new_request: { icon: FilePlus2, chip: "bg-skydrop/20 text-brand-strong" },
+  request_assigned: { icon: UserCheck, chip: "bg-navy/10 text-navy" },
+  reply_received: { icon: MessageSquare, chip: "bg-emerald-100 text-emerald-800" },
+  info_requested: { icon: Info, chip: "bg-amber-100 text-amber-800" },
+  status_changed: { icon: Bell, chip: "bg-amber-100 text-amber-800" },
+  content_published: { icon: FileText, chip: "bg-emerald-100 text-emerald-800" },
+  account: { icon: User, chip: "bg-navy/10 text-navy" },
 };
 
 /** إشعارات العميل: تُقرأ بالنقر وتنتقل لرابطها، مع تعليم الكل وتحميل المزيد */
@@ -174,7 +174,8 @@ export function NotificationsView({
           <ul className="max-h-[34rem] divide-y divide-border/60 overflow-y-auto">
             {items.map((notification) => {
               const unreadRow = !notification.readAt;
-              const Icon = TYPE_ICONS[notification.type] ?? Bell;
+              const meta = TYPE_META[notification.type] ?? { icon: Bell, chip: "bg-muted text-muted-foreground" };
+              const Icon = meta.icon;
               const typeLabel = t.types[notification.type] ?? notification.type;
               return (
                 <li key={notification.id}>
@@ -183,22 +184,22 @@ export function NotificationsView({
                     onClick={() => void markRead(notification)}
                     aria-label={typeLabel}
                     className={cn(
-                      "flex w-full items-start gap-4 p-4 text-start transition-colors hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand",
-                      unreadRow && "bg-accent/30"
+                      "flex w-full items-start gap-4 rounded-xl border-s-2 border-s-transparent p-4 text-start transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand",
+                      unreadRow && "border-s-brand bg-accent/30"
                     )}
                   >
                     <span
                       className={cn(
-                        "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                        unreadRow ? "bg-brand-soft text-brand-strong" : "bg-muted text-muted-foreground"
+                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full",
+                        meta.chip
                       )}
                     >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
+                      <Icon className="h-4.5 w-4.5" aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold text-navy">{typeLabel}</span>
-                        {unreadRow && <span className="inline-flex h-2 w-2 rounded-full bg-red-600" aria-hidden="true" />}
+                        {unreadRow && <span className="inline-flex size-2 rounded-full bg-brand" aria-hidden="true" />}
                         {notification.payload.ref && (
                           <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-bold text-muted-foreground" dir="ltr">
                             {notification.payload.ref}

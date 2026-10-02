@@ -145,7 +145,7 @@ export function InquiriesClient({ me, locale }: InquiriesClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-24">{t.account.requests.refCode}</TableHead>
                 <TableHead className="min-w-44">{ti.subject}</TableHead>
                 <TableHead className="min-w-24">{ti.category}</TableHead>
@@ -176,8 +176,8 @@ export function InquiriesClient({ me, locale }: InquiriesClientProps) {
                 </TableRow>
               ) : (
                 inquiries.map((row) => (
-                  <TableRow key={row.id} className="transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-sm font-bold text-navy ltr-isolate">{row.refCode}</TableCell>
+                  <TableRow key={row.id} className="transition-colors hover:bg-muted/50">
+                    <TableCell className="font-mono text-xs font-bold text-navy ltr-isolate">{row.refCode}</TableCell>
                     <TableCell>
                       <Link
                         href={`/${locale}/admin/inquiries/${row.id}`}

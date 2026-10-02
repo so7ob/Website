@@ -5,7 +5,7 @@
  * تُخفى ترويسة/تذييل الموقع العام عند وجود هذا الهيكل (body:has) لأن اللوحة
  * تطبيق قائم بذاته، والعودة للموقع متاحة من أسفل الشريط الجانبي.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,6 +13,7 @@ import {
   Users,
   Inbox,
   MessageSquareText,
+  Bell,
   FileText,
   Images,
   ListTree,
@@ -54,14 +55,38 @@ interface NavItem {
 export function AdminShell({ me, locale, siteName, children }: AdminShellProps) {
   const pathname = usePathname() ?? `/${locale}/admin`;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const t = getPortalContent(locale).admin.nav;
+  const tn = getPortalContent(locale).admin.notifications;
   const openMenuLabel = (locale === "en" ? siteEn : siteAr).common.openMenu;
+
+  // نقطة إشعارات الفريق: جلب فوري ثم كل 30 ثانية، وتحديث عند تغيير الصفحة
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/account/notifications?unread=1");
+        if (!res.ok) return;
+        const data = (await res.json()) as { unread?: number };
+        if (active && typeof data.unread === "number") setUnread(data.unread);
+      } catch {
+        /* بلا اتصال — بصمت */
+      }
+    };
+    void load();
+    const timer = setInterval(load, 30_000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [pathname]);
 
   const items: NavItem[] = [
     { href: `/${locale}/admin`, label: t.dashboard, icon: LayoutDashboard },
     { href: `/${locale}/admin/users`, label: t.users, icon: Users, permission: "users.view" },
     { href: `/${locale}/admin/requests`, label: t.requests, icon: Inbox, permission: "requests.view.all" },
     { href: `/${locale}/admin/inquiries`, label: t.inquiries, icon: MessageSquareText, permission: "inquiries.view.all" },
+    { href: `/${locale}/admin/notifications`, label: t.notifications, icon: Bell },
     { href: `/${locale}/admin/pages`, label: t.pages, icon: FileText, permission: "pages.view" },
     { href: `/${locale}/admin/media`, label: t.media, icon: Images, permission: "media.manage" },
     { href: `/${locale}/admin/menus`, label: t.menus, icon: ListTree, permission: "menus.manage" },
@@ -81,6 +106,7 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
       users: t.users,
       requests: t.requests,
       inquiries: t.inquiries,
+      notifications: t.notifications,
       pages: t.pages,
       media: t.media,
       menus: t.menus,
@@ -201,6 +227,19 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
           <h2 className="truncate text-sm font-semibold text-navy sm:text-base">{titleFor(pathname)}</h2>
 
           <div className="ms-auto flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon" className="relative size-10 rounded-full">
+              <Link
+                href={`/${locale}/admin/notifications`}
+                aria-label={unread > 0 ? `${tn.title} (${unread})` : tn.title}
+              >
+                <Bell className="size-5" aria-hidden="true" />
+                {unread > 0 ? (
+                  <span className="absolute -top-0.5 -end-0.5 grid size-4 place-items-center rounded-full bg-skydrop text-[10px] font-bold text-navy">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                ) : null}
+              </Link>
+            </Button>
             <Button asChild variant="ghost" size="sm" className="min-h-9 rounded-full px-3 text-xs font-semibold">
               <Link href={otherLocaleHref} hrefLang={localeMeta[locale].other}>
                 {localeMeta[locale].otherLabel}

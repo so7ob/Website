@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, Loader2, Save, ShieldQuestion } from "lucide-react";
+import { BadgeCheck, Loader2, Save, ShieldQuestion, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,7 +86,10 @@ export function ProfileForm({
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <User className="size-5" aria-hidden="true" />
+        </span>
         <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
       </header>
 
@@ -107,7 +110,7 @@ export function ProfileForm({
                 value={initial.email}
                 readOnly
                 dir="ltr"
-                className="min-h-11 flex-1 cursor-default bg-muted/50 text-start text-muted-foreground ltr-isolate"
+                className="min-h-11 flex-1 cursor-default bg-muted/50 text-start text-muted-foreground ltr-isolate focus-visible:ring-2 focus-visible:ring-ring/40"
                 aria-readonly="true"
               />
               <span
@@ -123,7 +126,7 @@ export function ProfileForm({
                 {initial.emailVerified ? t.verified : t.notVerified}
               </span>
             </div>
-            <p className="text-xs leading-6 text-slate-400">{t.emailReadonly}</p>
+            <p className="text-xs leading-6 text-muted-foreground">{t.emailReadonly}</p>
           </div>
 
           <div className="space-y-2">
@@ -139,7 +142,7 @@ export function ProfileForm({
               required
               aria-invalid={Boolean(fieldErrors.name)}
               aria-describedby={fieldErrors.name ? "profile-name-error" : undefined}
-              className="min-h-11"
+              className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
             />
             {fieldErrors.name && (
               <p id="profile-name-error" role="alert" className="text-xs font-medium text-red-700">
@@ -163,7 +166,7 @@ export function ProfileForm({
                 maxLength={20}
                 aria-invalid={Boolean(fieldErrors.phone)}
                 aria-describedby={fieldErrors.phone ? "profile-phone-error" : undefined}
-                className={`min-h-11 text-start ltr-isolate ${fieldErrors.phone ? "border-red-400" : ""}`}
+                className={`min-h-11 text-start ltr-isolate focus-visible:ring-2 focus-visible:ring-ring/40 ${fieldErrors.phone ? "border-red-400" : ""}`}
               />
               {fieldErrors.phone && (
                 <p id="profile-phone-error" role="alert" className="text-xs font-medium text-red-700">
@@ -181,7 +184,7 @@ export function ProfileForm({
                 onChange={(e) => setCompany(e.target.value)}
                 autoComplete="organization"
                 maxLength={120}
-                className="min-h-11"
+                className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             </div>
           </div>

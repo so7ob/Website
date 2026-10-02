@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowLeft,
-  Check,
   ChevronDown,
   ExternalLink,
   FileWarning,
@@ -563,7 +562,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   const statusIndicator =
     saveStatus === "saved" ? (
       <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-        <Check className="size-3.5" aria-hidden="true" />
+        <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
         {te.saved}
       </span>
     ) : saveStatus === "saving" ? (
@@ -573,7 +572,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
       </span>
     ) : saveStatus === "error" ? (
       <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-destructive">
-        <AlertTriangle className="size-3.5" aria-hidden="true" />
+        <span className="size-1.5 rounded-full bg-destructive" aria-hidden="true" />
         {te.saveFailed}
       </span>
     ) : (
@@ -659,100 +658,102 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
               {te.library}
             </Button>
 
-            {/* تراجع/إعادة */}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={undo}
-              disabled={!canUndo}
-              aria-label={te.undo}
-              title={te.undo}
-            >
-              <Undo2 className="size-4" aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={redo}
-              disabled={!canRedo}
-              aria-label={te.redo}
-              title={te.redo}
-            >
-              <Redo2 className="size-4" aria-hidden="true" />
-            </Button>
-
-            {/* أجهزة المعاينة */}
-            <div className="flex items-center rounded-xl border border-border p-0.5" role="group" aria-label={te.preview}>
-              {(
-                [
-                  { key: "desktop", icon: Monitor, label: te.deviceDesktop },
-                  { key: "tablet", icon: Tablet, label: te.deviceTablet },
-                  { key: "mobile", icon: Smartphone, label: te.deviceMobile },
-                ] as const
-              ).map((d) => (
-                <Button
-                  key={d.key}
-                  type="button"
-                  variant={device === d.key ? "secondary" : "ghost"}
-                  size="icon"
-                  className={cn("size-8", device === d.key && "bg-accent text-brand-strong")}
-                  onClick={() => setDevice(d.key)}
-                  aria-label={d.label}
-                  title={d.label}
-                  aria-pressed={device === d.key}
-                >
-                  <d.icon className="size-4" aria-hidden="true" />
-                </Button>
-              ))}
-            </div>
-
-            {/* معاينة مستقلة */}
-            <Button
-              asChild
-              variant="outline"
-              size="icon"
-              className="size-9"
-              aria-label={te.preview}
-              title={te.preview}
-            >
-              <Link
-                href={`/${locale}/admin/pages/${pageId}/preview?locale=${draftLocale}`}
-                target="_blank"
-                rel="noopener noreferrer"
+            {/* تراجع/إعادة/الأجهزة/المعاينة/الإصدارات/الإعدادات — مقطع واحد */}
+            <div className="flex flex-wrap items-center gap-1 rounded-full bg-muted/60 p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={undo}
+                disabled={!canUndo}
+                aria-label={te.undo}
+                title={te.undo}
               >
-                <ExternalLink className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
+                <Undo2 className="size-4" aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={redo}
+                disabled={!canRedo}
+                aria-label={te.redo}
+                title={te.redo}
+              >
+                <Redo2 className="size-4" aria-hidden="true" />
+              </Button>
 
-            {/* الإصدارات */}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => setVersionsOpen(true)}
-              aria-label={tp.versions}
-              title={tp.versions}
-            >
-              <History className="size-4" aria-hidden="true" />
-            </Button>
+              {/* أجهزة المعاينة */}
+              <div className="flex items-center" role="group" aria-label={te.preview}>
+                {(
+                  [
+                    { key: "desktop", icon: Monitor, label: te.deviceDesktop },
+                    { key: "tablet", icon: Tablet, label: te.deviceTablet },
+                    { key: "mobile", icon: Smartphone, label: te.deviceMobile },
+                  ] as const
+                ).map((d) => (
+                  <Button
+                    key={d.key}
+                    type="button"
+                    variant={device === d.key ? "secondary" : "ghost"}
+                    size="icon"
+                    className={cn("size-8", device === d.key && "bg-white text-navy shadow-sm")}
+                    onClick={() => setDevice(d.key)}
+                    aria-label={d.label}
+                    title={d.label}
+                    aria-pressed={device === d.key}
+                  >
+                    <d.icon className="size-4" aria-hidden="true" />
+                  </Button>
+                ))}
+              </div>
 
-            {/* الإعدادات */}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => setSettingsOpen(true)}
-              aria-label={te.pageSettings}
-              title={te.pageSettings}
-            >
-              <Settings2 className="size-4" aria-hidden="true" />
-            </Button>
+              {/* معاينة مستقلة */}
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                aria-label={te.preview}
+                title={te.preview}
+              >
+                <Link
+                  href={`/${locale}/admin/pages/${pageId}/preview?locale=${draftLocale}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+
+              {/* الإصدارات */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={() => setVersionsOpen(true)}
+                aria-label={tp.versions}
+                title={tp.versions}
+              >
+                <History className="size-4" aria-hidden="true" />
+              </Button>
+
+              {/* الإعدادات */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={() => setSettingsOpen(true)}
+                aria-label={te.pageSettings}
+                title={te.pageSettings}
+              >
+                <Settings2 className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
 
             {/* النشر */}
             {canPublish ? (

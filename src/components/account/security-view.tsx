@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
-import { KeyRound, Laptop, Loader2, LogOut, MonitorSmartphone, ShieldCheck, ShieldOff } from "lucide-react";
+import { Laptop, Loader2, Lock, LogOut, MonitorSmartphone, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -129,15 +129,20 @@ export function SecurityView({
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <ShieldCheck className="size-5" aria-hidden="true" />
+        </span>
         <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* تغيير كلمة المرور */}
         <section className="rounded-2xl border border-border bg-white p-6">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-navy">
-            <KeyRound className="h-5 w-5 text-brand" aria-hidden="true" />
+          <h2 className="flex items-center gap-2.5 text-lg font-bold text-navy">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-brand-strong">
+              <Lock className="size-4" aria-hidden="true" />
+            </span>
             {t.changePassword}
           </h2>
           {formError && (
@@ -184,8 +189,10 @@ export function SecurityView({
         {/* الجلسات النشطة */}
         <section className="rounded-2xl border border-border bg-white p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-navy">
-              <MonitorSmartphone className="h-5 w-5 text-brand" aria-hidden="true" />
+            <h2 className="flex items-center gap-2.5 text-lg font-bold text-navy">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-brand-strong">
+                <MonitorSmartphone className="size-4" aria-hidden="true" />
+              </span>
               {t.sessions}
             </h2>
             {others.length > 0 && (
@@ -220,8 +227,8 @@ export function SecurityView({
               {sessions.map((session) => (
                 <li
                   key={session.id}
-                  className={`flex flex-wrap items-center gap-4 rounded-xl border p-4 ${
-                    session.current ? "border-brand/40 bg-accent/30" : "border-border"
+                  className={`flex flex-wrap items-center gap-4 rounded-xl border p-4 transition-colors ${
+                    session.current ? "border-brand/40 bg-accent/30" : "border-border hover:bg-muted/50"
                   }`}
                 >
                   <span
@@ -235,9 +242,12 @@ export function SecurityView({
                     <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-navy">
                       {describeUserAgent(session.userAgent, t.unknownDevice)}
                       {session.current && (
-                        <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand-strong">
-                          {t.thisDevice}
-                        </span>
+                        <>
+                          <span className="inline-flex size-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                          <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand-strong">
+                            {t.thisDevice}
+                          </span>
+                        </>
                       )}
                     </p>
                     <p className="mt-1 text-xs leading-6 text-muted-foreground">
@@ -296,7 +306,7 @@ function PasswordField({
         required
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`min-h-11 ${error ? "border-red-400" : ""}`}
+        className={`min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40 ${error ? "border-red-400" : ""}`}
       />
       {error && (
         <p id={`${id}-error`} role="alert" className="text-xs font-medium text-red-700">

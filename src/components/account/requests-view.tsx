@@ -189,12 +189,19 @@ export function RequestsView({
 
       <Tabs value={status} onValueChange={onStatusChange}>
         <div className="overflow-x-auto pb-1">
-          <TabsList className="h-auto w-max flex-wrap gap-1 bg-muted/60 p-1">
-            <TabsTrigger value="all" className="min-h-9 rounded-lg px-3 text-sm font-medium">
+          <TabsList className="h-auto w-max flex-wrap gap-1 rounded-full bg-muted/60 p-1">
+            <TabsTrigger
+              value="all"
+              className="min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none"
+            >
               {allLabel}
             </TabsTrigger>
             {STATUS_KEYS.map((key) => (
-              <TabsTrigger key={key} value={key} className="min-h-9 rounded-lg px-3 text-sm font-medium">
+              <TabsTrigger
+                key={key}
+                value={key}
+                className="min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none"
+              >
                 {t.statuses[key] ?? key}
               </TabsTrigger>
             ))}
@@ -279,8 +286,8 @@ export function RequestsView({
                 </thead>
                 <tbody>
                   {requests.map((r) => (
-                    <tr key={r.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40">
-                      <td className="px-3 py-3.5 font-mono font-semibold text-navy">
+                    <tr key={r.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50">
+                      <td className="px-3 py-3.5 font-mono text-xs font-semibold text-navy ltr-isolate">
                         <Link href={detailHref(r.id)} className="underline decoration-transparent underline-offset-4 hover:decoration-brand">
                           {r.refCode}
                         </Link>
@@ -307,7 +314,7 @@ export function RequestsView({
                         </div>
                       </td>
                       <td className="px-3 py-3.5 whitespace-nowrap text-muted-foreground">{formatDateOnly(r.createdAt, locale)}</td>
-                      <td className="px-3 py-3.5 whitespace-nowrap text-muted-foreground">{formatRelative(r.lastActivityAt, locale)}</td>
+                      <td className="px-3 py-3.5 text-xs whitespace-nowrap text-muted-foreground">{formatRelative(r.lastActivityAt, locale)}</td>
                       <td className="px-3 py-3.5 text-end">
                         <Link
                           href={detailHref(r.id)}

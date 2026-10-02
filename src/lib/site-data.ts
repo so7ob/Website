@@ -31,6 +31,10 @@ export interface AnnouncementSettings {
   ctaLabelEn: string;
   ctaUrl: string;
   variant: AnnouncementVariant;
+  /** بداية العرض (YYYY-MM-DD أو ISO) — قبلها يبقى الشريط مخفيًا */
+  startAt: string;
+  /** نهاية العرض (YYYY-MM-DD أو ISO) — بعدها يبقى الشريط مخفيًا */
+  endAt: string;
   /** يُرفع مع كل حفظ — يستخدم لإعادة إظهار الشريط بعد الإخفاء */
   revision: string;
 }
@@ -43,6 +47,8 @@ const ANNOUNCEMENT_DISABLED: AnnouncementSettings = {
   ctaLabelEn: "",
   ctaUrl: "",
   variant: "info",
+  startAt: "",
+  endAt: "",
   revision: "",
 };
 
@@ -95,7 +101,18 @@ const SETTINGS_KEYS = [
   "announcement.ctaUrl",
   "announcement.variant",
   "announcement.revision",
+  "announcement.startAt",
+  "announcement.endAt",
 ];
+
+/** تحليل تاريخ جدولة (YYYY-MM-DD أو ISO كامل) — قيمة غير صالحة تُهمل */
+function parseScheduleDate(raw: string, endOfDay = false): Date | null {
+  if (!raw) return null;
+  const isDayOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+  if (!isDayOnly && !/^\d{4}-\d{2}-\d{2}T/.test(raw)) return null;
+  const date = new Date(isDayOnly ? `${raw}T${endOfDay ? "23:59:59" : "00:00:00"}` : raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 export async function getSettings(): Promise<SiteSettings> {
   const rows = await db.siteSetting.findMany({
@@ -103,6 +120,19 @@ export async function getSettings(): Promise<SiteSettings> {
   });
   const map = new Map(rows.map((r) => [r.key, r.value]));
   const variantRaw = map.get("announcement.variant") ?? "";
+  const startAt = map.get("announcement.startAt") ?? "";
+  const endAt = map.get("announcement.endAt") ?? "";
+
+  // الجدولة تحجب الشريط خارج نافذته دون تغيير القيمة المخزنة:
+  // قبل تاريخ البدء أو بعد نهاية يوم تاريخ الانتهاء → معطل فعليًا.
+  const now = new Date();
+  const startBoundary = parseScheduleDate(startAt);
+  const endBoundary = parseScheduleDate(endAt, true);
+  const scheduled =
+    map.get("announcement.enabled") === "true" &&
+    !(startBoundary && now < startBoundary) &&
+    !(endBoundary && now > endBoundary);
+
   return {
     contactEmail: map.get("contact.email") || siteConfig.contact.email,
     contactPhone: map.get("contact.phone") || siteConfig.contact.phone,
@@ -112,7 +142,7 @@ export async function getSettings(): Promise<SiteSettings> {
     nameEn: map.get("site.nameEn") || siteConfig.nameEn,
     announcement: {
       ...ANNOUNCEMENT_DISABLED,
-      enabled: map.get("announcement.enabled") === "true",
+      enabled: scheduled,
       messageAr: map.get("announcement.messageAr") ?? "",
       messageEn: map.get("announcement.messageEn") ?? "",
       ctaLabelAr: map.get("announcement.ctaLabelAr") ?? "",
@@ -121,6 +151,8 @@ export async function getSettings(): Promise<SiteSettings> {
       variant: (ANNOUNCEMENT_VARIANTS as readonly string[]).includes(variantRaw)
         ? (variantRaw as AnnouncementVariant)
         : "info",
+      startAt,
+      endAt,
       revision: map.get("announcement.revision") ?? "",
     },
   };

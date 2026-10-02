@@ -317,3 +317,91 @@ Stage Summary:
 - All features verified in browser AR/EN RTL/LTR + mobile
 - Known/accepted: dev-server OOM ceiling in sandbox (restarted once this round); announcement demo text is fictional (product owner should edit before production)
 - Next candidates: scheduled announcements (start/end dates); notification real-time push (websocket); request SLA indicators; dashboard date-range filters
+
+---
+Task ID: 17-qa
+Agent: main (Z.ai Code)
+Task: Round-17 assessment + QA + shared-file prep
+
+Work Log:
+- All checks green at round start: lint ✓, tsc ✓, 67/67 ✓, server 200
+- agent-browser QA: admin login+dashboard, pages list → editor load (toolbar renders, 0 errors), client profile/security (0 errors), no console errors anywhere
+- FUNCTIONAL GAP FOUND (top priority): staff notifications exist in DB (admin has 13 unread) and /api/account/notifications works for any authed user, but admin panel has NO bell and NO notifications page — staff never see their notifications
+- Round-17 scope: (1) staff notifications in admin shell + /admin/notifications page; (2) request response-aging badges (admin list awaitingTeam/overdueReply + client list awaitingYou); (3) scheduled announcements (start/end dates); styling round 3 on remaining screens
+- SHARED FILES PREPARED by main agent: portal types/ar/en — admin.nav.notifications + full admin.notifications section (title/subtitle/markRead/markAllRead/empty/types×7), admin.requests.{awaitingTeam,overdueReply,agingHours("{n} ساعة"/"{n}h"),agingDays}, account.requests.awaitingYou, admin.settings.{announcementStart,announcementEnd}. tsc clean, 67/67 pass. No permission changes needed (own-data notifications + settings.manage existing)
+
+Stage Summary:
+- Platform stable; translations staged; launching 17-a (styling round 3) + 17-b (staff notifications + aging badges + scheduled announcements) in parallel with strict file ownership: 17-b owns requests-client.tsx/inquiries-client.tsx/admin-shell.tsx/settings/API/site-data; 17-a owns user-detail/account-views/editor-chrome
+
+---
+Task ID: 17-b
+Agent: general-purpose
+Task: Staff notifications in admin + request aging badges + scheduled announcements
+Work Log:
+- Feature 1 (Staff notifications in admin panel):
+  - API: verified /api/account/notifications GET/POST works for ANY authenticated user (guardApi without permission → own data only); reused AS-IS, zero server changes. Response rows: {id,type,payload{ref,status,name},link,readAt,createdAt}; links stored with hardcoded locale prefix (/ar/admin/requests/{id} for staff notifications, /ar/account/requests/{id} for client-facing ones)
+  - NEW src/app/[locale]/admin/notifications/page.tsx: server wrapper following audit-page pattern — requireMe(locale, "admin.dashboard") (every staff role holds it; layout already redirects clients → /account), force-dynamic, passes me+locale
+  - NEW src/components/admin/notifications/notifications-client.tsx: adaptation of account notifications-view (unread rows bg-accent/30 + brand icon circle, per-row markRead-on-click + navigate, markAllRead w/ CheckCheck, 20/page load-more button "shown/total", skeleton first load, error banner + retry, empty state) — labels from t.admin.notifications.*, status chips from t.admin.requests.statuses, dates via fmtDateTime; admin/types.ts gained AdminNotification/NotificationsResponse
+  - Staff link mapping (client-side staffLink helper): /account/requests/ → /admin/requests/ when me.roleKey !== "client", plus stored /ar|en/ prefix rewritten to current display locale (verified with node: /ar/admin/requests/xyz + en → /en/admin/requests/xyz)
+  - admin-shell.tsx: Bell in topbar (ghost icon size-10 rounded-full, aria-label = t.admin.notifications.title + count when >0) with unread badge absolute -top-0.5 -end-0.5 size-4 bg-skydrop text-navy capped "9+"; polls /api/account/notifications?unread=1 every 30s (exact account-shell pattern: active flag, pathname dep, silent catch); sidebar nav gained "notifications" (Bell, no permission — own data) between inquiries and pages; titleFor map updated
+- Feature 2 (Request response-aging badges):
+  - /api/admin/requests GET: added awaitingSince (ISO|null) per row — null unless status NOT closed/cancelled AND the LAST kind="message" row (internal_note/system excluded via where kind:"message") is authorType==="client" (authorType is the client/staff identifier on RequestMessage, NOT senderId); computed with ONE extra findMany for the page's 20 ids (orderBy createdAt asc, last-per-request wins in Map, select requestId/authorType/createdAt only); all existing fields unchanged
+  - requests-client.tsx: AgingBadge next to StatusBadge in the status cell (flex-wrap gap-1.5) — <24h neutral chip border-border bg-muted text-muted-foreground "بانتظار رد الفريق · {n} ساعة/{n}h", ≥24h amber chip border-amber-300 bg-amber-100 text-amber-900 "رد متأخر · {n} يوم/{n}d" (labels from t.admin.requests.awaitingTeam/overdueReply/agingHours/agingDays, {n} replaced; hours/days floored from now−awaitingSince, clamped ≥0); admin/types.ts RequestRow gained awaitingSince: string | null
+  - 16-a table polish applied to the 2 unpolished workhorse tables: requests + inquiries thead rows get exact users-client classes ([&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground), rows hover:bg-muted/50 (was /40), refCode cells font-mono text-xs ltr-isolate (was text-sm)
+  - Client-side awaitingYou chip SKIPPED (17-a owns requests-view.tsx) — translations t.account.requests.awaitingYou remain staged for a future round; /api/account/requests untouched (purely status-based "responded" would need no API change)
+- Feature 3 (Scheduled announcements):
+  - /api/admin/settings PATCH: announcement.startAt/endAt added to ALLOWED_KEYS; validation = empty OR YYYY-MM-DD or full ISO (regex also accepts T..:..(:..(.mmm)?)?(Z|±hh:mm)); any announcement.* change still bumps announcement.revision (existing startsWith check covers new keys)
+  - site-data.ts: SETTINGS_KEYS now 16 (2 new), AnnouncementSettings gained startAt/endAt strings (kept raw in returned object so the admin form shows them); getSettings computes effective enabled OUTSIDE storage: startAt boundary = date at local 00:00:00, endAt = date at 23:59:59 (full ISO values used as-is); now < start OR now > end → returned announcement.enabled=false while stored value untouched (verified via node: future start hides, past end hides, same-day end shows until 23:59:59, invalid strings → no gating)
+  - settings-client.tsx: announcement card gained 2 date inputs (type="date" dir="ltr" min unset, labels t.admin.settings.announcementStart/End) wired into FIELDS/EMPTY_FORM/dirty-save loop as plain strings — empty clears (server upserts ""); load normalizes full-ISO stored values to their day so the date input renders truthfully
+  - announcement-bar.tsx unchanged — it already returns null when !announcement.enabled, which now carries the schedule gate
+- Static verification only (shared tree w/ concurrent 17-a): bunx tsc --noEmit = 0 errors (re-run after final tweak); bunx eslint (10 touched paths incl. new folders) = 0 problems; bun run test 67/67; git diff --check clean; account-shell/users-client/portal-content/prisma/editor files untouched (git-verified — 17-a's concurrent edits to account-views/user-detail-client are theirs)
+
+Stage Summary:
+- All 3 features complete: staff can now SEE their notifications (topbar bell + full page with mark-read/navigation), request list flags how long a client reply has been waiting (neutral <24h / amber ≥24h next to status), announcements can be scheduled with start/end dates evaluated server-side at render (no cron needed — gating is evaluated on every request via getSettings)
+- Browser-test checklist for main agent: (1) login as admin → bell in admin topbar shows unread count (admin@so7ob.local had 13 unread in QA), badge capped 9+, count drops on mark-read, auto-refreshes every 30s, hidden when 0; (2) /ar/admin/notifications lists own notifications with unread accent rows — click a request notification → lands on /{locale}/admin/requests/{id} (NOT the client portal), a client-link notification rewires to admin route; mark-all clears header pill + bell badge; load-more pages 20 at a time; (3) client user hitting /admin/notifications → redirected to /account; (4) requests list: rows where client sent the LAST visible message (status not closed/cancelled) show aging chip next to status — fresh ones neutral "بانتظار رد الفريق · n ساعة", ≥24h amber "رد متأخر · n يوم"; closed/cancelled/staff-last rows show none; (5) requests+inquiries tables now have uppercase muted headers + hover rows + mono-xs refCodes (visual parity with users table); (6) settings → announcement card: start/end date pickers save; start date in the future hides the banner everywhere (enabled stays "true" in DB), end date in the past hides it, clearing both + saving restores per the enabled switch; banner reappears for dismissed browsers on any announcement save (revision bump covers schedule keys); (7) RTL/LTR + 375px: bell badge position flips correctly (logical -end-), aging chips wrap under status badge on narrow screens
+- Notes: client-portal awaitingYou badge deferred (17-a file ownership) — t.account.requests.awaitingYou stays staged; notification links in DB carry a hardcoded /ar/ prefix by legacy design, the admin client rewrites locale at render (account portal still navigates as-is — unchanged behavior)
+
+---
+Task ID: 17-a
+Agent: frontend-styling-expert
+Task: Styling polish round 3 — user detail, account views, editor chrome
+
+Work Log:
+- src/components/admin/users/user-detail-client.tsx: 3 stat cards now speak the dashboard language — StatCard helper gains chip/bar class props, each card gets size-10 rounded-xl tinted icon chip (totalRequests=emerald/FileText, openRequests=amber/FileClock new import, sessionsCount=skydrop/MonitorSmartphone) + h-1 gradient top bar (rounded-t-2xl, overflow-hidden) + hover lift (-translate-y-0.5 shadow-lg shadow-navy/10 duration-300) + p-5; loading skeletons h-24→h-28 to match; requests table thead gets the 16-a uppercase muted pattern ([&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground) + rows hover:bg-muted/40→/50; accountInfo InfoRow dds (incl. emailVerified row) get border-s-2 border-border/60 ps-3 start-accent (values stay font-medium text-navy); activityLog rows rounded-xl px-2.5 py-1.5 + hover:bg-muted/50 transition-colors, ol space-y-2.5→1, timestamps text-[11px]→text-xs; both back links get text-muted-foreground hover:text-navy transition-colors (per-locale ArrowLeft/ArrowRight BackIcon already logical — kept)
+- src/components/account/requests-view.tsx: status tabs → pill segment language: TabsList rounded-full, triggers rounded-full px-4 min-h-9 with active state bg-navy text-white shadow-none (twMerge overrides base bg-background) + data-[state=inactive]:hover:bg-muted transition-colors — tablist a11y untouched; table rows hover:bg-muted/40→/50; refCode cell gains text-xs + ltr-isolate (was missing); lastActivity column text-xs; 17-b's awaitingLabel prop + awaitingClientReply amber dot preserved untouched (no badges added)
+- src/components/account/notifications-view.tsx: TYPE_ICONS → TYPE_META with per-type tinted icon chips (size-9 rounded-full: new_request=skydrop, request_assigned/content=navy, reply_received/content_published=emerald, info_requested/status_changed=amber — icons unchanged); unread rows get border-s-2 border-s-brand + bg-accent/30 (read rows border-s-transparent — no layout shift), rows rounded-xl hover:bg-muted/50; unread dot bg-red-600 h-2 w-2 → bg-brand size-2 (static, no pulse); chip tint now independent of read state (read/unread no longer swap chip colors)
+- src/components/account/profile-form.tsx (task named profile-view.tsx — actual file is profile-form.tsx): header gains User icon chip (size-10 rounded-xl bg-accent text-brand-strong) beside h1; all inputs (email/name/phone/company) get focus-visible:ring-2 ring-ring/40 polish matching the 16-a composer language; off-palette text-slate-400 hint → text-muted-foreground
+- src/components/account/security-view.tsx: header gains ShieldCheck icon chip; password-change section heading KeyRound→Lock inside size-8 rounded-lg bg-accent chip; sessions heading MonitorSmartphone gets same chip treatment; session rows get transition-colors + hover:bg-muted/50 (non-current only — current keeps its accent tint), current session gains emerald dot (size-2 bg-emerald-500) before the thisDevice chip; password inputs get focus-visible ring polish; revoke buttons/revokeAll untouched (size + red tone kept)
+- src/components/admin/editor/page-editor.tsx: topbar action cluster (undo/redo + device group + preview/versions/settings) grouped into one subtle bg-muted/60 rounded-full p-1 segment container (flex-wrap keeps xl→lg collapse + narrow widths safe; publish CTA + live link stay outside); buttons inside switch outline→ghost for proper segmented-control look (handlers/aria/disabled/size untouched); device group loses its own border (now borderless inside segment), active device state bg-accent text-brand-strong → bg-white text-navy shadow-sm; save-status indicator now dot-driven: saved=emerald dot (replaces Check icon), error=destructive dot (replaces AlertTriangle icon), dirty=amber dot (already existed), saving keeps spinner — removed now-unused Check import
+- src/components/admin/editor/block-library.tsx: library cards get border-border/70 at rest + hover:border-brand hover:bg-accent/20 (was transparent border + accent/60 + shadow); icon chips tinted per group via GROUP_CHIPS (home=skydrop, pages=emerald, generic=amber, layout=navy)
+- src/components/admin/editor/editor-canvas.tsx: selected-block ring ring-2 ring-brand → ring-2 ring-brand/50; block hover hint changes from ring to a dashed border — always-present border-dashed border-transparent + group-hover:border-border (no layout shift, no CLS on select)
+- Verified statically: bunx tsc --noEmit = 0 errors; bunx eslint (all 8 touched files) = 0 problems; bun run test 67/67; git diff --check clean; no forbidden files touched (17-b's requests/inquiries/admin-shell/settings/api/site-data/announcement-bar/portal-content all untouched; their concurrent changes visible in git status are theirs)
+
+Stage Summary:
+- User detail page now matches the dashboard stat-card language (tinted chips + gradient top bars + hover lifts), its tables/lists share the 16-a uppercase-thead + hover-row + accent-bordered dt/dd patterns
+- Account portal: pill status tabs with navy active state, brand-accented unread notification rows with per-type tinted icon chips, icon-chip page headers on profile/security, softer focus rings, emerald current-session marker
+- Editor chrome: unified rounded-full segmented topbar with white active device toggle, dot-based save-status indicator, tinted block-library chips, softer selection ring + dashed hover hint — all RTL-safe (logical properties only), palette-compliant (navy/skydrop/brand/accent/muted + semantic emerald/amber), 44px targets + ARIA preserved, zero logic/state/prop-signature changes (local StatCard helper gained presentational chip/bar props only)
+
+---
+Task ID: 17
+Agent: main (Z.ai Code)
+Task: Round-17 integration — staff notifications QA, aging edge-case fix, schedule verification
+
+Work Log:
+- Integrated 17-a + 17-b; full checks: lint ✓, tsc ✓, 67/67 ✓, git diff --check ✓
+- Browser QA of staff notifications (all pass):
+  - Admin shell bell shows unread count "الإشعارات (11)" + sidebar nav link between inquiries and pages; badge clears after mark-all-read
+  - /ar/admin/notifications renders (type chips طلب جديد/رد جديد/تغيير حالة, markAll, load-more); 0 errors
+  - Staff link mapping VERIFIED: clicked notification → /ar/admin/requests/{id} (rewrote /account/requests/ prefix for staff)
+- Browser QA of aging badges: found + FIXED edge case in /api/admin/requests — new requests with ZERO messages showed no badge (description is the client's communication); now awaitingSince falls back to createdAt when no messages and lastStaffReplyAt null. Verified: S7-87ADGHJU shows "بانتظار رد الفريق · 1 ساعة" (neutral); S7-4VSZBSNR correctly null (staff replied last). Age math verified against server clock (00:29→02:01 UTC = 1h)
+- Browser QA of scheduled announcements (all pass): future startAt → banner not-rendered; past endAt → not-rendered; cleared → visible again. UI date inputs save correctly (note: testing controlled date inputs via JS requires React-safe native setter + input event — direct .value set is a test artifact, not an app bug)
+- Client portal: status tabs now navy pills (active "عرض الكل" bg-navy ✓); awaitingYou client badge wired by 17-b (awaitingClientReply from API)
+- VLM review of notifications + user-detail pages: "high visual polish, RTL correct, no bugs" (all rows read during test = expected)
+- Mobile 375px: account notifications + admin requests no overflow
+- Demo state: announcement enabled (no dates), notifications all read for admin
+- ENVIRONMENT: dev server OOM-restarted once this round (4th time total)
+
+Stage Summary:
+- Round 17 complete: staff notifications (bell + page + staff link mapping), request aging badges (with zero-message edge case fixed), scheduled announcements (start/end dates), styling round 3 (user-detail stat cards, account views pills/unread styling, editor chrome segmented toolbar)
+- All verified in browser AR + mobile; checks all green
+- Next candidates: client awaitingYou chip visual on requests list (API ready, only rendering), dashboard overdue KPI card, websocket real-time notifications, dashboard date-range filters
