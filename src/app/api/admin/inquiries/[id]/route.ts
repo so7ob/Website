@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await db.inquiryMessage.create({ data: { inquiryId: id, authorId: actor.id, authorType: "system", kind: "system", body: `status:${to}` } });
     await audit({ actorId: actor.id, actorEmail: actor.email, action: "inquiry.status_changed", entityType: "inquiry", entityId: id, details: { from: inquiry.status, to } });
     if (inquiry.clientId) {
-      await notify({ userId: inquiry.clientId, type: to === "awaiting_info" ? "info_requested" : "status_changed", payload: { ref: inquiry.refCode, status: to }, link: "/ar/account" });
+      await notify({ userId: inquiry.clientId, type: to === "awaiting_info" ? "info_requested" : "status_changed", payload: { ref: inquiry.refCode, status: to }, link: `/${inquiry.locale}/account/inquiries/${id}` });
     }
     return json({ ok: true });
   }

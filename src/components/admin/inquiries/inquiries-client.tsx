@@ -6,10 +6,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Search, MessageSquareText, Eye, Loader2, RotateCcw, Download } from "lucide-react";
+import { Search, MessageCircleQuestion, MessageSquareText, Eye, Loader2, RotateCcw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
@@ -22,6 +21,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { useDebounced } from "@/components/admin/use-debounced";
 import { apiGet, ApiError, apiErrorMessage, buildQuery, fmtRelative } from "@/components/admin/helpers";
 import type { InquiriesResponse, Me } from "../types";
+import { cn } from "@/lib/utils";
 
 interface InquiriesClientProps {
   me: Me;
@@ -38,17 +38,22 @@ function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["
   const days = Math.max(0, Math.floor(ageMs / 86_400_000));
   if (days >= 1) {
     return (
-      <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+      <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium tabular-nums text-amber-900">
         {tr.overdueReply} · {tr.agingDays.replace("{n}", String(days))}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
       {tr.awaitingTeam} · {tr.agingHours.replace("{n}", String(hours))}
     </span>
   );
 }
+
+/** لغة حبوب التصفية (حالة/تصنيف) — بنية حبة «متأخر الرد» في قائمة الطلبات
+ *  مع تفعيل بحد brand وخلفية accent (لغة عناصر التنقل النشطة) */
+const FILTER_PILL_CLASS =
+  "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
 export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientProps) {
   const t = getPortalContent(locale);
@@ -113,10 +118,15 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-navy">{ti.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{ti.subtitle}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+            <MessageCircleQuestion className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-navy">{ti.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{ti.subtitle}</p>
+          </div>
         </div>
         {mayExport ? (
           <Button variant="outline" onClick={exportCsv} className="min-h-11 rounded-full">
@@ -126,6 +136,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
         ) : null}
       </div>
 
+      {/* أدوات التصفية: بحث + حبوب حالة/تصنيف — نفس قيم القوائم المنسدلة السابقة */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-56 flex-1 sm:max-w-xs">
           <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
@@ -137,33 +148,67 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
             }}
             placeholder={t.admin.requests.searchPlaceholder}
             aria-label={t.admin.users.search}
-            className="min-h-11 ps-9"
+            className="min-h-11 ps-9 focus-visible:ring-2 focus-visible:ring-ring/40"
           />
         </div>
-        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-          <SelectTrigger aria-label={t.admin.requests.filterStatus} className="min-h-11 w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.admin.requests.filterAll} — {t.admin.requests.filterStatus}</SelectItem>
-            {/* مرشّح مركّب يطابق مؤشر «الاستفسارات المفتوحة» في اللوحة (رابط عميق ?status=open) */}
-            <SelectItem value="open">{t.admin.dashboard.openInquiries}</SelectItem>
-            {statusKeys.map((s) => (
-              <SelectItem key={s} value={s}>{ti.statuses[s]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={category} onValueChange={(v) => { setCategory(v); setPage(1); }}>
-          <SelectTrigger aria-label={ti.category} className="min-h-11 w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.admin.requests.filterAll} — {ti.category}</SelectItem>
-            {categoryKeys.map((c) => (
-              <SelectItem key={c} value={c}>{ti.categories[c]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      </div>
+
+      {/* حبوب الحالة — «الكل» + المرشّح المركّب «مفتوحة» (رابط عميق ?status=open من اللوحة) + الحالات */}
+      <div role="group" aria-label={t.admin.requests.filterStatus} className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground" aria-hidden="true">
+          {t.admin.requests.filterStatus}
+        </span>
+        {[
+          { value: "all", label: t.admin.requests.filterAll },
+          { value: "open", label: t.admin.dashboard.openInquiries },
+          ...statusKeys.map((s) => ({ value: s, label: ti.statuses[s] })),
+        ].map(({ value, label }) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={status === value}
+            onClick={() => {
+              setStatus(value);
+              setPage(1);
+            }}
+            className={cn(
+              FILTER_PILL_CLASS,
+              status === value
+                ? "border-brand bg-accent text-brand-strong"
+                : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* حبوب التصنيف */}
+      <div role="group" aria-label={ti.category} className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground" aria-hidden="true">
+          {ti.category}
+        </span>
+        {[{ value: "all", label: t.admin.requests.filterAll }, ...categoryKeys.map((c) => ({ value: c, label: ti.categories[c] }))].map(
+          ({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={category === value}
+              onClick={() => {
+                setCategory(value);
+                setPage(1);
+              }}
+              className={cn(
+                FILTER_PILL_CLASS,
+                category === value
+                  ? "border-brand bg-accent text-brand-strong"
+                  : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              {label}
+            </button>
+          )
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white">
@@ -206,13 +251,13 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
                     <TableCell>
                       <Link
                         href={`/${locale}/admin/inquiries/${row.id}`}
-                        className="block max-w-64 truncate text-sm font-medium text-navy transition-colors hover:text-brand"
+                        className="block max-w-64 truncate rounded-sm text-sm font-medium text-navy transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                       >
                         {row.subject}
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-brand-strong">
+                      <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-brand-strong">
                         {ti.categories[row.category] ?? row.category}
                       </span>
                     </TableCell>
@@ -235,7 +280,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
                         {row.messageCount}
                       </span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{fmtRelative(row.lastActivityAt, locale)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">{fmtRelative(row.lastActivityAt, locale)}</TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="icon" className="size-10" aria-label={t.admin.requests.viewDetails}>
                         <Link href={`/${locale}/admin/inquiries/${row.id}`}>

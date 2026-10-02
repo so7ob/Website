@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bell, FilePlus2, FolderOpen, Layers, MessageCircle } from "lucide-react";
+import { Bell, FilePlus2, FolderOpen, Inbox, Layers, MessageCircle, MessageCircleQuestion } from "lucide-react";
 import { getAuthUser } from "@/lib/auth/session";
 import { getPortalContent } from "@/content/portal";
 import { db } from "@/lib/db";
@@ -44,7 +44,7 @@ export default async function AccountDashboardPage({ params }: { params: Promise
   if (!user) notFound();
 
   const scope = user.roleKey === "client" ? { clientId: user.id } : { assigneeId: user.id };
-  const [requests, unreadNotifications] = await Promise.all([
+  const [requests, unreadNotifications, openInquiries, totalInquiries] = await Promise.all([
     db.projectRequest.findMany({
       where: scope,
       orderBy: { lastActivityAt: "desc" },
@@ -60,6 +60,11 @@ export default async function AccountDashboardPage({ params }: { params: Promise
       },
     }),
     db.notification.count({ where: { userId: user.id, readAt: null } }),
+    // استفسارات مفتوحة — الحالات غير الختامية وغير المؤرشفة (نفس تصفية status=open الخادمية)
+    db.inquiry.count({
+      where: { ...scope, archivedAt: null, status: { in: ["new", "in_review", "awaiting_info", "responded"] } },
+    }),
+    db.inquiry.count({ where: scope }),
   ]);
 
   const openRequests = requests.filter(
@@ -79,6 +84,8 @@ export default async function AccountDashboardPage({ params }: { params: Promise
     // «بانتظار ردك» — التصفية الدقيقة (آخر ردٍّ من الطاقم) عبر معامل awaiting=you
     { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300", href: `/${locale}/account/requests?awaiting=you` },
     { label: t.unreadNotifications, value: unreadNotifications, icon: Bell, tone: "bg-violet-100 text-violet-800", bar: "bg-gradient-to-r from-violet-400 to-purple-400", href: `/${locale}/account/notifications` },
+    { label: t.openInquiries, value: openInquiries, icon: MessageCircleQuestion, tone: "bg-teal-100 text-teal-800", bar: "bg-gradient-to-r from-teal-500 to-emerald-400", href: `/${locale}/account/inquiries?status=open` },
+    { label: t.totalInquiries, value: totalInquiries, icon: Inbox, tone: "bg-muted text-muted-foreground", bar: "bg-gradient-to-r from-slate-400 to-teal-300", href: `/${locale}/account/inquiries` },
     { label: t.totalRequests, value: requests.length, icon: Layers, tone: "bg-muted text-muted-foreground", bar: "bg-gradient-to-r from-navy/60 to-slate-400", href: `/${locale}/account/requests` },
   ];
 
@@ -103,7 +110,7 @@ export default async function AccountDashboardPage({ params }: { params: Promise
       </header>
 
       {/* بطاقات المؤشرات — ذات الرابط تفتح القائمة المقابلة (روابط عميقة بلغة لوحة الإدارة) */}
-      <section aria-label={t.title} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section aria-label={t.title} className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map((s) => {
           const Icon = s.icon;
           const card = (
