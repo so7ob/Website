@@ -50,6 +50,11 @@ export async function validateUpload(file: File, kind: "attachment" | "media") {
   if (buffer.length !== file.size) return { error: "type_not_allowed" } as const;
   let valid = false;
   if (mime.startsWith("image/")) {
+    const signature = mime === "image/png" ? buffer.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))
+      : mime === "image/jpeg" ? buffer.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex"))
+      : mime === "image/webp" ? buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP"
+      : ["GIF87a", "GIF89a"].includes(buffer.subarray(0, 6).toString("ascii"));
+    if (!signature) return { error: "type_not_allowed" } as const;
     try {
       const image = sharp(buffer, { limitInputPixels: MAX_PIXELS, failOn: "warning", animated: true });
       const meta = await image.metadata();
