@@ -236,3 +236,84 @@ Stage Summary:
 - Round complete: 3 bug fixes (menus crash + home-slug corruption + scroll-behavior), 14 files styling polish, 4 new features (saved replies + CSV export + user detail + client search), migration 20261002000931_saved_replies applied
 - Known/accepted: single-instance rate limits; dev-server memory ceiling in sandbox (not a production issue); VLM minor a11y notes (chart label contrast, red asterisk contrast on login)
 - Next candidates: request deep-linking from user detail is list-filter based; announcements/banner block for editor; notification real-time push; CSV export for inquiries
+
+---
+Task ID: 16-qa
+Agent: main (Z.ai Code)
+Task: Round-16 assessment + QA + shared-file prep for feature round
+
+Work Log:
+- All checks green at round start: lint ✓, tsc ✓, 67/67 ✓, dev server 200
+- agent-browser QA: public AR pages (about/faq/contact/works/process/services) 0 errors; 404 page renders bilingual heading; admin login + inquiries list + inquiry detail + media + audit + outbox 0 errors; client dashboard + notifications 0 errors
+- No bugs found this round → feature round confirmed
+- Round-16 plan (from worklog next-candidates): announcement banner system (SiteSetting-based, no migration), inquiries CSV export (new permission), saved replies in inquiries, styling polish round 2
+- SHARED FILES PREPARED by main agent (subagents must NOT edit these): portal types/ar/en — added admin.settings.announcement* (+variants record), admin.inquiries.export/exportOk, top-level announce.{ariaLabel,dismiss}; permissions.ts — added "inquiries.export" granted to ops_manager (tests still 67/67, tsc clean)
+
+Stage Summary:
+- Platform stable; translations + permission staged; parallel subagents 16-a (styling) + 16-b (features) launching
+
+---
+Task ID: 16-a
+Agent: frontend-styling-expert
+Task: Styling polish round 2 — tables, media grid, audit, pagination, conversation
+
+Work Log:
+- src/components/admin/users/users-client.tsx: thead gets xs/medium/uppercase/tracking-wide muted labels via [&_th]:* on header row (border-b already from TableHeader); rows hover:bg-muted/50; SortHeader arrows → ChevronsUpDown (idle, opacity-60) / ChevronUp / ChevronDown (active, text-navy) with hover:text-foreground — onClick/props untouched; name+email two-line identity cell, ltr-isolate email and size-10 action buttons were already correct (kept)
+- src/components/admin/media/media-client.tsx: upload card → dashed border + hover:border-brand hover:bg-accent/30 transition (dropzone affordance); grid cards → group; image container framed (m-3 mb-0, rounded-xl border overflow-hidden); image transition-transform duration-300 group-hover:scale-[1.03]; copy-url + delete buttons moved into navy hover overlay (bg-navy/60, opacity-0 → group-hover/focus-within:opacity-100 on ≥sm, always visible on touch <sm) as size-11 (44px) round white/blurred buttons — same onClick/refs/permission gates, old bottom bar removed
+- src/app/[locale]/admin/pages/pages-client.tsx: same thead treatment; rows group/row + transition-colors hover:bg-muted/50 (archived keeps opacity-60); slug cell ltr-isolate font-mono text-xs untouched; status badges untouched; actions trigger size-9→size-10 text-muted-foreground → group-hover/row:text-foreground
+- src/components/admin/audit/audit-client.tsx: same thead/row treatment; details toggle size-9→size-10 with muted→foreground hover; expanded JSON now rounded-xl border bg-muted/40 p-3 font-mono text-xs text-foreground ltr-isolate max-h-64 overflow-auto with subtle custom scrollbar ([scrollbar-width:thin] + ::-webkit-scrollbar w-2 rounded thumb bg-border) — replaces navy/skydrop terminal look
+- src/components/admin/outbox/outbox-client.tsx: same thead/row treatment; status chips untouched (badges.tsx already polished)
+- src/components/admin/pagination.tsx: numeric pagination — page-number buttons (size-10 rounded-full, hover:bg-muted, current = border-transparent bg-navy text-white, aria-current="page") with ±1 window + "…" gaps when >7 pages; prev/next arrows size-10 rounded-full, disabled arrows text-muted-foreground/50 (disabled:opacity-100 override keeps them readable); RTL icon flip, props signature, from–to/total aria-live summary unchanged (screen-reader "page/pages" text replaced by aria-current)
+- src/components/admin/conversation.tsx: client bubbles bg-accent/60 + border-sky-200/70 rounded-ss-sm tail; staff bubbles bg-navy text-white rounded-se-sm tail (logical corner utilities verified to override rounded-2xl shorthand via compiled CSS test — longhands emit after shorthand); internal-note amber + system chip untouched; composer wrapper focus-within:border-brand/40 + ring-2 ring-ring/40, textarea border-0 bg-transparent px-0 shadow-none focus-visible:ring-0; savedReplies picker + all logic/props/state untouched
+- src/components/account/request-detail-view.tsx: timeline — non-latest dots bg-border, latest dot bg-brand + ring-4 ring-brand/15, dots size-2.5 transition-all duration-300 (history is createdAt asc so last item = current status); bubbles realigned to shared conversation language (own/client = accent tint rounded-se-sm, staff = navy white rounded-ss-sm, labels skydrop/white-60) since this view renders its own bubbles (NOT the shared conversation.tsx — verified, aligned manually); info card dt/dd definition-list already correct (kept); attachments list already polished (kept)
+- src/components/admin/requests/saved-replies-dialog.tsx: list rows rounded-xl + hover:bg-muted/50 transition; preview already line-clamp-2 text-xs text-muted-foreground (kept)
+- Verified statically: bunx tsc --noEmit = 0 errors; bunx eslint (all 9 touched files) = 0 problems; bun run test 67/67; git diff --check clean; no forbidden files touched (16-b's settings/inquiries/api/layout/site-data/portal-content/permissions untouched)
+
+Stage Summary:
+- Workhorse screens now speak the round-15 polish language: uppercase muted table headers + hover-tinted rows across users/pages/audit/outbox; framed media cards with zoom-on-hover and a navy action overlay (44px targets, touch-visible on small screens); audit JSON details as a proper mono code block with slim custom scrollbar; round numeric pagination with navy active chip; chat bubbles differentiated by role (accent client / navy staff / amber notes) with logical-corner tails; composer with unified focus-within ring and borderless textarea; client request timeline with brand-ringed current status — all RTL-safe (logical properties, logical corners), palette-compliant (navy/skydrop/brand/accent only), no logic/props/translation changes
+
+---
+Task ID: 16-b
+Agent: general-purpose
+Task: Announcement banner system + inquiries CSV export + saved replies in inquiries
+
+Work Log:
+- Feature 1 (Site-wide announcement banner, no migration — reuses SiteSetting KV):
+  - API /api/admin/settings PATCH: ALLOWED_KEYS + announcement.{enabled,messageAr,messageEn,ctaLabelAr,ctaLabelEn,ctaUrl,variant}; validation messageAr/En ≤280, ctaLabels ≤60, ctaUrl ≤200 + must start "/" or http(s)://, variant ∈ {info,warning,success,brand}, enabled ∈ {true,false}; any announcement key change also writes "announcement.revision"=String(Date.now()) in the SAME PATCH (upsert loop unchanged, audit keys list includes it) so dismissed browsers see the banner again
+  - src/lib/site-data.ts: getSettings() now queries 14 keys and returns `announcement` object {enabled,messageAr,messageEn,ctaLabelAr,ctaLabelEn,ctaUrl,variant,revision} (defaults: disabled, variant "info", arbitrary variant falls back to "info"); SiteSettings interface updated; exported AnnouncementSettings/AnnouncementVariant/ANNOUNCEMENT_VARIANTS types
+  - Admin UI settings-client.tsx: new 4th section card (Megaphone icon, t.admin.settings.announcement + announcementSubtitle) with Switch (enabled as "true"/"false" form string, normalized on load) + 6-field grid (messageAr dir=rtl, messageEn dir=ltr ltr-isolate, ctaLabels, ctaUrl placeholder "/ar/services", variant Select from announcementVariants — Radix needs non-empty so "info" default); dirty-keys-only save loop unchanged; client-side ctaUrl format check mirrors server
+  - Public banner src/components/site/announcement-bar.tsx ("use client", new file): props {announcement, locale, labels{ariaLabel,dismiss}}; renders null when disabled OR locale message empty OR dismissed; dismissal via localStorage "so7ob-announcement" storing revision — read with useSyncExternalStore (server snapshot "" → no hydration mismatch, storage event → cross-tab sync, self-dismiss state keyed to revision so updating the announcement mid-session re-shows it; revision falls back to content-derived string if unset); variant styles info=bg-skydrop/15+Info, warning=amber+TriangleAlert, success=emerald+CircleCheck, brand=bg-navy+Megaphone; strip is id="site-announcement" role="region" aria-label, direct child of body above header; container max-w-7xl flex-wrap gap-3 py-2.5 text-sm font-medium, message flex-1 break-words, CTA pill min-h-9 rounded-full (internal "/" → next/link, external http(s) → target=_blank rel=noopener noreferrer, mailto/tel plain), dismiss X button size-9 hover:bg-black/5
+  - [locale]/layout.tsx: <AnnouncementBar> rendered as FIRST element inside <body> before skip-link with labels from portal.announce; admin-shell.tsx CSS hide rule extended: body:has(#admin-shell) > #site-announcement { display:none !important } (banner is direct body child so selector works; account/auth/public pages keep it)
+- Feature 2 (Inquiries CSV export): /api/admin/inquiries/export GET guardApi "inquiries.export" (super_admin+ops_manager), mirrors list route where-building (q contains subject/email/name/refCode-upper, status ∈ 5 statuses, category), take 5000 orderBy createdAt desc; 11 columns refCode,id,subject,category,status,name,email,assignedTo(assignee email),createdAt,lastMessageAt(=last message createdAt via messages orderBy desc take 1, fallback inquiry updatedAt),archived(1/0); \uFEFF BOM + text/csv; charset=utf-8, CRLF, csvEscape like requests export, filename so7ob-inquiries-YYYY-MM-DD.csv; AUDIT_ACTIONS.inquiriesExported ("inquiries.exported") added to audit.ts, logged with count+filters; inquiries-client.tsx header restructured flex-wrap justify-between with Download export button gated can(me,"inquiries.export"), window.open relative URL with current q/status/category, toast ti.exportOk — exact mirror of requests-client pattern
+- Feature 3 (Saved replies in inquiries): inquiry-detail-client.tsx passes savedReplies={trigger:t.admin.savedReplies.useReply, insert, empty} to ReplyComposer gated by mayReply (= can "inquiries.reply") — same wiring as request-detail-client; picker only renders on the reply tab, clients never see it (admin-only page)
+- Static verification only (shared dev server, per instructions): bunx tsc --noEmit = 0 errors; bunx eslint (10 touched files) = 0 problems — note initial react-hooks/set-state-in-effect error on mounted-flag pattern solved by switching to useSyncExternalStore; bun run test 67/67; git diff --check clean; only my 10 files + 16-qa's prepared translations/permissions touched (16-a's concurrent files untouched)
+
+Stage Summary:
+- All 3 features complete: announcement banner (admin-managed, bilingual, 4 styles, dismissible with revision-based reset, hidden in admin panel), inquiries CSV export (permission-gated, filter-mirroring, Excel-safe Arabic via BOM, audited), saved replies picker wired into inquiry reply composer
+- Browser-test checklist for main agent: (1) admin settings → announcement section: enable + fill AR/EN texts + CTA + variant, save → verify banner on public AR and EN pages above header with correct style/icon/CTA (internal link navigates client-side, external opens new tab), dismiss (X) hides it, reload keeps it hidden, editing+saving announcement brings it back; (2) banner hidden on /admin pages (CSS :has rule), visible on account/auth pages; (3) empty message or disabled → no banner; (4) inquiries page: Export CSV button for super_admin/ops_manager only, exports with current search/status/category filters, Arabic subjects intact in Excel, audit log shows inquiries.exported; (5) inquiry detail: "Saved reply" picker on reply tab inserts template, absent on internal-note tab, support-role agent with inquiries.reply sees it, client portal never does; (6) RTL/LTR both directions + 375px mobile wrap of banner text/CTA
+
+---
+Task ID: 16
+Agent: main (Z.ai Code)
+Task: Round-16 integration — QA of 16-a styling + 16-b features, verification, commit
+
+Work Log:
+- Integrated both subagents; full checks: lint ✓, tsc ✓, 67/67 tests ✓, git diff --check ✓
+- Browser QA of announcement system (all pass):
+  - Admin settings 4th card renders all fields (switch, AR/EN messages, CTA labels+url, variant select); save 200 writes announcement.revision
+  - Public AR: banner renders (region "إعلان", message, CTA link "الخدمات" href=/ar/services, dismiss button); VLM review: integrated, no visual bugs
+  - Dismissal: X hides instantly, persists after reload (localStorage so7ob-announcement = revision); editing any announcement field via PATCH re-shows (revision reset) — verified with fetch PATCH + reload
+  - EN page: English message + "Services" CTA; auth pages show banner
+  - Admin isolation: #site-announcement display:none in /en/admin and subpages (CSS body:has rule) — NOTE: verify with computed style (offsetParent), NOT getElementById existence (initial false positive)
+  - Mobile 375: no overflow (banner 375px wide) — NOTE: check against window.innerWidth, not hardcoded 375 (false positive when viewport is desktop)
+- Browser QA of inquiries features (all pass):
+  - Export button visible, API 200 with Content-Disposition so7ob-inquiries-2026-10-02.csv, 11 columns, Arabic subjects intact (BOM pattern same as requests export), audit inquiries.exported
+  - Saved-replies picker in inquiry composer: empty state "لا ردود محفوظة" → created test reply via API → picker lists it → click inserts into textarea (verified value)
+- Styling round 2 verified: users table (uppercase thead, sort chevrons — VLM: "high polish, correct RTL"), media grid (dashed dropzone; cards polished; empty state professional), pagination active page bg-navy + aria-current, conversation bubbles rounded-ss-sm tail corners confirmed in DOM
+- Demo state kept intentionally: announcement ENABLED with demo text (shows feature end-to-end in PR review) + 1 demo saved reply "رد استفسار تجريبي"
+
+Stage Summary:
+- Round 16 complete: announcement banner system (8 settings keys, revision-based dismissal, 4 variants, admin-isolated), inquiries CSV export (new inquiries.export permission), saved replies wired into inquiries, 9 files styling polish round 2
+- All features verified in browser AR/EN RTL/LTR + mobile
+- Known/accepted: dev-server OOM ceiling in sandbox (restarted once this round); announcement demo text is fictional (product owner should edit before production)
+- Next candidates: scheduled announcements (start/end dates); notification real-time push (websocket); request SLA indicators; dashboard date-range filters

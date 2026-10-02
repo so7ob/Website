@@ -2,21 +2,37 @@
 
 /**
  * إعدادات الموقع: بيانات التواصل + الروابط الاجتماعية + اسم الموقع
- * باللغتين. حفظ واحد يرسل المفاتيح المعدلة فقط.
+ * باللغتين + شريط الإعلان العلوي. حفظ واحد يرسل المفاتيح المعدلة فقط.
  */
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Save, Loader2, RotateCcw, Mail, Phone, MapPin, Github, Languages } from "lucide-react";
+import { Save, Loader2, RotateCcw, Mail, Phone, MapPin, Github, Languages, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
 import type { Locale } from "@/lib/i18n";
 import { apiGet, apiSend, ApiError, apiErrorMessage } from "@/components/admin/helpers";
 import type { Me, SettingsResponse } from "../types";
 
-const FIELDS = ["contact.email", "contact.phone", "contact.address", "social.github", "site.nameAr", "site.nameEn"] as const;
+const FIELDS = [
+  "contact.email",
+  "contact.phone",
+  "contact.address",
+  "social.github",
+  "site.nameAr",
+  "site.nameEn",
+  "announcement.enabled",
+  "announcement.messageAr",
+  "announcement.messageEn",
+  "announcement.ctaLabelAr",
+  "announcement.ctaLabelEn",
+  "announcement.ctaUrl",
+  "announcement.variant",
+] as const;
 type FieldKey = (typeof FIELDS)[number];
 type FormState = Record<FieldKey, string>;
 
@@ -27,7 +43,16 @@ const EMPTY_FORM: FormState = {
   "social.github": "",
   "site.nameAr": "",
   "site.nameEn": "",
+  "announcement.enabled": "false",
+  "announcement.messageAr": "",
+  "announcement.messageEn": "",
+  "announcement.ctaLabelAr": "",
+  "announcement.ctaLabelEn": "",
+  "announcement.ctaUrl": "",
+  "announcement.variant": "info",
 };
+
+const ANNOUNCEMENT_VARIANT_KEYS = ["info", "warning", "success", "brand"] as const;
 
 interface SettingsClientProps {
   me: Me;
@@ -51,6 +76,11 @@ export function SettingsClient({ me, locale }: SettingsClientProps) {
       const res = await apiGet<SettingsResponse>("/api/admin/settings");
       const next = { ...EMPTY_FORM };
       for (const key of FIELDS) next[key] = res.settings[key] ?? "";
+      // قيم افتراضية للمفاتيح الثنائية والمنتقي — Radix لا يقبل قيمة فارغة
+      next["announcement.enabled"] = res.settings["announcement.enabled"] === "true" ? "true" : "false";
+      if (!(ANNOUNCEMENT_VARIANT_KEYS as readonly string[]).includes(next["announcement.variant"])) {
+        next["announcement.variant"] = "info";
+      }
       setForm(next);
       setInitial(next);
     } catch (err) {
@@ -86,6 +116,10 @@ export function SettingsClient({ me, locale }: SettingsClientProps) {
       toast.error(t.auth.errors.generic);
       return;
     }
+    if (updates["announcement.ctaUrl"] && !/^(\/|https?:\/\/)/.test(updates["announcement.ctaUrl"])) {
+      toast.error(t.auth.errors.generic);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -105,6 +139,8 @@ export function SettingsClient({ me, locale }: SettingsClientProps) {
         <Skeleton className="h-8 w-48 rounded-xl" />
         <Skeleton className="h-44 rounded-2xl" />
         <Skeleton className="h-28 rounded-2xl" />
+        <Skeleton className="h-36 rounded-2xl" />
+        <Skeleton className="h-72 rounded-2xl" />
       </div>
     );
   }
@@ -233,6 +269,112 @@ export function SettingsClient({ me, locale }: SettingsClientProps) {
               dir="ltr"
               className="min-h-11 ltr-isolate"
             />
+          </div>
+        </div>
+      </section>
+      {/* شريط الإعلان العلوي */}
+      <section className="rounded-2xl border border-border bg-white p-5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-navy">
+          <Megaphone className="size-4 text-brand" aria-hidden="true" />
+          {ts.announcement}
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{ts.announcementSubtitle}</p>
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="announcement-enabled"
+              checked={form["announcement.enabled"] === "true"}
+              onCheckedChange={(v) => setField("announcement.enabled", v ? "true" : "false")}
+            />
+            <Label htmlFor="announcement-enabled" className="cursor-pointer text-sm text-muted-foreground">
+              {ts.announcementEnabled}
+            </Label>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="announcement-message-ar" className="text-muted-foreground">
+                {ts.announcementMessageAr}
+              </Label>
+              <Input
+                id="announcement-message-ar"
+                value={form["announcement.messageAr"]}
+                onChange={(e) => setField("announcement.messageAr", e.target.value)}
+                maxLength={280}
+                dir="rtl"
+                className="min-h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-message-en" className="text-muted-foreground">
+                {ts.announcementMessageEn}
+              </Label>
+              <Input
+                id="announcement-message-en"
+                value={form["announcement.messageEn"]}
+                onChange={(e) => setField("announcement.messageEn", e.target.value)}
+                maxLength={280}
+                dir="ltr"
+                className="min-h-11 ltr-isolate"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-cta-label-ar" className="text-muted-foreground">
+                {ts.announcementCtaLabelAr}
+              </Label>
+              <Input
+                id="announcement-cta-label-ar"
+                value={form["announcement.ctaLabelAr"]}
+                onChange={(e) => setField("announcement.ctaLabelAr", e.target.value)}
+                maxLength={60}
+                dir="rtl"
+                className="min-h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-cta-label-en" className="text-muted-foreground">
+                {ts.announcementCtaLabelEn}
+              </Label>
+              <Input
+                id="announcement-cta-label-en"
+                value={form["announcement.ctaLabelEn"]}
+                onChange={(e) => setField("announcement.ctaLabelEn", e.target.value)}
+                maxLength={60}
+                dir="ltr"
+                className="min-h-11 ltr-isolate"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-cta-url" className="text-muted-foreground">
+                {ts.announcementCtaUrl}
+              </Label>
+              <Input
+                id="announcement-cta-url"
+                value={form["announcement.ctaUrl"]}
+                onChange={(e) => setField("announcement.ctaUrl", e.target.value)}
+                maxLength={200}
+                dir="ltr"
+                className="min-h-11 ltr-isolate"
+                placeholder="/ar/services"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="announcement-variant" className="text-muted-foreground">
+                {ts.announcementVariant}
+              </Label>
+              <Select
+                value={form["announcement.variant"] || "info"}
+                onValueChange={(v) => setField("announcement.variant", v)}
+              >
+                <SelectTrigger id="announcement-variant" className="min-h-11 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ANNOUNCEMENT_VARIANT_KEYS.map((v) => (
+                    <SelectItem key={v} value={v}>{ts.announcementVariants[v]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </section>

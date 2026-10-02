@@ -196,7 +196,7 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                     </div>
                   </div>
                 ) : (
-                  <div key={reply.id} className="rounded-2xl border border-border bg-white p-3">
+                  <div key={reply.id} className="rounded-xl border border-border bg-white p-3 transition-colors hover:bg-muted/50">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-navy">{reply.name}</p>

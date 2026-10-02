@@ -111,7 +111,7 @@ export function AuditClient({ me, locale }: AuditClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-40">{ta.date}</TableHead>
                 <TableHead className="min-w-40">{ta.actor}</TableHead>
                 <TableHead className="min-w-40">{ta.action}</TableHead>
@@ -139,7 +139,7 @@ export function AuditClient({ me, locale }: AuditClientProps) {
               ) : (
                 logs.map((log) => (
                   <Fragment key={log.id}>
-                  <TableRow className="align-top transition-colors hover:bg-muted/40">
+                  <TableRow className="align-top transition-colors hover:bg-muted/50">
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(log.createdAt, locale)}</TableCell>
                     <TableCell>
                       <p className="text-sm font-medium text-navy">{log.actor}</p>
@@ -161,7 +161,7 @@ export function AuditClient({ me, locale }: AuditClientProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-9"
+                          className="size-10 text-muted-foreground transition-colors hover:text-foreground"
                           onClick={() => setExpanded((prev) => (prev === log.id ? null : log.id))}
                           aria-label={ta.details}
                           aria-expanded={expanded === log.id}
@@ -177,8 +177,11 @@ export function AuditClient({ me, locale }: AuditClientProps) {
                   </TableRow>
                   {expanded === log.id ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5} className="bg-muted/30 p-3">
-                        <pre className="max-h-64 overflow-auto rounded-xl bg-navy p-4 text-xs leading-relaxed text-skydrop ltr-isolate" dir="ltr">
+                      <TableCell colSpan={5} className="bg-muted/20 p-3">
+                        <pre
+                          className="max-h-64 overflow-auto rounded-xl border border-border/60 bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground ltr-isolate [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent"
+                          dir="ltr"
+                        >
                           {JSON.stringify(log.details, null, 2)}
                         </pre>
                       </TableCell>

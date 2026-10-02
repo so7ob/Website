@@ -26,6 +26,7 @@ export const PERMISSIONS = {
   "inquiries.assign": "تعيين مسؤول للاستفسار",
   "inquiries.status": "تغيير حالة الاستفسار",
   "inquiries.archive": "أرشفة الاستفسارات",
+  "inquiries.export": "تصدير الاستفسارات",
   // المحتوى
   "pages.view": "عرض الصفحات في لوحة الإدارة",
   "pages.edit": "تحرير مسودات الصفحات",
@@ -84,6 +85,7 @@ export const SYSTEM_ROLES: {
       "inquiries.assign",
       "inquiries.status",
       "inquiries.archive",
+      "inquiries.export",
       "notifications.send",
       "email.outbox",
       "audit.view",

@@ -18,6 +18,34 @@ export interface NavLink {
 
 const FALLBACK_HEADER: RouteName[] = ["about", "services", "works", "process", "faq", "contact"];
 
+/** أنماط شريط الإعلان المعتمدة */
+export const ANNOUNCEMENT_VARIANTS = ["info", "warning", "success", "brand"] as const;
+export type AnnouncementVariant = (typeof ANNOUNCEMENT_VARIANTS)[number];
+
+/** إعدادات شريط الإعلان العلوي — تُدار من لوحة الإدارة */
+export interface AnnouncementSettings {
+  enabled: boolean;
+  messageAr: string;
+  messageEn: string;
+  ctaLabelAr: string;
+  ctaLabelEn: string;
+  ctaUrl: string;
+  variant: AnnouncementVariant;
+  /** يُرفع مع كل حفظ — يستخدم لإعادة إظهار الشريط بعد الإخفاء */
+  revision: string;
+}
+
+const ANNOUNCEMENT_DISABLED: AnnouncementSettings = {
+  enabled: false,
+  messageAr: "",
+  messageEn: "",
+  ctaLabelAr: "",
+  ctaLabelEn: "",
+  ctaUrl: "",
+  variant: "info",
+  revision: "",
+};
+
 /** قائمة الترويسة أو التذييل من قاعدة البيانات مع ترتيب مرتب */
 export async function getMenu(location: "header" | "footer", locale: Locale): Promise<NavLink[]> {
   const rows = await db.menuItem.findMany({
@@ -49,13 +77,32 @@ export interface SiteSettings {
   socialGithub: string;
   nameAr: string;
   nameEn: string;
+  announcement: AnnouncementSettings;
 }
+
+const SETTINGS_KEYS = [
+  "contact.email",
+  "contact.phone",
+  "contact.address",
+  "social.github",
+  "site.nameAr",
+  "site.nameEn",
+  "announcement.enabled",
+  "announcement.messageAr",
+  "announcement.messageEn",
+  "announcement.ctaLabelAr",
+  "announcement.ctaLabelEn",
+  "announcement.ctaUrl",
+  "announcement.variant",
+  "announcement.revision",
+];
 
 export async function getSettings(): Promise<SiteSettings> {
   const rows = await db.siteSetting.findMany({
-    where: { key: { in: ["contact.email", "contact.phone", "contact.address", "social.github", "site.nameAr", "site.nameEn"] } },
+    where: { key: { in: SETTINGS_KEYS } },
   });
   const map = new Map(rows.map((r) => [r.key, r.value]));
+  const variantRaw = map.get("announcement.variant") ?? "";
   return {
     contactEmail: map.get("contact.email") || siteConfig.contact.email,
     contactPhone: map.get("contact.phone") || siteConfig.contact.phone,
@@ -63,5 +110,18 @@ export async function getSettings(): Promise<SiteSettings> {
     socialGithub: map.get("social.github") || siteConfig.github,
     nameAr: map.get("site.nameAr") || siteConfig.nameAr,
     nameEn: map.get("site.nameEn") || siteConfig.nameEn,
+    announcement: {
+      ...ANNOUNCEMENT_DISABLED,
+      enabled: map.get("announcement.enabled") === "true",
+      messageAr: map.get("announcement.messageAr") ?? "",
+      messageEn: map.get("announcement.messageEn") ?? "",
+      ctaLabelAr: map.get("announcement.ctaLabelAr") ?? "",
+      ctaLabelEn: map.get("announcement.ctaLabelEn") ?? "",
+      ctaUrl: map.get("announcement.ctaUrl") ?? "",
+      variant: (ANNOUNCEMENT_VARIANTS as readonly string[]).includes(variantRaw)
+        ? (variantRaw as AnnouncementVariant)
+        : "info",
+      revision: map.get("announcement.revision") ?? "",
+    },
   };
 }

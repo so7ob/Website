@@ -18,9 +18,9 @@ import {
   CircleX,
   UserPlus,
   KeyRound,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
   Users,
   Loader2,
   RotateCcw,
@@ -301,7 +301,7 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-52">
                   <SortHeader label={t.account.profile.name} col="name" sort={sort} dir={dir} onSort={onSort} />
                 </TableHead>
@@ -339,7 +339,7 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id} className="transition-colors hover:bg-muted/40">
+                  <TableRow key={user.id} className="transition-colors hover:bg-muted/50">
                     <TableCell>
                       <div className="min-w-0">
                         <Link
@@ -638,18 +638,18 @@ function SortHeader({
   onSort: (col: SortCol) => void;
 }) {
   const active = sort === col;
-  const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  const Icon = !active ? ChevronsUpDown : dir === "asc" ? ChevronUp : ChevronDown;
   return (
     <button
       type="button"
       onClick={() => onSort(col)}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md text-xs font-medium transition-colors hover:text-navy",
+        "inline-flex items-center gap-1 rounded-md text-xs font-medium transition-colors hover:text-foreground",
         active ? "text-navy" : "text-muted-foreground"
       )}
     >
       {label}
-      <Icon className="size-3.5" aria-hidden="true" />
+      <Icon className={cn("size-3.5 shrink-0", !active && "opacity-60")} aria-hidden="true" />
     </button>
   );
 }

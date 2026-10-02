@@ -387,6 +387,8 @@ export const portalEn: PortalContent = {
         responded: "Responded",
         closed: "Closed",
       },
+      export: "Export CSV",
+      exportOk: "Inquiries file exported",
     },
     pages: {
       title: "Pages",
@@ -534,6 +536,21 @@ export const portalEn: PortalContent = {
       github: "GitHub",
       save: "Save settings",
       saved: "Settings saved",
+      announcement: "Top announcement",
+      announcementSubtitle: "A site-wide banner for all visitors — stays until dismissed in the browser, and returns automatically when updated",
+      announcementMessageAr: "Announcement text (Arabic)",
+      announcementMessageEn: "Announcement text (English)",
+      announcementCtaLabelAr: "Button label (Arabic)",
+      announcementCtaLabelEn: "Button label (English)",
+      announcementCtaUrl: "Button link (optional)",
+      announcementVariant: "Style",
+      announcementVariants: {
+        info: "Info",
+        warning: "Warning",
+        success: "Success",
+        brand: "Brand",
+      },
+      announcementEnabled: "Enabled",
     },
     audit: {
       title: "Audit log",
@@ -578,5 +595,9 @@ export const portalEn: PortalContent = {
       empty: "No saved replies",
       emptyBody: "Create templates for frequent replies so the team can insert them in one click.",
     },
+  },
+  announce: {
+    ariaLabel: "Announcement",
+    dismiss: "Dismiss announcement",
   },
 };

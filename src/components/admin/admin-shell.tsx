@@ -154,8 +154,8 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
 
   return (
     <div id="admin-shell" className="flex min-h-dvh bg-muted/40">
-      {/* إخفاء ترويسة وتذييل الموقع العام داخل اللوحة — اللوحة تطبيق مستقل */}
-      <style>{`body:has(#admin-shell) > header, body:has(#admin-shell) > footer { display: none !important; }`}</style>
+      {/* إخفاء ترويسة وتذييل الموقع العام وشريط الإعلان داخل اللوحة — اللوحة تطبيق مستقل */}
+      <style>{`body:has(#admin-shell) > header, body:has(#admin-shell) > footer, body:has(#admin-shell) > #site-announcement { display: none !important; }`}</style>
 
       {/* الشريط الجانبي — سطح المكتب */}
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-gradient-to-b from-navy to-navy-soft text-white lg:flex">

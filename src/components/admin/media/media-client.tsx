@@ -166,7 +166,7 @@ export function MediaClient({ me, locale }: MediaClientProps) {
 
       {/* بطاقة الرفع */}
       {mayUpload ? (
-        <section className="rounded-2xl border border-border bg-white p-5">
+        <section className="rounded-2xl border border-dashed border-border bg-white p-5 transition-colors hover:border-brand hover:bg-accent/30">
           <h2 className="text-sm font-semibold text-navy">{tmed.upload}</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
             <div className="space-y-2">
@@ -220,14 +220,43 @@ export function MediaClient({ me, locale }: MediaClientProps) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {media.map((item) => (
-            <article key={item.id} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-sm">
-              <div className="aspect-video overflow-hidden bg-muted">
+            <article key={item.id} className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-sm">
+              <div className="relative m-3 mb-0 aspect-video overflow-hidden rounded-xl border border-border bg-muted">
                 <img
                   src={item.url}
                   alt={item.altText ?? item.filename}
                   loading="lazy"
-                  className="size-full object-cover"
+                  className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 />
+                {/* طبقة الإجراءات عند التحويم — تبقى ظاهرة على الشاشات الصغيرة (اللمس) */}
+                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-navy/60 opacity-100 transition-opacity duration-300 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 rounded-full bg-white/90 text-navy shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-navy"
+                    onClick={() => void copyUrl(item)}
+                    aria-label={tmed.copyUrl}
+                    title={tmed.copyUrl}
+                  >
+                    {copiedId === item.id ? (
+                      <Check className="size-4 text-emerald-600" aria-hidden="true" />
+                    ) : (
+                      <Link2 className="size-4" aria-hidden="true" />
+                    )}
+                  </Button>
+                  {mayManage ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-11 rounded-full bg-white/90 text-destructive shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-destructive"
+                      onClick={() => setDeleteTarget(item)}
+                      aria-label={tmed.delete}
+                      title={tmed.delete}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </Button>
+                  ) : null}
+                </div>
               </div>
               <div className="flex flex-1 flex-col gap-2 p-3">
                 <p className="truncate text-sm font-medium text-navy ltr-isolate" title={item.filename}>
@@ -249,34 +278,6 @@ export function MediaClient({ me, locale }: MediaClientProps) {
                 ) : (
                   <p className="text-xs text-muted-foreground">{item.altText ?? tmed.alt}</p>
                 )}
-                <div className="mt-auto flex items-center gap-1 pt-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-9"
-                    onClick={() => void copyUrl(item)}
-                    aria-label={tmed.copyUrl}
-                    title={tmed.copyUrl}
-                  >
-                    {copiedId === item.id ? (
-                      <Check className="size-4 text-emerald-600" aria-hidden="true" />
-                    ) : (
-                      <Link2 className="size-4" aria-hidden="true" />
-                    )}
-                  </Button>
-                  {mayManage ? (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="ms-auto size-9 text-destructive hover:text-destructive"
-                      onClick={() => setDeleteTarget(item)}
-                      aria-label={tmed.delete}
-                      title={tmed.delete}
-                    >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    </Button>
-                  ) : null}
-                </div>
               </div>
             </article>
           ))}

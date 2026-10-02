@@ -291,7 +291,7 @@ export function PagesClient({ me, locale }: PagesClientProps) {
         <div className="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-56">{t.admin.menus.labelAr} / {t.admin.menus.labelEn}</TableHead>
                 <TableHead className="min-w-32">{tp.slug}</TableHead>
                 <TableHead>{tp.status}</TableHead>
@@ -305,7 +305,7 @@ export function PagesClient({ me, locale }: PagesClientProps) {
               {rows.map((row) => {
                 const archived = row.status === "archived";
                 return (
-                  <TableRow key={row.id} className={cn(archived && "opacity-60")}>
+                  <TableRow key={row.id} className={cn("group/row transition-colors hover:bg-muted/50", archived && "opacity-60")}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {row.isHome ? (
@@ -345,7 +345,7 @@ export function PagesClient({ me, locale }: PagesClientProps) {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-9" aria-label={tp.pageTitle}>
+                          <Button variant="ghost" size="icon" className="size-10 text-muted-foreground transition-colors group-hover/row:text-foreground" aria-label={tp.pageTitle}>
                             <MoreHorizontal className="size-4" aria-hidden="true" />
                           </Button>
                         </DropdownMenuTrigger>

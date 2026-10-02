@@ -70,6 +70,7 @@ export const AUDIT_ACTIONS = {
   // الاستفسارات
   inquirySubmitted: "inquiry.submitted",
   inquiryReplied: "inquiry.replied",
+  inquiriesExported: "inquiries.exported",
   // المحتوى
   pageCreated: "page.created",
   pageDraftSaved: "page.draft_saved",

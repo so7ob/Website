@@ -329,6 +329,8 @@ export interface PortalContent {
       conversation: string;
       empty: string;
       statuses: Record<string, string>;
+      export: string;
+      exportOk: string;
     };
     pages: {
       title: string;
@@ -471,6 +473,16 @@ export interface PortalContent {
       github: string;
       save: string;
       saved: string;
+      announcement: string;
+      announcementSubtitle: string;
+      announcementMessageAr: string;
+      announcementMessageEn: string;
+      announcementCtaLabelAr: string;
+      announcementCtaLabelEn: string;
+      announcementCtaUrl: string;
+      announcementVariant: string;
+      announcementVariants: Record<string, string>;
+      announcementEnabled: string;
     };
     audit: {
       title: string;
@@ -515,5 +527,9 @@ export interface PortalContent {
       empty: string;
       emptyBody: string;
     };
+  };
+  announce: {
+    ariaLabel: string;
+    dismiss: string;
   };
 }

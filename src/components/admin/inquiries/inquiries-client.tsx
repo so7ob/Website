@@ -6,13 +6,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Search, MessageSquareText, Eye, Loader2, RotateCcw } from "lucide-react";
+import { Search, MessageSquareText, Eye, Loader2, RotateCcw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
+import { can } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n";
 import { StatusBadge } from "@/components/admin/badges";
 import { AdminPagination } from "@/components/admin/pagination";
@@ -74,11 +75,32 @@ export function InquiriesClient({ me, locale }: InquiriesClientProps) {
   const statusKeys = useMemo(() => Object.keys(ti.statuses), [ti.statuses]);
   const categoryKeys = useMemo(() => Object.keys(ti.categories), [ti.categories]);
 
+  const mayExport = can(me, "inquiries.export");
+
+  // تصدير CSV بنفس تصفية العرض الحالية — رابط نسبي فيرسل الكوكيز تلقائيًا
+  const exportCsv = () => {
+    const query = buildQuery({
+      q: debouncedQ,
+      status: status !== "all" ? status : "",
+      category: category !== "all" ? category : "",
+    });
+    window.open(`/api/admin/inquiries/export${query}`, "_blank");
+    toast.success(ti.exportOk);
+  };
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">{ti.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{ti.subtitle}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-navy">{ti.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{ti.subtitle}</p>
+        </div>
+        {mayExport ? (
+          <Button variant="outline" onClick={exportCsv} className="min-h-11 rounded-full">
+            <Download className="size-4" aria-hidden="true" />
+            {ti.export}
+          </Button>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

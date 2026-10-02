@@ -69,7 +69,7 @@ export function OutboxClient({ me, locale }: OutboxClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-40">{to.date}</TableHead>
                 <TableHead className="min-w-52">{to.to}</TableHead>
                 <TableHead className="min-w-64">{to.subject}</TableHead>
@@ -95,7 +95,7 @@ export function OutboxClient({ me, locale }: OutboxClientProps) {
                 </TableRow>
               ) : (
                 emails.map((email) => (
-                  <TableRow key={email.id} className="align-top transition-colors hover:bg-muted/40">
+                  <TableRow key={email.id} className="align-top transition-colors hover:bg-muted/50">
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(email.createdAt, locale)}</TableCell>
                     <TableCell className="max-w-56 truncate text-sm text-navy ltr-isolate">{email.to}</TableCell>
                     <TableCell>

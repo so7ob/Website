@@ -221,6 +221,15 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
             canNote={mayReply}
             sending={sending}
             onSend={sendMessage}
+            savedReplies={
+              mayReply
+                ? {
+                    trigger: t.admin.savedReplies.useReply,
+                    insert: t.admin.savedReplies.insert,
+                    empty: t.admin.savedReplies.empty,
+                  }
+                : undefined
+            }
             labels={{
               reply: ti.reply,
               internalNote: t.admin.requests.internalNote,

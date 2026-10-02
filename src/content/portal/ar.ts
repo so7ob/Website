@@ -387,6 +387,8 @@ export const portalAr: PortalContent = {
         responded: "تم الرد",
         closed: "مغلق",
       },
+      export: "تصدير CSV",
+      exportOk: "صُدّر ملف الاستفسارات",
     },
     pages: {
       title: "الصفحات",
@@ -534,6 +536,21 @@ export const portalAr: PortalContent = {
       github: "GitHub",
       save: "حفظ الإعدادات",
       saved: "حُفظت الإعدادات",
+      announcement: "الإعلان العلوي",
+      announcementSubtitle: "شريط أعلى الموقع لكل الزوار — يظهر حتى يخفيه الزائر من متصفحه، ويعود تلقائيًا عند تحديثه",
+      announcementMessageAr: "نص الإعلان (عربي)",
+      announcementMessageEn: "نص الإعلان (إنجليزي)",
+      announcementCtaLabelAr: "تسمية الزر (عربي)",
+      announcementCtaLabelEn: "تسمية الزر (إنجليزي)",
+      announcementCtaUrl: "رابط الزر (اختياري)",
+      announcementVariant: "النمط",
+      announcementVariants: {
+        info: "معلوماتي",
+        warning: "تحذيري",
+        success: "نجاح",
+        brand: "هوية",
+      },
+      announcementEnabled: "مفعّل",
     },
     audit: {
       title: "سجل التدقيق",
@@ -578,5 +595,9 @@ export const portalAr: PortalContent = {
       empty: "لا ردود محفوظة",
       emptyBody: "أنشئ قوالب للردود المتكررة ليستخدمها الفريق بضغطة واحدة.",
     },
+  },
+  announce: {
+    ariaLabel: "إعلان",
+    dismiss: "إخفاء الإعلان",
   },
 };

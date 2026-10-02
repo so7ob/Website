@@ -257,20 +257,27 @@ export function RequestDetailView({
                     <div key={message.id} className={cn("flex", message.authorType === "client" ? "justify-end" : "justify-start")}>
                       <div
                         className={cn(
-                          "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 shadow-sm sm:max-w-[75%]",
+                          "max-w-[85%] rounded-2xl border px-4 py-3 text-sm leading-7 shadow-sm sm:max-w-[75%]",
                           message.authorType === "client"
-                            ? "bg-brand-soft text-navy"
-                            : "border border-border bg-white text-foreground"
+                            ? "rounded-se-sm border-brand/10 bg-accent/60 text-foreground"
+                            : "rounded-ss-sm border-navy bg-navy text-white shadow-navy/10"
                         )}
                       >
                         <p
                           className={cn(
                             "mb-1 text-xs font-bold",
-                            message.authorType === "client" ? "text-brand-strong" : "text-navy"
+                            message.authorType === "client" ? "text-brand-strong" : "text-skydrop"
                           )}
                         >
                           {message.authorType === "client" ? d.you : d.staff}
-                          <span className="ms-2 font-normal text-muted-foreground/80">{formatRelative(message.createdAt, locale)}</span>
+                          <span
+                            className={cn(
+                              "ms-2 font-normal",
+                              message.authorType === "client" ? "text-muted-foreground/80" : "text-white/60"
+                            )}
+                          >
+                            {formatRelative(message.createdAt, locale)}
+                          </span>
                         </p>
                         <p className="whitespace-pre-wrap break-words">{message.body}</p>
                       </div>
@@ -401,25 +408,34 @@ export function RequestDetailView({
           <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
             <h2 className="text-lg font-bold text-navy">{d.statusTimeline}</h2>
             <ol className="mt-4 space-y-5">
-              {request.statusHistory.map((event, index) => (
-                <li key={event.id} className="relative ps-6">
-                  {index < request.statusHistory.length - 1 && (
-                    <span className="absolute start-[0.3125rem] top-3 bottom-[-1.25rem] w-px bg-border" aria-hidden="true" />
-                  )}
-                  <span className="absolute start-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-navy">
-                      {event.fromStatus ? `${t.statuses[event.fromStatus] ?? event.fromStatus} → ` : ""}
-                      {t.statuses[event.toStatus] ?? event.toStatus}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatDate(event.createdAt, locale)}
-                      {event.changedBy?.name ? ` · ${event.changedBy.name}` : ""}
-                    </p>
-                    {event.note && <p className="mt-1 text-sm leading-6 text-muted-foreground">{event.note}</p>}
-                  </div>
-                </li>
-              ))}
+              {request.statusHistory.map((event, index) => {
+                const latest = index === request.statusHistory.length - 1;
+                return (
+                  <li key={event.id} className="relative ps-6">
+                    {index < request.statusHistory.length - 1 && (
+                      <span className="absolute start-[0.3125rem] top-3 bottom-[-1.25rem] w-px bg-border" aria-hidden="true" />
+                    )}
+                    <span
+                      className={cn(
+                        "absolute start-0 top-1.5 size-2.5 rounded-full transition-all duration-300",
+                        latest ? "bg-brand ring-4 ring-brand/15" : "bg-border"
+                      )}
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-navy">
+                        {event.fromStatus ? `${t.statuses[event.fromStatus] ?? event.fromStatus} → ` : ""}
+                        {t.statuses[event.toStatus] ?? event.toStatus}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatDate(event.createdAt, locale)}
+                        {event.changedBy?.name ? ` · ${event.changedBy.name}` : ""}
+                      </p>
+                      {event.note && <p className="mt-1 text-sm leading-6 text-muted-foreground">{event.note}</p>}
+                    </div>
+                  </li>
+                );
+              })}
               {request.statusHistory.length === 0 && (
                 <li className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
