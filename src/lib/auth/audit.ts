@@ -71,6 +71,8 @@ export const AUDIT_ACTIONS = {
   inquirySubmitted: "inquiry.submitted",
   inquiryReplied: "inquiry.replied",
   inquiriesExported: "inquiries.exported",
+  inquiryArchived: "inquiry.archived",
+  inquiryRestored: "inquiry.restored",
   // المحتوى
   pageCreated: "page.created",
   pageDraftSaved: "page.draft_saved",

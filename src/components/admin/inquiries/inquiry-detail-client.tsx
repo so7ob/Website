@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * تفاصيل الاستفسار: محادثة (رد/ملاحظة داخلية) + تعيين + تغيير حالة — نسخة
- * أخف من تفاصيل الطلب بنفس عناصر المحادثة المشتركة.
+ * تفاصيل الاستفسار: محادثة (رد/ملاحظة داخلية) + تعيين + تغيير حالة +
+ * أرشفة/استعادة + طباعة — نسخة أخف من تفاصيل الطلب بنفس عناصر المحادثة المشتركة.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, MessageSquareText, Loader2, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, MessageSquareText, Loader2, RotateCcw, Archive, ArchiveRestore, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -71,6 +71,7 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
   const mayReply = can(me, "inquiries.reply");
   const mayAssign = can(me, "inquiries.assign");
   const mayStatus = can(me, "inquiries.status");
+  const mayArchive = can(me, "inquiries.archive");
 
   const load = useCallback(
     async (signal: AbortSignal, quiet = false) => {
@@ -242,7 +243,23 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
             {ti.categories[detail.category] ?? detail.category}
           </span>
           {awaitingSince ? <AgingBadge since={awaitingSince} tr={t.admin.requests} /> : null}
+          {detail.archivedAt ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground print:break-inside-avoid print:border print:border-border">
+              <Archive className="size-3" aria-hidden="true" />
+              {ti.archived}
+            </span>
+          ) : null}
         </div>
+        {/* زر الطباعة — مخفي على الورق (ترويسة الطباعة الخاصة تظهر بدله) */}
+        <Button
+          variant="outline"
+          onClick={() => window.print()}
+          aria-label={ti.print}
+          className="ms-auto min-h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40 print:hidden"
+        >
+          <Printer className="size-4" aria-hidden="true" />
+          {ti.print}
+        </Button>
       </div>
 
       <h2 className="text-lg font-semibold break-words text-navy">{detail.subject}</h2>
@@ -382,6 +399,24 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
                   </SelectContent>
                 </Select>
               </div>
+            ) : null}
+
+            {mayArchive ? (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  patch({ action: detail.archivedAt ? "restore" : "archive" }, detail.archivedAt ? ti.restore : ti.archived)
+                }
+                disabled={busy}
+                className="min-h-11 w-full rounded-full"
+              >
+                {detail.archivedAt ? (
+                  <ArchiveRestore className="size-4" aria-hidden="true" />
+                ) : (
+                  <Archive className="size-4" aria-hidden="true" />
+                )}
+                {detail.archivedAt ? ti.restore : ti.archive}
+              </Button>
             ) : null}
           </section>
         </aside>

@@ -198,8 +198,8 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
       {/* إخفاء ترويسة وتذييل الموقع العام وشريط الإعلان داخل اللوحة — اللوحة تطبيق مستقل */}
       <style>{`body:has(#admin-shell) > header, body:has(#admin-shell) > footer, body:has(#admin-shell) > #site-announcement { display: none !important; }`}</style>
 
-      {/* الشريط الجانبي — سطح المكتب */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-gradient-to-b from-navy to-navy-soft text-white lg:flex">
+      {/* الشريط الجانبي — سطح المكتب (مخفي عند الطباعة) */}
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-gradient-to-b from-navy to-navy-soft text-white print:hidden lg:flex">
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
           <span
             className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-skydrop/25 to-white/5 text-base font-bold text-skydrop"
@@ -214,8 +214,8 @@ export function AdminShell({ me, locale, siteName, children }: AdminShellProps) 
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* الشريط العلوي */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-white/90 px-4 backdrop-blur sm:px-6">
+        {/* الشريط العلوي (مخفي عند الطباعة) */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-white/90 px-4 backdrop-blur print:hidden sm:px-6">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="size-10 lg:hidden" aria-label={openMenuLabel}>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPortalContent } from "@/content/portal";
+import { ar } from "@/content/ar";
+import { en } from "@/content/en";
 import { locales, type Locale } from "@/lib/i18n";
 import { InquiryDetailView } from "@/components/account/inquiry-detail-view";
 
@@ -16,5 +18,13 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
   const locale = raw as Locale;
   const portal = getPortalContent(locale);
 
-  return <InquiryDetailView locale={locale} id={id} t={portal.account.inquiries} authErrors={portal.auth.errors} />;
+  return (
+    <InquiryDetailView
+      locale={locale}
+      id={id}
+      t={portal.account.inquiries}
+      authErrors={portal.auth.errors}
+      siteName={(locale === "en" ? en : ar).meta.siteName}
+    />
+  );
 }

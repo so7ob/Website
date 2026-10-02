@@ -17,13 +17,19 @@ export async function GET(req: NextRequest) {
   const query = (url.searchParams.get("q") ?? "").trim().toLowerCase().slice(0, 100);
   const status = url.searchParams.get("status") ?? "";
   const category = url.searchParams.get("category") ?? "";
+  const archived = url.searchParams.get("archived") === "1";
   const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
   const pageSize = 20;
 
   const where = {
+    // عرض «المؤرشف» (archived=1): سجلات مؤرشفة فقط مع بقاء تصفية الحالة
+    // فاعلة؛ والعرض الافتراضي: غير المؤرشف دائمًا — مثل قائمة الطلبات، فلا
+    // تتسرب المؤرشفة إلى فرع الحالة النوعية أو فرع بلا حالة (كانت تتسرب)،
+    // ومرشّح «open» المركّب غير المؤرشف ضمنًا عبر هذا المفتاح العلوي.
+    archivedAt: archived ? { not: null } : null,
     // status=open → مرشّح مركّب يطابق مؤشر «الاستفسارات المفتوحة» في اللوحة
     ...(status === "open"
-      ? { status: { in: OPEN_INQUIRY_STATUSES }, archivedAt: null }
+      ? { status: { in: OPEN_INQUIRY_STATUSES } }
       : status && INQUIRY_STATUSES.includes(status)
         ? { status }
         : {}),

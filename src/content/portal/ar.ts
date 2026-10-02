@@ -68,6 +68,7 @@ export const portalAr: PortalContent = {
     dashboard: {
       title: "لوحة حسابك",
       welcome: "مرحبًا",
+      welcomeWithName: "مرحبًا، {name}",
       openRequests: "طلبات مفتوحة",
       awaitingReply: "بانتظار ردك",
       unreadNotifications: "إشعارات غير مقروءة",
@@ -223,6 +224,7 @@ export const portalAr: PortalContent = {
       createdOkOpen: "متابعة المحادثة",
       attachments: "المرفقات",
       download: "تنزيل",
+      print: "طباعة الاستفسار",
     },
     notifications: {
       title: "الإشعارات",
@@ -455,6 +457,12 @@ export const portalAr: PortalContent = {
       overdueReply: "رد متأخر",
       agingHours: "{n} ساعة",
       agingDays: "{n} يوم",
+      presetSave: "حفظ التصفية",
+      presetName: "اسم التصفية",
+      presetSaved: "حُفظت التصفية",
+      presetRemoved: "حُذفت التصفية",
+      presetApply: "تطبيق التصفية المحفوظة",
+      presetDelete: "حذف التصفية المحفوظة",
       print: "طباعة الطلب",
     },
     inquiries: {
@@ -483,6 +491,12 @@ export const portalAr: PortalContent = {
       },
       export: "تصدير CSV",
       exportOk: "صُدّر ملف الاستفسارات",
+      archive: "أرشفة",
+      restore: "استعادة",
+      archived: "مؤرشف",
+      bulkArchive: "أرشفة المحدد",
+      selected: "محدد",
+      print: "طباعة الاستفسار",
     },
     notifications: {
       title: "الإشعارات",

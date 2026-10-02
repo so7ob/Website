@@ -12,6 +12,10 @@ import {
   FileText,
   Timer,
   ArrowUpRight,
+  LayoutDashboard,
+  ChartBar,
+  CalendarDays,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -270,9 +274,15 @@ export default async function AdminDashboardPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
-        {/* مبدّل المدى الزمني — تنقل خادمي يعيد رسم اللوحة والمخطط */}
-        <div role="group" aria-label={t.rangeLabel} className="flex items-center gap-1 rounded-full bg-muted p-1">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+            <LayoutDashboard className="size-5" aria-hidden="true" />
+          </span>
+          <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
+        </div>
+        {/* مبدّل المدى الزمني — تنقل خادمي يعيد رسم اللوحة والمخطط
+            (حبوب بحدود بلغة مرشّحات القوائم — تُخفى عند الطباعة) */}
+        <div role="group" aria-label={t.rangeLabel} className="flex flex-wrap items-center gap-2 print:hidden">
           {rangeOptions.map((option) => {
             const active = option.days === rangeDays;
             return (
@@ -282,8 +292,10 @@ export default async function AdminDashboardPage({
                 scroll={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-9 items-center rounded-full px-4 text-xs font-semibold transition-colors",
-                  active ? "bg-navy text-white" : "text-muted-foreground hover:bg-white/60"
+                  "inline-flex min-h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                  active
+                    ? "border-brand bg-accent text-brand-strong"
+                    : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
                 {option.label}
@@ -327,10 +339,15 @@ export default async function AdminDashboardPage({
         })}
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 print:block print:space-y-4 lg:grid-cols-2">
         {/* الطلبات حسب الحالة — أشرطة أفقية */}
         <section className="rounded-2xl border border-border bg-white p-5">
-          <h2 className="text-sm font-semibold text-navy">{t.requestsByStatus}</h2>
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+              <ChartBar className="size-4" aria-hidden="true" />
+            </span>
+            <h2 className="text-sm font-semibold text-navy">{t.requestsByStatus}</h2>
+          </div>
           {byStatus.every((s) => s.count === 0) ? (
             <EmptyState icon={Inbox} title={t.noData} className="py-8" />
           ) : (
@@ -340,7 +357,7 @@ export default async function AdminDashboardPage({
                   <Link
                     href={`/${locale}/admin/requests?status=${row.status}`}
                     aria-label={`${requestLabels.statuses[row.status] ?? row.status}: ${row.count}`}
-                    className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted/40"
+                    className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                   >
                     <p className="w-28 shrink-0 truncate text-xs text-muted-foreground">
                       {requestLabels.statuses[row.status] ?? row.status}
@@ -349,7 +366,7 @@ export default async function AdminDashboardPage({
                       <div
                         title={`${requestLabels.statuses[row.status] ?? row.status}: ${row.count}`}
                         className={cn(
-                          "animate-shimmer h-full rounded-full transition-all duration-500",
+                          "animate-shimmer h-full rounded-full transition-all duration-300",
                           STATUS_BAR[row.status] ?? "bg-gradient-to-r from-brand to-brand-strong"
                         )}
                         style={{ width: `${Math.max(row.count > 0 ? 4 : 0, Math.round((row.count / maxStatus) * 100))}%` }}
@@ -365,9 +382,14 @@ export default async function AdminDashboardPage({
           )}
         </section>
 
-        {/* المدى المختار — أعمدة مصغرة (أيام لـ 7/30، أسابيع لـ 90) */}
-        <section className="rounded-2xl border border-border bg-white p-5">
-          <h2 className="text-sm font-semibold text-navy">{rangeLabel}</h2>
+        {/* المدى المختار — أعمدة مصغرة (أيام لـ 7/30، أسابيع لـ 90) — تُخفى عند الطباعة */}
+        <section className="rounded-2xl border border-border bg-white p-5 print:hidden">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+              <CalendarDays className="size-4" aria-hidden="true" />
+            </span>
+            <h2 className="text-sm font-semibold text-navy">{rangeLabel}</h2>
+          </div>
           {rangeTotal === 0 ? (
             <EmptyState icon={Inbox} title={t.noData} className="py-8" />
           ) : (
@@ -380,9 +402,9 @@ export default async function AdminDashboardPage({
                   <div
                     title={bar.title}
                     className={cn(
-                      "rounded-t-lg transition duration-200 hover:brightness-125",
+                      "rounded-full transition-all duration-300 hover:brightness-125",
                       rangeDays === 30 ? "w-full" : "w-full max-w-10",
-                      bar.count === 0 ? "bg-muted hover:brightness-100" : "bg-gradient-to-t from-navy to-skydrop"
+                      bar.count === 0 ? "bg-muted hover:brightness-100" : "bg-gradient-to-t from-brand to-skydrop"
                     )}
                     style={{ height: `${Math.max(4, Math.round((bar.count / maxBar) * 64))}px` }}
                   />
@@ -400,14 +422,19 @@ export default async function AdminDashboardPage({
         </section>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 print:block print:space-y-4 lg:grid-cols-2">
         {/* أحدث الطلبات */}
         <section className="rounded-2xl border border-border bg-white">
           <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold text-navy">{t.recentRequests}</h2>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+                <Inbox className="size-4" aria-hidden="true" />
+              </span>
+              <h2 className="text-sm font-semibold text-navy">{t.recentRequests}</h2>
+            </div>
             <Link
               href={`/${locale}/admin/requests`}
-              className="inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-xs font-semibold text-brand transition-colors hover:bg-accent hover:text-brand-strong"
+              className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold text-brand transition-colors hover:bg-accent hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               {t.viewAll}
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
@@ -423,7 +450,7 @@ export default async function AdminDashboardPage({
                     <p className="font-mono text-sm font-bold text-navy ltr-isolate">{r.refCode}</p>
                     <p className="min-w-0 flex-1 truncate text-sm text-foreground">{r.name}</p>
                     <StatusBadge status={r.status} label={requestLabels.statuses[r.status] ?? r.status} />
-                    <p className="w-full text-xs text-muted-foreground sm:w-auto">
+                    <p className="w-full text-xs tabular-nums text-muted-foreground sm:w-auto">
                       {requestLabels.services[r.serviceType] ?? r.serviceType}
                       {" · "}
                       {r.assignee?.name ?? requestLabels.none}
@@ -440,10 +467,15 @@ export default async function AdminDashboardPage({
         {/* أحدث الأحداث (سجل التدقيق) */}
         <section className="rounded-2xl border border-border bg-white">
           <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold text-navy">{t.recentActivity}</h2>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+                <ScrollText className="size-4" aria-hidden="true" />
+              </span>
+              <h2 className="text-sm font-semibold text-navy">{t.recentActivity}</h2>
+            </div>
             <Link
               href={`/${locale}/admin/audit`}
-              className="inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-xs font-semibold text-brand transition-colors hover:bg-accent hover:text-brand-strong"
+              className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold text-brand transition-colors hover:bg-accent hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               {t.viewAll}
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
@@ -459,7 +491,7 @@ export default async function AdminDashboardPage({
                   <p className="min-w-0 flex-1 truncate text-sm text-foreground">
                     {log.actor?.name ?? log.actorEmail ?? "—"}
                   </p>
-                  <p className="text-xs text-muted-foreground">{fmtRelative(log.createdAt.toISOString(), locale)}</p>
+                  <p className="text-xs tabular-nums text-muted-foreground">{fmtRelative(log.createdAt.toISOString(), locale)}</p>
                 </li>
               ))}
             </ul>

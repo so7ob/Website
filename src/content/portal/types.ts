@@ -67,6 +67,7 @@ export interface PortalContent {
     dashboard: {
       title: string;
       welcome: string;
+      welcomeWithName: string;
       openRequests: string;
       awaitingReply: string;
       unreadNotifications: string;
@@ -129,6 +130,7 @@ export interface PortalContent {
       createdOkOpen: string;
       attachments: string;
       download: string;
+      print: string;
     };
     requests: {
       title: string;
@@ -396,6 +398,12 @@ export interface PortalContent {
       overdueReply: string;
       agingHours: string;
       agingDays: string;
+      presetSave: string;
+      presetName: string;
+      presetSaved: string;
+      presetRemoved: string;
+      presetApply: string;
+      presetDelete: string;
       print: string;
     };
     inquiries: {
@@ -412,6 +420,12 @@ export interface PortalContent {
       statuses: Record<string, string>;
       export: string;
       exportOk: string;
+      archive: string;
+      restore: string;
+      archived: string;
+      bulkArchive: string;
+      selected: string;
+      print: string;
     };
     notifications: {
       title: string;

@@ -68,6 +68,7 @@ export const portalEn: PortalContent = {
     dashboard: {
       title: "Your dashboard",
       welcome: "Welcome",
+      welcomeWithName: "Welcome, {name}",
       openRequests: "Open requests",
       awaitingReply: "Awaiting your reply",
       unreadNotifications: "Unread notifications",
@@ -223,6 +224,7 @@ export const portalEn: PortalContent = {
       createdOkOpen: "Open conversation",
       attachments: "Attachments",
       download: "Download",
+      print: "Print inquiry",
     },
     notifications: {
       title: "Notifications",
@@ -455,6 +457,12 @@ export const portalEn: PortalContent = {
       overdueReply: "Reply overdue",
       agingHours: "{n}h",
       agingDays: "{n}d",
+      presetSave: "Save filter",
+      presetName: "Filter name",
+      presetSaved: "Filter saved",
+      presetRemoved: "Filter removed",
+      presetApply: "Apply saved filter",
+      presetDelete: "Delete saved filter",
       print: "Print request",
     },
     inquiries: {
@@ -483,6 +491,12 @@ export const portalEn: PortalContent = {
       },
       export: "Export CSV",
       exportOk: "Inquiries file exported",
+      archive: "Archive",
+      restore: "Restore",
+      archived: "Archived",
+      bulkArchive: "Archive selected",
+      selected: "selected",
+      print: "Print inquiry",
     },
     notifications: {
       title: "Notifications",

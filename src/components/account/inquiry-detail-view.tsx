@@ -12,6 +12,7 @@ import {
   Lock,
   MessageSquare,
   Paperclip,
+  Printer,
   SearchX,
   Send,
   User,
@@ -48,11 +49,13 @@ export function InquiryDetailView({
   id,
   t,
   authErrors,
+  siteName,
 }: {
   locale: Locale;
   id: string;
   t: PortalContent["account"]["inquiries"];
   authErrors: PortalContent["auth"]["errors"];
+  siteName: string;
 }) {
   const [inquiry, setInquiry] = useState<InquiryDetail | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "notFound">("loading");
@@ -158,6 +161,12 @@ export function InquiryDetailView({
 
   return (
     <div className="space-y-5">
+      {/* ترويسة الطباعة — تظهر على الورق فقط: العلامة + التاريخ */}
+      <div className="hidden print:block print:border-b print:border-border print:pb-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          {siteName} · {new Date().toLocaleDateString(locale)}
+        </p>
+      </div>
       <header className="flex flex-wrap items-center gap-3">
         <Button
           asChild
@@ -182,6 +191,15 @@ export function InquiryDetailView({
             {t.categories[inquiry.category] ?? inquiry.category}
           </span>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => window.print()}
+          aria-label={t.print}
+          className="ms-auto h-11 rounded-full px-5 font-semibold focus-visible:ring-2 focus-visible:ring-ring/40 print:hidden"
+        >
+          <Printer className="h-4 w-4" aria-hidden="true" />
+          {t.print}
+        </Button>
       </header>
 
       <h2 className="text-lg font-semibold text-navy">{inquiry.subject}</h2>

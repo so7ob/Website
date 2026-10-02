@@ -1,14 +1,16 @@
 "use client";
 
 /**
- * قائمة الاستفسارات: بحث + تصفية (حالة/تصنيف) + ترقيم صفحات.
+ * قائمة الاستفسارات: بحث وتصفية (حالة/تصنيف/مؤرشف) + تحديد جماعي
+ * للأرشفة + ترقيم صفحات.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Search, MessageCircleQuestion, MessageSquareText, Eye, Loader2, RotateCcw, Download } from "lucide-react";
+import { Search, MessageCircleQuestion, MessageSquareText, Eye, Loader2, RotateCcw, Download, Archive, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
@@ -19,7 +21,7 @@ import { StatusBadge } from "@/components/admin/badges";
 import { AdminPagination } from "@/components/admin/pagination";
 import { EmptyState } from "@/components/admin/empty-state";
 import { useDebounced } from "@/components/admin/use-debounced";
-import { apiGet, ApiError, apiErrorMessage, buildQuery, fmtRelative } from "@/components/admin/helpers";
+import { apiGet, apiSend, ApiError, apiErrorMessage, buildQuery, fmtRelative } from "@/components/admin/helpers";
 import type { InquiriesResponse, Me } from "../types";
 import { cn } from "@/lib/utils";
 
@@ -63,12 +65,14 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
   const debouncedQ = useDebounced(q);
   const [status, setStatus] = useState(initialStatus ?? "all");
   const [category, setCategory] = useState("all");
+  const [archived, setArchived] = useState(false);
   const [page, setPage] = useState(1);
   const [reloadToken, setReloadToken] = useState(0);
 
   const [data, setData] = useState<InquiriesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = useCallback(
     async (signal: AbortSignal) => {
@@ -79,17 +83,21 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
           q: debouncedQ,
           status: status !== "all" ? status : "",
           category: category !== "all" ? category : "",
+          archived,
           page,
         });
         const res = await apiGet<InquiriesResponse>(`/api/admin/inquiries${query}`);
-        if (!signal.aborted) setData(res);
+        if (!signal.aborted) {
+          setData(res);
+          setSelected(new Set());
+        }
       } catch (err) {
         if (!signal.aborted && err instanceof ApiError) setError(apiErrorMessage(err, t.auth.errors));
       } finally {
         if (!signal.aborted) setLoading(false);
       }
     },
-    [debouncedQ, status, category, page, t.auth.errors]
+    [debouncedQ, status, category, archived, page, t.auth.errors]
   );
 
   useEffect(() => {
@@ -104,6 +112,38 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
   const categoryKeys = useMemo(() => Object.keys(ti.categories), [ti.categories]);
 
   const mayExport = can(me, "inquiries.export");
+  const mayArchive = can(me, "inquiries.archive");
+
+  // ——— الأرشفة الجماعية ———
+  const bulk = async (action: "archive" | "restore") => {
+    if (selected.size === 0) return;
+    try {
+      await apiSend<{ ok: boolean; count: number }>("/api/admin/inquiries/bulk", "POST", {
+        ids: Array.from(selected),
+        action,
+      });
+      toast.success(action === "archive" ? ti.archived : ti.restore);
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, t.auth.errors));
+    }
+  };
+
+  const toggleAll = (checked: boolean) => {
+    setSelected(checked ? new Set(inquiries.map((i) => i.id)) : new Set());
+  };
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const allChecked = inquiries.length > 0 && inquiries.every((i) => selected.has(i.id));
+  const someChecked = inquiries.some((i) => selected.has(i.id)) && !allChecked;
 
   // تصدير CSV بنفس تصفية العرض الحالية — رابط نسبي فيرسل الكوكيز تلقائيًا
   const exportCsv = () => {
@@ -111,6 +151,8 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
       q: debouncedQ,
       status: status !== "all" ? status : "",
       category: category !== "all" ? category : "",
+      // تصدير ما يُرى: عرض المؤرشف يصدّر المؤرشف فقط — اتساقًا مع القائمة
+      archived,
     });
     window.open(`/api/admin/inquiries/export${query}`, "_blank");
     toast.success(ti.exportOk);
@@ -153,7 +195,9 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
         </div>
       </div>
 
-      {/* حبوب الحالة — «الكل» + المرشّح المركّب «مفتوحة» (رابط عميق ?status=open من اللوحة) + الحالات */}
+      {/* حبوب الحالة — «الكل» + المرشّح المركّب «مفتوحة» (رابط عميق ?status=open
+          من اللوحة) + الحالات + حبة عرض «المؤرشف» (تحوّل زر التحديد الجماعي
+          إلى استعادة وتخفي شارات الانتظار) */}
       <div role="group" aria-label={t.admin.requests.filterStatus} className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground" aria-hidden="true">
           {t.admin.requests.filterStatus}
@@ -181,6 +225,23 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
             {label}
           </button>
         ))}
+        <button
+          type="button"
+          aria-pressed={archived}
+          onClick={() => {
+            setArchived((v) => !v);
+            setPage(1);
+          }}
+          className={cn(
+            FILTER_PILL_CLASS,
+            archived
+              ? "border-brand bg-accent text-brand-strong"
+              : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          )}
+        >
+          <Archive className="size-4" aria-hidden="true" />
+          {ti.archived}
+        </button>
       </div>
 
       {/* حبوب التصنيف */}
@@ -211,11 +272,42 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
         )}
       </div>
 
+      {/* شريط التحديد الجماعي — زر أرشفة، أو استعادة في عرض «المؤرشف» */}
+      {mayArchive && selected.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-accent/60 px-4 py-3">
+          <p className="text-sm font-semibold text-brand-strong">
+            {selected.size} {ti.selected}
+          </p>
+          <div className="ms-auto flex items-center gap-2">
+            <Button
+              variant={archived ? "outline" : "default"}
+              onClick={() => bulk(archived ? "restore" : "archive")}
+              className="min-h-10 rounded-full"
+            >
+              {archived ? <ArchiveRestore className="size-4" aria-hidden="true" /> : <Archive className="size-4" aria-hidden="true" />}
+              {archived ? ti.restore : ti.bulkArchive}
+            </Button>
+            <Button variant="ghost" onClick={() => setSelected(new Set())} className="min-h-10 rounded-full">
+              {t.admin.users.cancel}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-border bg-white">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
+                {mayArchive ? (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                      onCheckedChange={(checked) => toggleAll(checked === true)}
+                      aria-label={ti.bulkArchive}
+                    />
+                  </TableHead>
+                ) : null}
                 <TableHead className="min-w-24">{t.account.requests.refCode}</TableHead>
                 <TableHead className="min-w-44">{ti.subject}</TableHead>
                 <TableHead className="min-w-24">{ti.category}</TableHead>
@@ -231,7 +323,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
               {loading && !data ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <TableRow key={`sk-${i}`}>
-                    {Array.from({ length: 9 }).map((__, j) => (
+                    {Array.from({ length: mayArchive ? 10 : 9 }).map((__, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-5 w-full" />
                       </TableCell>
@@ -240,13 +332,26 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
                 ))
               ) : inquiries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="p-0">
+                  <TableCell colSpan={mayArchive ? 10 : 9} className="p-0">
                     <EmptyState icon={MessageSquareText} title={ti.empty} />
                   </TableCell>
                 </TableRow>
               ) : (
                 inquiries.map((row) => (
-                  <TableRow key={row.id} className="transition-colors hover:bg-muted/50">
+                  <TableRow
+                    key={row.id}
+                    data-state={selected.has(row.id) ? "selected" : undefined}
+                    className="transition-colors hover:bg-muted/50"
+                  >
+                    {mayArchive ? (
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.has(row.id)}
+                          onCheckedChange={(checked) => toggleOne(row.id, checked === true)}
+                          aria-label={row.refCode}
+                        />
+                      </TableCell>
+                    ) : null}
                     <TableCell className="font-mono text-xs font-bold text-navy ltr-isolate">{row.refCode}</TableCell>
                     <TableCell>
                       <Link

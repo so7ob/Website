@@ -21,6 +21,7 @@ import {
   RotateCcw,
   User,
   UserCheck,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import type { AdminNotification, Me, NotificationsResponse } from "../types";
 
 const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   new_request: FilePlus2,
+  new_inquiry: MessageCircleQuestion,
   request_assigned: UserCheck,
   reply_received: MessageSquare,
   info_requested: Info,

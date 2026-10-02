@@ -4,7 +4,7 @@
  * قائمة الطلبات: بحث وتصفية (حالة/أولوية/خدمة/مسؤول/مؤرشف) + تحديد جماعي
  * للأرشفة + إجراءات سريعة (تعيين لي/تعيين لغيري/أرشفة/استعادة).
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -20,8 +20,12 @@ import {
   Loader2,
   RotateCcw,
   BookMarked,
+  Bookmark,
+  BookmarkCheck,
+  BookmarkPlus,
   Download,
   Timer,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +44,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
 import type { PortalContent } from "@/content/portal/types";
@@ -89,9 +100,89 @@ function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["
   );
 }
 
+// ——— التصفيات المحفوظة (محلية لكل مستخدم — لا مساس بالواجهة البرمجية) ———
+
+/** لقطة قيم التصفية التي يلتقطها الإعداد المحفوظ — الصفحة لا تُحفظ أبدًا */
+interface PresetFilters {
+  status: string;
+  priority: string;
+  service: string;
+  assignee: string;
+  q: string;
+  overdue: boolean;
+  archived: boolean;
+}
+
+/** إعداد محفوظ: معرّف فريد (الأسماء المتطابقة جائزة) + اسم + لقطة تصفية */
+interface RequestPreset {
+  id: string;
+  name: string;
+  filters: PresetFilters;
+}
+
+/** سقف الإعدادات المحفوظة — الأقدم يُسقط عند تجاوزه */
+const PRESET_LIMIT = 8;
+const EMPTY_PRESETS: RequestPreset[] = [];
+
+/** فحص دفاعي لشكل الإعداد المقروء من التخزين — التالف يُتجاهل بصمت */
+function isValidPreset(value: unknown): value is RequestPreset {
+  if (typeof value !== "object" || value === null) return false;
+  const preset = value as { id?: unknown; name?: unknown; filters?: unknown };
+  if (typeof preset.id !== "string" || typeof preset.name !== "string" || !preset.name) return false;
+  const f = preset.filters as Record<string, unknown> | null | undefined;
+  return (
+    typeof f === "object" &&
+    f !== null &&
+    typeof f.status === "string" &&
+    typeof f.priority === "string" &&
+    typeof f.service === "string" &&
+    typeof f.assignee === "string" &&
+    typeof f.q === "string" &&
+    typeof f.overdue === "boolean" &&
+    typeof f.archived === "boolean"
+  );
+}
+
+/** قراءة دفاعية من localStorage — النمط المعتمد في المشروع */
+function readStoredPresets(key: string): RequestPreset[] {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return EMPTY_PRESETS;
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return EMPTY_PRESETS;
+    const list = parsed.filter(isValidPreset);
+    return list.length > 0 ? list : EMPTY_PRESETS;
+  } catch {
+    return EMPTY_PRESETS; /* التخزين محجوب أو البيانات تالفة */
+  }
+}
+
+/**
+ * مخزن على مستوى الوحدة لكل مفتاح مستخدم: قراءة واحدة عند أول استخدام،
+ * ومرجع قيمة ثابت بين القراءات (شرط useSyncExternalStore)، ومستمعون
+ * يُنبَّهون بعد كل حفظ/حذف. لقطة الخادم فارغة دائمًا فلا تعارض إماهة
+ * (نمط شريط الإعلان) — مهيئ useState قارئٌ لـ localStorage كان سيسبب
+ * تعارض إماهة عند وجود إعدادات محفوظة (الخادم يرسم بلا حبكات).
+ */
+const presetStores = new Map<string, { value: RequestPreset[]; listeners: Set<() => void> }>();
+
+function getPresetStore(key: string) {
+  let store = presetStores.get(key);
+  if (!store) {
+    store = { value: readStoredPresets(key), listeners: new Set() };
+    presetStores.set(key, store);
+  }
+  return store;
+}
+
+function makePresetId(): string {
+  return `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function RequestsClient({ me, locale, initialStatus, initialOverdue }: RequestsClientProps) {
   const t = getPortalContent(locale);
   const tr = t.admin.requests;
+  const tp = t.admin.requests; // تصفيات محفوظة — مفاتيح admin.requests
 
   const [q, setQ] = useState("");
   const debouncedQ = useDebounced(q);
@@ -116,6 +207,85 @@ export function RequestsClient({ me, locale, initialStatus, initialOverdue }: Re
   const maySavedReplies = can(me, "requests.reply");
 
   const [repliesOpen, setRepliesOpen] = useState(false);
+
+  // ——— التصفيات المحفوظة: localStorage بمفتاح خاص بالمستخدم الحالي ———
+  const presetKey = `so7ob-req-presets:${me.id}`;
+  const [presetSaveOpen, setPresetSaveOpen] = useState(false);
+  const [presetName, setPresetName] = useState("");
+
+  const subscribePresets = useCallback(
+    (notify: () => void) => {
+      const store = getPresetStore(presetKey);
+      store.listeners.add(notify);
+      return () => {
+        store.listeners.delete(notify);
+      };
+    },
+    [presetKey],
+  );
+  const presets = useSyncExternalStore(
+    subscribePresets,
+    useCallback(() => getPresetStore(presetKey).value, [presetKey]),
+    () => EMPTY_PRESETS,
+  );
+
+  /** كتابة جديدة (حفظ/حذف) — تحدّث التخزين ثم تنبّه المشتركين فورًا */
+  const writePresets = (updater: (prev: RequestPreset[]) => RequestPreset[]) => {
+    const store = getPresetStore(presetKey);
+    const next = updater(store.value);
+    try {
+      window.localStorage.setItem(presetKey, JSON.stringify(next));
+    } catch {
+      /* التخزين ممتلئ أو محجوب — نسخة الجلسة تستمر */
+    }
+    store.value = next;
+    store.listeners.forEach((notify) => notify());
+  };
+
+  /** تطبيق إعداد — نفس مسار نقرات التصفية العادية (حالة/بحث مؤجل) + عودة للصفحة 1 */
+  const applyPreset = (filters: PresetFilters) => {
+    setQ(filters.q);
+    setStatus(filters.status);
+    setPriority(filters.priority);
+    setService(filters.service);
+    setAssignee(filters.assignee);
+    setOverdue(filters.overdue);
+    setArchived(filters.archived);
+    setPage(1);
+  };
+
+  const savePreset = () => {
+    const name = presetName.trim().slice(0, 30);
+    if (!name) return;
+    const snapshot: PresetFilters = { status, priority, service, assignee, q, overdue, archived };
+    writePresets((prev) => {
+      const next = [...prev, { id: makePresetId(), name, filters: snapshot }];
+      return next.length > PRESET_LIMIT ? next.slice(next.length - PRESET_LIMIT) : next;
+    });
+    setPresetSaveOpen(false);
+    setPresetName("");
+    toast.success(tp.presetSaved);
+  };
+
+  const removePreset = (id: string) => {
+    writePresets((prev) => prev.filter((preset) => preset.id !== id));
+    toast.success(tp.presetRemoved);
+  };
+
+  const onPresetDialogChange = (open: boolean) => {
+    setPresetSaveOpen(open);
+    if (!open) setPresetName("");
+  };
+
+  /** هل مزيج التصفية الحالي يطابق الإعداد حرفيًا؟ (للحالة المضغوطة aria-pressed) */
+  const isPresetActive = (filters: PresetFilters) =>
+    filters.status === status &&
+    filters.priority === priority &&
+    filters.service === service &&
+    filters.assignee === assignee &&
+    filters.q === q &&
+    filters.overdue === overdue &&
+    filters.archived === archived;
 
   const load = useCallback(
     async (signal: AbortSignal) => {
@@ -244,6 +414,50 @@ export function RequestsClient({ me, locale, initialStatus, initialOverdue }: Re
       </div>
       <SavedRepliesDialog locale={locale} open={repliesOpen} onOpenChange={setRepliesOpen} />
 
+      {/* حوارية حفظ التصفية الحالية باسم */}
+      <Dialog open={presetSaveOpen} onOpenChange={onPresetDialogChange}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-navy">{tp.presetSave}</DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              savePreset();
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="req-preset-name" className="text-xs">
+                {tp.presetName}
+              </Label>
+              <Input
+                id="req-preset-name"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                maxLength={30}
+                autoFocus
+                className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onPresetDialogChange(false)}
+                className="min-h-11 rounded-full"
+              >
+                {t.admin.users.cancel}
+              </Button>
+              <Button type="submit" disabled={!presetName.trim()} className="min-h-11 rounded-full">
+                <BookmarkPlus className="size-4" aria-hidden="true" />
+                {tp.presetSave}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* أدوات التصفية */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-56 flex-1 sm:max-w-xs">
@@ -328,7 +542,59 @@ export function RequestsClient({ me, locale, initialStatus, initialOverdue }: Re
           <Timer className="size-4" aria-hidden="true" />
           {tr.filterOverdue}
         </button>
+        {/* حفظ مزيج التصفية الحالي كإعداد محلي — التركيبة الفارغة صالحة أيضًا */}
+        <Button variant="outline" onClick={() => setPresetSaveOpen(true)} className="min-h-11 rounded-full">
+          <BookmarkPlus className="size-4" aria-hidden="true" />
+          {tp.presetSave}
+        </Button>
       </div>
+
+      {/* تصفيات محفوظة: تطبيق بنقرة الحبة، وحذف مباشر من زر الإنهاء داخلها */}
+      {presets.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {presets.map((preset) => {
+            const active = isPresetActive(preset.filters);
+            return (
+              <div
+                key={preset.id}
+                className={cn(
+                  "inline-flex min-h-9 items-stretch rounded-full border transition-colors",
+                  active ? "border-brand bg-accent text-brand-strong" : "border-border bg-white text-muted-foreground",
+                )}
+              >
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  aria-label={`${tp.presetApply} — ${preset.name}`}
+                  onClick={() => applyPreset(preset.filters)}
+                  className={cn(
+                    "inline-flex min-h-9 items-center gap-1.5 rounded-s-full ps-3 pe-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                    active ? "" : "hover:bg-muted/50 hover:text-foreground",
+                  )}
+                >
+                  {active ? (
+                    <BookmarkCheck className="size-3.5 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <Bookmark className="size-3.5 shrink-0" aria-hidden="true" />
+                  )}
+                  <span className="max-w-48 truncate">{preset.name}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`${tp.presetDelete} — ${preset.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removePreset(preset.id);
+                  }}
+                  className="inline-flex min-h-9 w-9 items-center justify-center rounded-e-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 hover:bg-muted hover:text-foreground"
+                >
+                  <X className="size-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
 
       {/* شريط التحديد الجماعي */}
       {mayArchive && selected.size > 0 ? (

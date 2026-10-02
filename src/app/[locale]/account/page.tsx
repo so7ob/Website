@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bell, FilePlus2, FolderOpen, Inbox, Layers, MessageCircle, MessageCircleQuestion } from "lucide-react";
+import { Bell, FilePlus2, FolderOpen, Inbox, Layers, LayoutDashboard, MessageCircle, MessageCircleQuestion } from "lucide-react";
 import { getAuthUser } from "@/lib/auth/session";
 import { getPortalContent } from "@/content/portal";
 import { db } from "@/lib/db";
@@ -92,15 +92,20 @@ export default async function AccountDashboardPage({ params }: { params: Promise
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t.welcome}، {user.name}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+            <LayoutDashboard className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-navy">{t.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t.welcomeWithName.replace("{name}", user.name)}
+            </p>
+          </div>
         </div>
         <Button
           asChild
-          className="h-12 rounded-full bg-primary px-6 text-base font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
+          className="h-12 rounded-full bg-primary px-6 text-base font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong print:hidden"
         >
           <Link href={`/${locale}/account/requests/new`}>
             <FilePlus2 className="h-5 w-5" aria-hidden="true" />
@@ -141,13 +146,13 @@ export default async function AccountDashboardPage({ params }: { params: Promise
       </section>
 
       {isEmpty ? (
-        <section className="rounded-2xl border border-border bg-white p-8 text-center sm:p-12">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
-            <FolderOpen className="h-7 w-7" aria-hidden="true" />
+        <section className="rounded-3xl border border-border bg-white p-8 text-center sm:p-12">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-accent text-brand-strong ring-8 ring-accent/50">
+            <FolderOpen className="size-7" aria-hidden="true" />
           </span>
           <h2 className="mt-4 text-lg font-bold text-navy">{t.emptyTitle}</h2>
           <p className="mx-auto mt-2 max-w-md leading-8 text-muted-foreground">{t.emptyBody}</p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row print:hidden">
             <Button
               asChild
               className="h-12 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong"
@@ -165,7 +170,7 @@ export default async function AccountDashboardPage({ params }: { params: Promise
             <h2 className="text-lg font-bold text-navy">{t.recentUpdates}</h2>
             <Link
               href={`/${locale}/account/requests`}
-              className="text-sm font-semibold text-brand underline decoration-brand/40 underline-offset-4 hover:text-brand-strong"
+              className="rounded-sm text-sm font-semibold text-brand underline decoration-brand/40 underline-offset-4 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               {t.viewAll}
             </Link>
@@ -184,16 +189,16 @@ export default async function AccountDashboardPage({ params }: { params: Promise
               <tbody>
                 {recent.map((r) => (
                   <tr key={r.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50">
-                    <td className="px-3 py-3.5 font-mono font-semibold text-navy">{r.refCode}</td>
+                    <td className="px-3 py-3.5 font-mono font-semibold text-navy ltr-isolate">{r.refCode}</td>
                     <td className="px-3 py-3.5 text-muted-foreground">{labels.services[r.serviceType] ?? r.serviceType}</td>
                     <td className="px-3 py-3.5">
                       <StatusBadge status={r.status} label={labels.statuses[r.status] ?? r.status} />
                     </td>
-                    <td className="px-3 py-3.5 text-muted-foreground">{formatRelative(r.lastActivityAt, locale)}</td>
+                    <td className="px-3 py-3.5 tabular-nums text-muted-foreground">{formatRelative(r.lastActivityAt, locale)}</td>
                     <td className="px-3 py-3.5 text-end">
                       <Link
                         href={`/${locale}/account/requests/${r.id}`}
-                        className="font-semibold text-brand underline decoration-brand/40 underline-offset-4 hover:text-brand-strong"
+                        className="rounded-sm font-semibold text-brand underline decoration-brand/40 underline-offset-4 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                       >
                         {labels.viewDetails}
                       </Link>

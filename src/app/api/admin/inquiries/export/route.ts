@@ -48,12 +48,15 @@ export async function GET(req: NextRequest) {
   const query = (url.searchParams.get("q") ?? "").trim().toLowerCase().slice(0, 100);
   const status = url.searchParams.get("status") ?? "";
   const category = url.searchParams.get("category") ?? "";
+  const archived = url.searchParams.get("archived") === "1";
 
   // نفس بناء شروط القائمة /api/admin/inquiries — بلا ترقيم صفحات
-  // (status=open → المرشّح المركّب: الحالات غير المغلقة وغير المؤرشفة)
+  // (archived=1 → المؤرشف فقط؛ الافتراضي غير المؤرشف دائمًا — نفس دلالات القائمة)
   const where = {
+    archivedAt: archived ? { not: null } : null,
+    // (status=open → المرشّح المركّب: الحالات المفتوحة)
     ...(status === "open"
-      ? { status: { in: OPEN_INQUIRY_STATUSES }, archivedAt: null }
+      ? { status: { in: OPEN_INQUIRY_STATUSES } }
       : status && INQUIRY_STATUSES.includes(status)
         ? { status }
         : {}),

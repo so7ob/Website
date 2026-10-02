@@ -12,6 +12,7 @@ import {
   Info,
   Loader2,
   MessageSquare,
+  MessageCircleQuestion,
   User,
   UserCheck,
 } from "lucide-react";
@@ -27,6 +28,7 @@ import type { AccountNotification, NotificationsResponse } from "./types";
 
 const TYPE_META: Record<string, { icon: React.ComponentType<{ className?: string }>; chip: string }> = {
   new_request: { icon: FilePlus2, chip: "bg-skydrop/20 text-brand-strong" },
+  new_inquiry: { icon: MessageCircleQuestion, chip: "bg-teal-100 text-teal-800" },
   request_assigned: { icon: UserCheck, chip: "bg-navy/10 text-navy" },
   reply_received: { icon: MessageSquare, chip: "bg-emerald-100 text-emerald-800" },
   info_requested: { icon: Info, chip: "bg-amber-100 text-amber-800" },
