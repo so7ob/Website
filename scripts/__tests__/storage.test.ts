@@ -12,12 +12,13 @@ test("an upload survives a fresh process with a different standalone working dir
     mkdirSync(releaseA, { recursive: true }); mkdirSync(releaseB, { recursive: true });
     const storageModule = resolve("src/lib/file-storage.ts");
     const env = { ...process.env, NODE_ENV: "production", DATA_DIR: data };
-    const upload = Bun.spawn([process.execPath, "--eval", `import { storeUpload } from ${JSON.stringify(storageModule)}; const result = await storeUpload(new File(['synthetic persistent data'], 'sample.pdf', {type:'application/pdf'}), 'attachment'); if ('error' in result) process.exit(1); console.log(result.storedName);`], { cwd: releaseA, env, stdout: "pipe", stderr: "pipe" });
+    const content = "%PDF-1.4\nsynthetic persistent data\n%%EOF";
+    const upload = Bun.spawn([process.execPath, "--eval", `import { storeUpload } from ${JSON.stringify(storageModule)}; const result = await storeUpload(new File([${JSON.stringify(content)}], 'sample.pdf', {type:'application/pdf'}), 'attachment'); if ('error' in result) process.exit(1); console.log(result.storedName);`], { cwd: releaseA, env, stdout: "pipe", stderr: "pipe" });
     const storedName = (await new Response(upload.stdout).text()).trim();
     expect(await new Response(upload.stderr).text()).toBe("");
     expect(await upload.exited).toBe(0);
     const read = Bun.spawn([process.execPath, "--eval", `import { readFileBuffer } from ${JSON.stringify(storageModule)}; const bytes = readFileBuffer(${JSON.stringify(storedName)}); if (!bytes) process.exit(1); console.log(bytes.toString());`], { cwd: releaseB, env, stdout: "pipe", stderr: "pipe" });
-    expect((await new Response(read.stdout).text()).trim()).toBe("synthetic persistent data");
+    expect((await new Response(read.stdout).text()).trim()).toBe(content);
     expect(await read.exited).toBe(0);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
