@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 
 export const NOTIFICATION_TYPES = [
   "new_request", // وصول طلب جديد
+  "new_inquiry", // وصول استفسار جديد
   "request_assigned", // تعيين طلب إليك
   "reply_received", // وصول رد على طلب تتابعه
   "info_requested", // طلب معلومات إضافية

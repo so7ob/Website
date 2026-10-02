@@ -1,6 +1,6 @@
 /**
  * GET   /api/admin/settings — الإعدادات الحالية.
- * PATCH /api/admin/settings — تحديث مفاتيح معتمدة (تواصل + روابط اجتماعية).
+ * PATCH /api/admin/settings — تحديث مفاتيح معتمدة (تواصل + روابط اجتماعية + شريط الإعلان).
  */
 import { type NextRequest } from "next/server";
 import { db } from "@/lib/db";
@@ -14,7 +14,21 @@ const ALLOWED_KEYS = [
   "social.github",
   "site.nameAr",
   "site.nameEn",
+  "announcement.enabled",
+  "announcement.messageAr",
+  "announcement.messageEn",
+  "announcement.ctaLabelAr",
+  "announcement.ctaLabelEn",
+  "announcement.ctaUrl",
+  "announcement.variant",
+  "announcement.startAt",
+  "announcement.endAt",
 ];
+
+const ANNOUNCEMENT_VARIANTS = ["info", "warning", "success", "brand"];
+
+/** تاريخ مجدول: YYYY-MM-DD أو ISO كامل (فارغ = بلا جدولة) */
+const SCHEDULE_DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
 
 export async function GET(req: NextRequest) {
   const guard = await guardApi(req, "settings.manage");
@@ -50,10 +64,38 @@ export async function PATCH(req: NextRequest) {
       if (key === "contact.phone" && value && !/^[+]?[\d\s\-()]{7,20}$/.test(value)) {
         return json({ ok: false, code: "invalid_phone" }, 400);
       }
+      // تحقق شريط الإعلان: الأطوال والصيغ
+      if ((key === "announcement.messageAr" || key === "announcement.messageEn") && value.length > 280) {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
+      if ((key === "announcement.ctaLabelAr" || key === "announcement.ctaLabelEn") && value.length > 60) {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
+      if (key === "announcement.ctaUrl" && (value.length > 200 || (value && !/^(\/|https?:\/\/)/.test(value)))) {
+        return json({ ok: false, code: "invalid_url" }, 400);
+      }
+      if (key === "announcement.variant" && !ANNOUNCEMENT_VARIANTS.includes(value)) {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
+      if (key === "announcement.enabled" && value !== "true" && value !== "false") {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
+      // جدولة الشريط: تاريخ صالح أو فارغ (بلا جدولة)
+      if (
+        (key === "announcement.startAt" || key === "announcement.endAt") &&
+        value && !SCHEDULE_DATE_RE.test(value)
+      ) {
+        return json({ ok: false, code: "invalid" }, 400);
+      }
       updates.push({ key, value });
     }
   }
   if (!updates.length) return json({ ok: false, code: "invalid" }, 400);
+
+  // أي تغيير في مفاتيح الإعلان يرفع رقم المراجعة — يعيد إظهار الشريط لمن أخفاه
+  if (updates.some((u) => u.key.startsWith("announcement."))) {
+    updates.push({ key: "announcement.revision", value: String(Date.now()) });
+  }
 
   for (const update of updates) {
     await db.siteSetting.upsert({

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, MailPlus, ShieldX } from "lucide-react";
+import { Loader2, Mail, MailPlus, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import type { PortalContent } from "@/content/portal/types";
@@ -66,7 +66,7 @@ export function InviteForm({ locale, t, token, nameLabel }: { locale: Locale; t:
     return (
       <AuthCard title={t.registerTitle}>
         <div className="mt-2 flex flex-col items-center text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-700">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-800">
             <ShieldX className="h-7 w-7" aria-hidden="true" />
           </span>
           <p className="mt-4 font-semibold text-navy">{t.verifyInvalid}</p>
@@ -81,6 +81,11 @@ export function InviteForm({ locale, t, token, nameLabel }: { locale: Locale; t:
 
   return (
     <AuthCard
+      icon={
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <Mail className="size-5" aria-hidden="true" />
+        </span>
+      }
       title={t.registerTitle}
       subtitle={t.registerSubtitle}
       footer={
@@ -97,7 +102,7 @@ export function InviteForm({ locale, t, token, nameLabel }: { locale: Locale; t:
     >
       <form onSubmit={onSubmit} noValidate className="mt-6 space-y-5">
         {formError && (
-          <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+          <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {formError}
           </div>
         )}

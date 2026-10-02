@@ -16,6 +16,14 @@ import { sha256 } from "./tokens";
 export const SESSION_DAYS = 30;
 const BOOTSTRAP_WINDOW_MS = 60_000;
 
+/**
+ * سر احتياطي للتطوير المحلي فقط — يُستخدم حين يغيب AUTH_SECRET عن البيئة
+ * (بيئة الاختبار أعادت كتابة .env من قالب بلا السر فأبطلت كل الجلسات القائمة).
+ * ثابت وموثق ومخصص للتطوير؛ الإنتاج بلا AUTH_SECRET يرفع next-auth خطأ
+ * MissingSecret ولا يسقط أبدًا إلى سر معروف.
+ */
+const DEV_AUTH_SECRET_FALLBACK = "ce1cfd44862e227ec0cd7d7e40d7b0145031bfaa0070fe12ecd36ce1146bcc5d";
+
 /** بصمة الجلسة من محتويات رمز JWT */
 export function sessionFingerprint(userId: string, iat: number): string {
   return sha256(`session:${userId}:${iat}`);
@@ -77,7 +85,9 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: SESSION_DAYS * 24 * 60 * 60,
   },
-  secret: process.env.AUTH_SECRET,
+  secret:
+    process.env.AUTH_SECRET ??
+    (process.env.NODE_ENV === "production" ? undefined : DEV_AUTH_SECRET_FALLBACK),
   callbacks: {
     async jwt({ token, user }) {
       // عند الدخول: تثبيت بيانات المستخدم في الرمز (iat سيضاف عند التوقيع)
@@ -161,6 +171,14 @@ export const authOptions: NextAuthOptions = {
   },
   logger: {
     error(code, metadata) {
+      // كوكي جلسة غير قابل لفك التشفير (سر سابق أو كوكي تالف): حالة زائر لا خطأ خادم —
+      // تحذير موجز بدل خطأ وحدة تحكم يظهر في لوحة Next.js كخطأ صفحة (next-auth يعاملها كمُسجَّل خروج)
+      if (code === "JWT_SESSION_ERROR") {
+        console.warn(
+          `[next-auth:${code}] ${metadata instanceof Error ? metadata.message : "session cookie unreadable"} — treated as signed out`
+        );
+        return;
+      }
       console.error(`[next-auth:${code}]`, metadata);
     },
     warn() {},

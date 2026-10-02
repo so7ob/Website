@@ -14,7 +14,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:seed": "bun run src/db/seed.ts",
+    "db:seed": "bun run src/db/seed-roles.ts && bun run src/db/seed-content.ts",
     "admin:create": "bun run scripts/create-admin.ts",
     "db:backup": "bun run scripts/backup-db.ts"
   },

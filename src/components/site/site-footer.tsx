@@ -44,7 +44,10 @@ export function SiteFooter({
                 {channels.map((c) => (
                   <li key={c.label}>
                     <span className="text-white/50">{c.label}: </span>
-                    <a href={c.href} className="ltr-isolate font-medium text-skydrop hover:underline">
+                    <a
+                      href={c.href}
+                      className="ltr-isolate font-medium text-skydrop underline-offset-4 transition-colors hover:underline hover:decoration-skydrop/40"
+                    >
                       {c.value}
                     </a>
                   </li>
@@ -54,11 +57,14 @@ export function SiteFooter({
           </div>
 
           <nav aria-label={content.footer.pagesTitle}>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">{content.footer.pagesTitle}</h2>
-            <ul className="mt-4 space-y-2.5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-white/50">{content.footer.pagesTitle}</h2>
+            <ul className="mt-4 space-y-3">
               {items.map((item) => (
                 <li key={item.href + item.label}>
-                  <Link href={item.href} className="text-sm text-white/80 transition-colors hover:text-skydrop">
+                  <Link
+                    href={item.href}
+                    className="text-sm text-white/80 underline-offset-4 transition-colors hover:text-skydrop hover:underline hover:decoration-skydrop/40"
+                  >
                     {item.label}
                   </Link>
                 </li>
@@ -67,15 +73,15 @@ export function SiteFooter({
           </nav>
 
           <nav aria-label={content.footer.servicesTitle}>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">{content.footer.servicesTitle}</h2>
-            <ul className="mt-4 space-y-2.5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-white/50">{content.footer.servicesTitle}</h2>
+            <ul className="mt-4 space-y-3">
               {SERVICE_ROUTES.map((key) => {
                 const item = content.services.items.find((s) => s.service === key);
                 return (
                   <li key={key}>
                     <Link
                       href={`${localePath(locale, "services")}#${key}`}
-                      className="text-sm text-white/80 transition-colors hover:text-skydrop"
+                      className="text-sm text-white/80 underline-offset-4 transition-colors hover:text-skydrop hover:underline hover:decoration-skydrop/40"
                     >
                       {item?.name ?? key}
                     </Link>
@@ -86,7 +92,7 @@ export function SiteFooter({
           </nav>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-4 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {content.meta.siteName} — {content.footer.rights}
           </p>
@@ -96,7 +102,7 @@ export function SiteFooter({
               href={settings.socialGithub}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-white/70 transition-colors hover:text-skydrop"
+              className="inline-flex items-center gap-1.5 text-white/70 underline-offset-4 transition-colors hover:text-skydrop hover:underline hover:decoration-skydrop/40"
             >
               <Github className="h-3.5 w-3.5" aria-hidden="true" />
               {content.footer.repoLink}

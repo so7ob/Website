@@ -39,7 +39,8 @@ import { BLOCK_LIBRARY, type BlockType } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const TYPE_ICONS: Record<BlockType, LucideIcon> = {
+/** أيقونة كل نوع من الكتل — مشتركة بين المكتبة ولوحة الإضافة السريعة */
+export const TYPE_ICONS: Record<BlockType, LucideIcon> = {
   hero: Rocket,
   servicesGrid: LayoutGrid,
   featureGrid: Grid3x3,
@@ -71,6 +72,13 @@ const TYPE_ICONS: Record<BlockType, LucideIcon> = {
 
 const GROUP_ORDER = ["home", "pages", "generic", "layout"] as const;
 
+const GROUP_CHIPS: Record<(typeof GROUP_ORDER)[number], string> = {
+  home: "bg-skydrop/20 text-brand-strong",
+  pages: "bg-emerald-100 text-emerald-800",
+  generic: "bg-amber-100 text-amber-800",
+  layout: "bg-navy/10 text-navy",
+};
+
 interface BlockLibraryProps {
   locale: Locale;
   onAdd: (type: BlockType) => void;
@@ -100,9 +108,14 @@ export function BlockLibrary({ locale, onAdd, className }: BlockLibraryProps) {
                         type="button"
                         onClick={() => onAdd(entry.type)}
                         title={t.addBlock}
-                        className="flex w-full min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-transparent bg-white px-3 text-start text-sm font-medium text-navy transition-all hover:border-brand/40 hover:bg-accent/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="flex w-full min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-border/70 bg-white px-3 text-start text-sm font-medium text-navy transition-all hover:border-brand hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                       >
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-brand-strong">
+                        <span
+                          className={cn(
+                            "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                            GROUP_CHIPS[group]
+                          )}
+                        >
                           <Icon className="size-4" aria-hidden="true" strokeWidth={1.8} />
                         </span>
                         <span className="truncate">{locale === "en" ? entry.en : entry.ar}</span>

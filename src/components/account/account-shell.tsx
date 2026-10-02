@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageCircleQuestion,
   Plus,
   ShieldCheck,
   User,
@@ -38,7 +39,7 @@ function UnreadDot({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
     <span
-      className="ms-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white"
+      className="ms-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-skydrop px-1.5 text-[11px] font-bold text-navy"
       aria-label={String(count)}
     >
       {count > 99 ? "99+" : count}
@@ -48,14 +49,22 @@ function UnreadDot({ count }: { count: number }) {
 
 function UserCard({ user }: { user: AccountShellUser }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-4">
-      <p className="truncate text-sm font-semibold text-navy">{user.name}</p>
-      <p className="mt-0.5 truncate text-xs text-muted-foreground" dir="ltr">
-        {user.email}
-      </p>
-      <span className="mt-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {user.roleKey}
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-white p-4">
+      <span
+        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-navy text-sm font-bold text-white"
+        aria-hidden="true"
+      >
+        {user.name.trim().slice(0, 1).toUpperCase() || "·"}
       </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-navy">{user.name}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground" dir="ltr">
+          {user.email}
+        </p>
+        <span className="mt-1.5 inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {user.roleKey}
+        </span>
+      </div>
     </div>
   );
 }
@@ -89,10 +98,13 @@ function NavList({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+              "relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
               active ? "bg-accent text-brand-strong" : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
+            {active ? (
+              <span aria-hidden="true" className="absolute inset-y-2 start-0 w-1 rounded-full bg-brand" />
+            ) : null}
             <Icon className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{item.label}</span>
             {item.badge && <UnreadDot count={unread} />}
@@ -103,7 +115,7 @@ function NavList({
       <Link
         href={`/${locale}`}
         onClick={onNavigate}
-        className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
         <Globe className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
         <span className="truncate">{nav.backSite}</span>
@@ -111,7 +123,7 @@ function NavList({
       <Link
         href={`/${locale}/auth/logout`}
         onClick={onNavigate}
-        className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+        className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
         <LogOut className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
         <span className="truncate">{nav.logout}</span>
@@ -176,6 +188,7 @@ export function AccountShell({
     { href: base, label: nav.dashboard, icon: LayoutDashboard },
     { href: `${base}/requests`, label: nav.requests, icon: FolderOpen },
     { href: `${base}/requests/new`, label: nav.newRequest, icon: Plus },
+    { href: `${base}/inquiries`, label: nav.inquiries, icon: MessageCircleQuestion },
     { href: `${base}/notifications`, label: nav.notifications, icon: Bell, badge: true },
     { href: `${base}/profile`, label: nav.profile, icon: User },
     { href: `${base}/security`, label: nav.security, icon: ShieldCheck },
@@ -184,10 +197,13 @@ export function AccountShell({
   const sheetSide = locale === "ar" ? "right" : "left";
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div id="account-shell" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* الطباعة: بوابة الحساب تطبيق — تُطبع صفحة المحتوى وحدها بلا ترويسة/تذييل الموقع وشريط الإعلان
+          (إخفاء طباعي فقط؛ على الشاشة تبقى البوابة مدمجة في هيكل الموقع العام) */}
+      <style>{`@media print { body:has(#account-shell) > header, body:has(#account-shell) > footer, body:has(#account-shell) > #site-announcement { display: none !important; } #account-shell { padding: 0 !important; } }`}</style>
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        {/* القائمة الجانبية — جهة البداية */}
-        <aside className="hidden lg:block">
+        {/* القائمة الجانبية — جهة البداية (مخفية عند الطباعة) */}
+        <aside className="hidden print:hidden lg:block">
           <div className="sticky top-24 flex flex-col gap-4">
             <UserCard user={user} />
             <NavList items={items} pathname={pathname} unread={unread} nav={nav} locale={locale} />
@@ -195,11 +211,16 @@ export function AccountShell({
         </aside>
 
         <div className="min-w-0">
-          {/* شريط الجوال */}
-          <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+          {/* شريط الجوال (مخفي عند الطباعة) */}
+          <div className="mb-4 flex items-center justify-between gap-3 print:hidden lg:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl" aria-label={nav.dashboard}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-10 rounded-full focus-visible:ring-2 focus-visible:ring-ring/40"
+                  aria-label={nav.dashboard}
+                >
                   <Menu className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </SheetTrigger>
@@ -220,13 +241,13 @@ export function AccountShell({
             </Sheet>
             <Link
               href={`${base}/notifications`}
-              className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand"
+              className="relative inline-flex size-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               aria-label={nav.notifications}
             >
               <Bell className="h-5 w-5" aria-hidden="true" />
               {unread > 0 && (
-                <span className="absolute -top-1 -end-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                  {unread > 99 ? "99+" : unread}
+                <span className="absolute -top-0.5 -end-0.5 grid size-4 place-items-center rounded-full bg-skydrop text-[10px] font-bold text-navy">
+                  {unread > 9 ? "9+" : unread}
                 </span>
               )}
             </Link>

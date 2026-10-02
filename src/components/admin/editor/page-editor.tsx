@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowLeft,
-  Check,
   ChevronDown,
   ExternalLink,
   FileWarning,
@@ -27,6 +26,7 @@ import {
   PlusCircle,
   Redo2,
   RotateCw,
+  Search,
   Settings2,
   Smartphone,
   Tablet,
@@ -64,6 +64,7 @@ import type { Me } from "@/components/admin/types";
 import { EmptyState } from "@/components/admin/empty-state";
 import { cn } from "@/lib/utils";
 import { BlockLibrary } from "./block-library";
+import { BlockPalette } from "./block-palette";
 import { EditorCanvas, type PreviewDevice } from "./editor-canvas";
 import { PropertiesPanel } from "./properties-panel";
 import { PageSettingsDialog } from "./page-settings-dialog";
@@ -116,6 +117,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [conflictOpen, setConflictOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -343,10 +345,23 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     assertDefaultProps();
   }, []);
 
-  // اختصارات لوحة المفاتيح: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y، وEscape لإلغاء التحديد
+  // اختصارات لوحة المفاتيح: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Ctrl+S،
+  // وCtrl+/ للوحة الإضافة السريعة، وEscape لإلغاء التحديد (خارج الحوارات)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // حوار/لوحة مفتوحة؟ Escape يخصّها — تغلقه دون إلغاء تحديد الكتلة خلفها
+        if (
+          paletteOpen ||
+          settingsOpen ||
+          versionsOpen ||
+          conflictOpen ||
+          confirmDeleteId !== null ||
+          mobileLibraryOpen ||
+          mobilePropsOpen
+        ) {
+          return;
+        }
         const target = e.target as HTMLElement | null;
         const inField = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
         if (!inField) setSelectedId(null);
@@ -361,11 +376,32 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
       } else if ((key === "z" && e.shiftKey) || key === "y") {
         e.preventDefault();
         redo();
+      } else if (key === "s") {
+        // حفظ فوري للمسودة — مثل محررات المستندات (يعمل حتى داخل حقول التحرير)
+        e.preventDefault();
+        void performSaveRef.current().then((ok) => {
+          if (ok) toast.success(te.saved);
+        });
+      } else if (key === "/") {
+        // لوحة الإضافة السريعة — تعمل من أي موضع داخل المحرر (تبديل)
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [undo, redo]);
+  }, [
+    undo,
+    redo,
+    te.saved,
+    paletteOpen,
+    settingsOpen,
+    versionsOpen,
+    conflictOpen,
+    confirmDeleteId,
+    mobileLibraryOpen,
+    mobilePropsOpen,
+  ]);
 
   // ——— حارس المغادرة ———
   useEffect(() => {
@@ -563,7 +599,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   const statusIndicator =
     saveStatus === "saved" ? (
       <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-        <Check className="size-3.5" aria-hidden="true" />
+        <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
         {te.saved}
       </span>
     ) : saveStatus === "saving" ? (
@@ -573,7 +609,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
       </span>
     ) : saveStatus === "error" ? (
       <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-destructive">
-        <AlertTriangle className="size-3.5" aria-hidden="true" />
+        <span className="size-1.5 rounded-full bg-destructive" aria-hidden="true" />
         {te.saveFailed}
       </span>
     ) : (
@@ -659,100 +695,102 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
               {te.library}
             </Button>
 
-            {/* تراجع/إعادة */}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={undo}
-              disabled={!canUndo}
-              aria-label={te.undo}
-              title={te.undo}
-            >
-              <Undo2 className="size-4" aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={redo}
-              disabled={!canRedo}
-              aria-label={te.redo}
-              title={te.redo}
-            >
-              <Redo2 className="size-4" aria-hidden="true" />
-            </Button>
-
-            {/* أجهزة المعاينة */}
-            <div className="flex items-center rounded-xl border border-border p-0.5" role="group" aria-label={te.preview}>
-              {(
-                [
-                  { key: "desktop", icon: Monitor, label: te.deviceDesktop },
-                  { key: "tablet", icon: Tablet, label: te.deviceTablet },
-                  { key: "mobile", icon: Smartphone, label: te.deviceMobile },
-                ] as const
-              ).map((d) => (
-                <Button
-                  key={d.key}
-                  type="button"
-                  variant={device === d.key ? "secondary" : "ghost"}
-                  size="icon"
-                  className={cn("size-8", device === d.key && "bg-accent text-brand-strong")}
-                  onClick={() => setDevice(d.key)}
-                  aria-label={d.label}
-                  title={d.label}
-                  aria-pressed={device === d.key}
-                >
-                  <d.icon className="size-4" aria-hidden="true" />
-                </Button>
-              ))}
-            </div>
-
-            {/* معاينة مستقلة */}
-            <Button
-              asChild
-              variant="outline"
-              size="icon"
-              className="size-9"
-              aria-label={te.preview}
-              title={te.preview}
-            >
-              <Link
-                href={`/${locale}/admin/pages/${pageId}/preview?locale=${draftLocale}`}
-                target="_blank"
-                rel="noopener noreferrer"
+            {/* تراجع/إعادة/الأجهزة/المعاينة/الإصدارات/الإعدادات — مقطع واحد */}
+            <div className="flex flex-wrap items-center gap-1 rounded-full bg-muted/60 p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={undo}
+                disabled={!canUndo}
+                aria-label={te.undo}
+                title={te.undo}
               >
-                <ExternalLink className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
+                <Undo2 className="size-4" aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={redo}
+                disabled={!canRedo}
+                aria-label={te.redo}
+                title={te.redo}
+              >
+                <Redo2 className="size-4" aria-hidden="true" />
+              </Button>
 
-            {/* الإصدارات */}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => setVersionsOpen(true)}
-              aria-label={tp.versions}
-              title={tp.versions}
-            >
-              <History className="size-4" aria-hidden="true" />
-            </Button>
+              {/* أجهزة المعاينة */}
+              <div className="flex items-center" role="group" aria-label={te.preview}>
+                {(
+                  [
+                    { key: "desktop", icon: Monitor, label: te.deviceDesktop },
+                    { key: "tablet", icon: Tablet, label: te.deviceTablet },
+                    { key: "mobile", icon: Smartphone, label: te.deviceMobile },
+                  ] as const
+                ).map((d) => (
+                  <Button
+                    key={d.key}
+                    type="button"
+                    variant={device === d.key ? "secondary" : "ghost"}
+                    size="icon"
+                    className={cn("size-8", device === d.key && "bg-white text-navy shadow-sm")}
+                    onClick={() => setDevice(d.key)}
+                    aria-label={d.label}
+                    title={d.label}
+                    aria-pressed={device === d.key}
+                  >
+                    <d.icon className="size-4" aria-hidden="true" />
+                  </Button>
+                ))}
+              </div>
 
-            {/* الإعدادات */}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => setSettingsOpen(true)}
-              aria-label={te.pageSettings}
-              title={te.pageSettings}
-            >
-              <Settings2 className="size-4" aria-hidden="true" />
-            </Button>
+              {/* معاينة مستقلة */}
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                aria-label={te.preview}
+                title={te.preview}
+              >
+                <Link
+                  href={`/${locale}/admin/pages/${pageId}/preview?locale=${draftLocale}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+
+              {/* الإصدارات */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={() => setVersionsOpen(true)}
+                aria-label={tp.versions}
+                title={tp.versions}
+              >
+                <History className="size-4" aria-hidden="true" />
+              </Button>
+
+              {/* الإعدادات */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                onClick={() => setSettingsOpen(true)}
+                aria-label={te.pageSettings}
+                title={te.pageSettings}
+              >
+                <Settings2 className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
 
             {/* النشر */}
             {canPublish ? (
@@ -795,9 +833,29 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
         <div className="grid min-h-0 gap-3 lg:grid-cols-[13rem_1fr] xl:grid-cols-[13rem_1fr_20rem]">
           {/* المكتبة */}
           <aside className="hidden min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm lg:flex">
-            <header className="border-b border-border px-3 py-2.5">
-              <h2 className="text-sm font-bold text-navy">{te.library}</h2>
-              <p className="text-[11px] text-muted-foreground">{te.autosaveOn}</p>
+            <header className="flex items-start justify-between gap-2 border-b border-border px-3 py-2.5">
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold text-navy">{te.library}</h2>
+                <p className="text-[11px] text-muted-foreground">{te.autosaveOn}</p>
+              </div>
+              {/* إضافة سريعة — Ctrl+/ */}
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                aria-label={te.quickAdd}
+                aria-keyshortcuts="Control+/"
+                title={te.quickAdd}
+                className="flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-border/70 bg-white px-2 text-muted-foreground transition-colors hover:border-brand hover:bg-accent/20 hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                <Search className="size-3.5" aria-hidden="true" />
+                <span
+                  aria-hidden="true"
+                  className="ltr-isolate flex items-center gap-0.5 font-mono text-[10px] leading-none"
+                >
+                  <kbd className="rounded border border-border bg-muted px-1 py-0.5">Ctrl</kbd>
+                  <kbd className="rounded border border-border bg-muted px-1 py-0.5">/</kbd>
+                </span>
+              </button>
             </header>
             <div className="min-h-0 flex-1">
               <BlockLibrary locale={locale} onAdd={addBlock} />
@@ -972,6 +1030,9 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
         me={me}
         onRestored={() => void loadPage()}
       />
+
+      {/* ——— لوحة الإضافة السريعة (Ctrl+/) ——— */}
+      <BlockPalette locale={locale} open={paletteOpen} onOpenChange={setPaletteOpen} onAdd={addBlock} />
     </TooltipProvider>
   );
 }

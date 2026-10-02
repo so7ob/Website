@@ -80,6 +80,14 @@ const STATUS_TONES: Record<string, string> = {
   archived: "border-transparent bg-slate-200 text-slate-500",
 };
 
+/** شارة أيقونة ملونة حسب حالة الصفحة (تشخيص بصرية بجانب الشارة النصية) */
+const STATUS_CHIP_TONES: Record<string, string> = {
+  published: "bg-emerald-100 text-emerald-800",
+  draft: "bg-amber-100 text-amber-800",
+  in_review: "bg-skydrop/20 text-brand-strong",
+  archived: "bg-muted text-muted-foreground",
+};
+
 const DUPLICATE_ATTEMPTS = 5;
 
 export function PagesClient({ me, locale }: PagesClientProps) {
@@ -260,10 +268,10 @@ export function PagesClient({ me, locale }: PagesClientProps) {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tp.title} className="min-h-10 ps-9" aria-label={tp.title} />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tp.title} className="min-h-10 ps-9 focus-visible:ring-2 focus-visible:ring-ring/40" aria-label={tp.title} />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="min-h-10 w-40" aria-label={tp.status}>
+          <SelectTrigger className="min-h-10 w-40 focus-visible:ring-2 focus-visible:ring-ring/40" aria-label={tp.status}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -291,7 +299,7 @@ export function PagesClient({ me, locale }: PagesClientProps) {
         <div className="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-56">{t.admin.menus.labelAr} / {t.admin.menus.labelEn}</TableHead>
                 <TableHead className="min-w-32">{tp.slug}</TableHead>
                 <TableHead>{tp.status}</TableHead>
@@ -305,9 +313,18 @@ export function PagesClient({ me, locale }: PagesClientProps) {
               {rows.map((row) => {
                 const archived = row.status === "archived";
                 return (
-                  <TableRow key={row.id} className={cn(archived && "opacity-60")}>
+                  <TableRow key={row.id} className={cn("group/row transition-colors hover:bg-muted/50", archived && "opacity-60")}>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                            STATUS_CHIP_TONES[row.status] ?? STATUS_CHIP_TONES.draft
+                          )}
+                        >
+                          <FileText className="size-4" aria-hidden="true" />
+                        </span>
                         {row.isHome ? (
                           <Star className="size-4 shrink-0 fill-amber-400 text-amber-500" aria-hidden="true" />
                         ) : null}
@@ -345,7 +362,12 @@ export function PagesClient({ me, locale }: PagesClientProps) {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-9" aria-label={tp.pageTitle}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-10 text-muted-foreground transition-colors group-hover/row:text-foreground"
+                            aria-label={tp.rowActions.replace("{title}", locale === "en" ? row.titleEn || row.titleAr : row.titleAr || row.titleEn)}
+                          >
                             <MoreHorizontal className="size-4" aria-hidden="true" />
                           </Button>
                         </DropdownMenuTrigger>

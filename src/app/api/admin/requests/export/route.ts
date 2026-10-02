@@ -11,6 +11,35 @@ import { REQUEST_STATUSES } from "@/lib/requests-service";
 
 const MAX_ROWS = 5000;
 
+/** الحالات المفتوحة — الردود المتأخرة تخص الطلبات غير المغلبة/الملغاة فقط */
+const OVERDUE_OPEN_STATUSES = ["new", "in_review", "awaiting_info", "in_progress", "responded"];
+
+/** نفس منطق /api/admin/requests: مرشّحون مفتوحون غير مؤرشفون ثم مطابقة في الذاكرة
+ *  (Prisma لا يقارن عمودين في المرشّح) — دلالات مؤشر اللوحة نفسها. */
+async function findOverdueRequestIds(): Promise<string[]> {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const candidates = await db.projectRequest.findMany({
+    where: {
+      status: { in: OVERDUE_OPEN_STATUSES },
+      archivedAt: null,
+      OR: [
+        { lastClientReplyAt: { not: null, lt: cutoff } },
+        { lastClientReplyAt: null, lastStaffReplyAt: null, createdAt: { lt: cutoff } },
+      ],
+    },
+    select: { id: true, lastClientReplyAt: true, lastStaffReplyAt: true },
+  });
+  const ids: string[] = [];
+  for (const c of candidates) {
+    const isOverdue =
+      c.lastClientReplyAt === null
+        ? c.lastStaffReplyAt === null
+        : c.lastStaffReplyAt === null || c.lastClientReplyAt > c.lastStaffReplyAt;
+    if (isOverdue) ids.push(c.id);
+  }
+  return ids;
+}
+
 /** تهريب قيمة CSV: تُقتبس الحقول التي تحتوي فاصلة/اقتباس/سطرًا جديدًا */
 function csvEscape(value: string): string {
   if (/[",\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -52,10 +81,15 @@ export async function GET(req: NextRequest) {
   const priority = url.searchParams.get("priority") ?? "";
   const assignee = url.searchParams.get("assignee") ?? "";
   const archived = url.searchParams.get("archived") === "1";
+  const overdue = url.searchParams.get("overdue") === "1";
+
+  // تصفية الردود المتأخرة — تجمع مع بقية مرشّحات القائمة نفسها
+  const overdueIds = overdue ? await findOverdueRequestIds() : [];
 
   // نفس بناء شروط القائمة /api/admin/requests — بلا ترقيم صفحات
   const where = {
     archivedAt: archived ? { not: null } : null,
+    ...(overdue ? { id: { in: overdueIds } } : {}),
     ...(status && REQUEST_STATUSES.includes(status as never) ? { status } : {}),
     ...(service ? { serviceType: service } : {}),
     ...(priority ? { priority } : {}),
@@ -135,6 +169,7 @@ export async function GET(req: NextRequest) {
         ...(priority ? { priority } : {}),
         ...(assignee ? { assignee } : {}),
         archived,
+        overdue,
         ...(query ? { query } : {}),
       },
     },

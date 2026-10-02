@@ -129,19 +129,26 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{te.mediaLibrary}</DialogTitle>
+          <DialogTitle className="text-lg font-bold text-navy">{te.mediaLibrary}</DialogTitle>
           <DialogDescription>{tm.subtitle}</DialogDescription>
         </DialogHeader>
 
         {canUpload && (
-          <div className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-border p-4">
+          <div className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-border p-4 transition-colors hover:border-brand hover:bg-accent/30">
             <div className="min-w-48 flex-1 space-y-1.5">
               <Label htmlFor="media-picker-file">{tm.filename}</Label>
-              <Input id="media-picker-file" type="file" accept="image/*" ref={fileRef} disabled={uploading} />
+              <Input
+                id="media-picker-file"
+                type="file"
+                accept="image/*"
+                ref={fileRef}
+                disabled={uploading}
+                className="min-h-11 cursor-pointer file:me-2 file:cursor-pointer file:rounded-full file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-strong"
+              />
             </div>
-            <Button onClick={() => void upload()} disabled={uploading} className="min-h-10">
+            <Button onClick={() => void upload()} disabled={uploading} className="min-h-11 rounded-full">
               {uploading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Upload className="size-4" aria-hidden="true" />}
               {tm.upload}
             </Button>
@@ -169,11 +176,11 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
           <>
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {data.media.map((item) => (
-                <li key={item.id} className="overflow-hidden rounded-xl border border-border bg-white">
+                <li key={item.id} className="overflow-hidden rounded-xl border border-border bg-white transition-all hover:border-brand/40 hover:shadow-sm">
                   <button
                     type="button"
                     onClick={() => pick(item.url)}
-                    className="group block w-full cursor-pointer focus-visible:outline-none"
+                    className="group relative block w-full cursor-pointer focus-visible:outline-none"
                     aria-label={`${te.mediaLibrary}: ${item.filename}`}
                   >
                     <span className="block aspect-[4/3] w-full overflow-hidden bg-muted">
@@ -181,22 +188,31 @@ export function MediaPicker({ open, onOpenChange, me, locale, onSelect }: MediaP
                         src={item.url}
                         alt={item.altText ?? item.filename}
                         loading="lazy"
-                        className="size-full object-cover transition-transform group-hover:scale-105 group-focus-visible:ring-2 group-focus-visible:ring-brand"
+                        className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </span>
+                    {/* لمسة التحديد: غشاوة ولمعة تظهر عند التحويم/التركيز قبل الإدراج */}
+                    <span
+                      className="pointer-events-none absolute inset-0 bg-accent/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="pointer-events-none absolute inset-0 opacity-0 ring-2 ring-inset ring-brand transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                      aria-hidden="true"
+                    />
                   </button>
                   <div className="space-y-1.5 p-2.5">
-                    <p className="truncate text-xs font-medium text-navy" dir="ltr" title={item.filename}>
+                    <p className="truncate font-mono text-xs font-medium text-navy" dir="ltr" title={item.filename}>
                       {item.filename}
                     </p>
-                    <p className="text-[11px] text-muted-foreground">{formatBytes(item.size)}</p>
+                    <p className="text-[11px] tabular-nums text-muted-foreground">{formatBytes(item.size)}</p>
                     {canManage && (
                       <Input
                         value={altDraft[item.id] ?? item.altText ?? ""}
                         onChange={(e) => setAltDraft((prev) => ({ ...prev, [item.id]: e.target.value }))}
                         onBlur={() => void saveAlt(item.id)}
                         placeholder={tm.alt}
-                        className="h-8 text-xs"
+                        className="min-h-10 text-xs focus-visible:ring-2 focus-visible:ring-ring/40"
                         aria-label={`${tm.alt}: ${item.filename}`}
                       />
                     )}
@@ -243,9 +259,9 @@ export function MediaField({
         onChange={(e) => onChange(e.target.value)}
         placeholder="/api/media/…"
         dir="ltr"
-        className="font-mono text-xs"
+        className="font-mono text-xs focus-visible:ring-2 focus-visible:ring-ring/40"
       />
-      <Button type="button" variant="outline" size="icon" className="size-9 shrink-0" onClick={onOpenPicker} aria-label={te.mediaLibrary}>
+      <Button type="button" variant="outline" size="icon" className="size-10 shrink-0" onClick={onOpenPicker} aria-label={te.mediaLibrary}>
         <ImagePlus className="size-4" aria-hidden="true" />
       </Button>
     </div>

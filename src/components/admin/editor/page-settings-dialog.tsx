@@ -129,9 +129,9 @@ export function PageSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{te.pageSettings}</DialogTitle>
+          <DialogTitle className="text-lg font-bold text-navy">{te.pageSettings}</DialogTitle>
           <DialogDescription>
             {tp.slug} — {tp.slugHint}
           </DialogDescription>
@@ -142,11 +142,11 @@ export function PageSettingsDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="ps-title-ar">{t.admin.menus.labelAr}</Label>
-              <Input id="ps-title-ar" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} dir="rtl" className="min-h-9" />
+              <Input id="ps-title-ar" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} dir="rtl" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ps-title-en">{t.admin.menus.labelEn}</Label>
-              <Input id="ps-title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} dir="ltr" className="min-h-9" />
+              <Input id="ps-title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} dir="ltr" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
             </div>
           </div>
 
@@ -159,7 +159,7 @@ export function PageSettingsDialog({
                 value={slug}
                 onChange={(e) => setSlug(e.target.value.toLowerCase())}
                 dir="ltr"
-                className={cn("min-h-9 font-mono text-xs", !slugValid && "border-destructive focus-visible:ring-destructive")}
+                className={cn("min-h-9 font-mono text-xs focus-visible:ring-2 focus-visible:ring-ring/40", !slugValid && "border-destructive focus-visible:ring-destructive")}
                 placeholder="about"
               />
               <p className={cn("text-[11px] leading-5", slugValid ? "text-muted-foreground" : "text-destructive")}>
@@ -174,7 +174,7 @@ export function PageSettingsDialog({
                 inputMode="numeric"
                 value={order}
                 onChange={(e) => setOrder(e.target.value)}
-                className="min-h-9"
+                className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             </div>
           </div>
@@ -184,7 +184,7 @@ export function PageSettingsDialog({
             <div className="space-y-1.5">
               <Label htmlFor="ps-visibility">{tp.visibility}</Label>
               <Select value={visibility} onValueChange={setVisibility}>
-                <SelectTrigger id="ps-visibility" className="min-h-9 w-full">
+                <SelectTrigger id="ps-visibility" className="min-h-9 w-full focus-visible:ring-2 focus-visible:ring-ring/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,19 +216,19 @@ export function PageSettingsDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="ps-seo-title-ar">{te.seoTitle} — {te.ar}</Label>
-                <Input id="ps-seo-title-ar" value={seoTitleAr} onChange={(e) => setSeoTitleAr(e.target.value)} dir="rtl" className="min-h-9" />
+                <Input id="ps-seo-title-ar" value={seoTitleAr} onChange={(e) => setSeoTitleAr(e.target.value)} dir="rtl" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ps-seo-title-en">{te.seoTitle} — {te.en}</Label>
-                <Input id="ps-seo-title-en" value={seoTitleEn} onChange={(e) => setSeoTitleEn(e.target.value)} dir="ltr" className="min-h-9" />
+                <Input id="ps-seo-title-en" value={seoTitleEn} onChange={(e) => setSeoTitleEn(e.target.value)} dir="ltr" className="min-h-9 focus-visible:ring-2 focus-visible:ring-ring/40" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ps-seo-desc-ar">{te.seoDescription} — {te.ar}</Label>
-                <Textarea id="ps-seo-desc-ar" value={seoDescAr} onChange={(e) => setSeoDescAr(e.target.value)} rows={2} dir="rtl" />
+                <Textarea id="ps-seo-desc-ar" value={seoDescAr} onChange={(e) => setSeoDescAr(e.target.value)} rows={2} dir="rtl" className="focus-visible:ring-2 focus-visible:ring-ring/40" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ps-seo-desc-en">{te.seoDescription} — {te.en}</Label>
-                <Textarea id="ps-seo-desc-en" value={seoDescEn} onChange={(e) => setSeoDescEn(e.target.value)} rows={2} dir="ltr" />
+                <Textarea id="ps-seo-desc-en" value={seoDescEn} onChange={(e) => setSeoDescEn(e.target.value)} rows={2} dir="ltr" className="focus-visible:ring-2 focus-visible:ring-ring/40" />
               </div>
             </div>
           </div>

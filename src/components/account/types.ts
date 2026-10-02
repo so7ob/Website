@@ -138,6 +138,93 @@ export interface AccountProfile {
   lastLoginAt: string | null;
 }
 
+// ——— الاستفسارات ———
+
+/** صف استفسار في القائمة — GET /api/account/inquiries */
+export interface InquiryRow {
+  id: string;
+  refCode: string;
+  subject: string;
+  category: string;
+  status: string;
+  locale: string;
+  createdAt: string;
+  lastActivityAt: string;
+  closedAt: string | null;
+  assigneeName: string | null;
+  messageCount: number;
+}
+
+export interface InquiryListResponse {
+  ok: boolean;
+  total: number;
+  page: number;
+  pageSize: number;
+  inquiries: InquiryRow[];
+}
+
+/** رسالة محادثة الاستفسار — الملاحظات الداخلية مستبعدة خادميًا */
+export interface InquiryMessage {
+  id: string;
+  authorType: "client" | "staff" | "system";
+  kind: "message" | "system";
+  body: string;
+  createdAt: string;
+  author: { name: string; roleKey: string } | null;
+}
+
+/** مرفق استفسار — filename هو حقل النموذج؛ name/url احتياطيان لتوافق الاستجابة */
+export interface InquiryAttachment {
+  id: string;
+  filename: string;
+  size?: number;
+  mimeType?: string;
+  createdAt?: string;
+  name?: string;
+  url?: string | null;
+}
+
+/** تفاصيل الاستفسار الكاملة — GET /api/account/inquiries/[id] */
+export interface InquiryDetail {
+  id: string;
+  refCode: string;
+  subject: string;
+  category: string;
+  status: string;
+  locale: string;
+  createdAt: string;
+  lastActivityAt: string;
+  closedAt: string | null;
+  archivedAt: string | null;
+  name: string;
+  email: string;
+  assignee: { id: string; name: string } | null;
+  attachments: InquiryAttachment[];
+  messages: InquiryMessage[];
+}
+
+export interface InquiryDetailResponse {
+  ok: boolean;
+  code?: string;
+  inquiry?: InquiryDetail;
+}
+
+/** إنشاء استفسار — POST /api/account/inquiries (201 {ok,ref,id} — 429 rate_limited) */
+export interface CreateInquiryResponse {
+  ok: boolean;
+  ref?: string;
+  id?: string;
+  code?: string;
+  retryAfterSec?: number;
+}
+
+/** رد على استفسار — POST /api/account/inquiries/[id]/messages (400 code "closed"|"empty") */
+export interface InquiryReplyResponse {
+  ok: boolean;
+  code?: string;
+  message?: InquiryMessage;
+}
+
 /** مسودة طلب الخادم — GET /api/account/drafts */
 export interface RequestDraftPayload {
   ok?: boolean;

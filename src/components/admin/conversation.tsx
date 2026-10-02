@@ -85,11 +85,13 @@ export function MessageBubble({
       </p>
       <div
         className={cn(
-          "max-w-[85%] rounded-2xl border px-4 py-3 sm:max-w-[75%]",
-          staff ? "border-navy/10 bg-navy/[0.05]" : "border-border bg-white"
+          "max-w-[85%] rounded-2xl border px-4 py-3 shadow-sm sm:max-w-[75%]",
+          staff
+            ? "rounded-se-sm border-navy bg-navy text-white shadow-navy/10"
+            : "rounded-ss-sm border-sky-200/70 bg-accent/60 text-foreground"
         )}
       >
-        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">{message.body}</p>
+        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.body}</p>
       </div>
       <p className="px-1 text-[11px] text-muted-foreground">{fmtDateTime(message.createdAt, locale)}</p>
     </div>
@@ -225,7 +227,7 @@ export function ReplyComposer({ canReply, canNote, sending, labels, onSend, onAt
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
+    <div className="rounded-2xl border border-border bg-white p-4 transition-all focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-ring/40">
       <Tabs value={currentTab} onValueChange={(v) => setTab(v as "message" | "internal_note")}>
         <TabsList className="flex-wrap">
           {canReply ? (
@@ -256,7 +258,7 @@ export function ReplyComposer({ canReply, canNote, sending, labels, onSend, onAt
         placeholder={labels.placeholder}
         rows={4}
         maxLength={8000}
-        className="mt-3 min-h-24 resize-y"
+        className="mt-3 min-h-24 resize-y border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
         aria-label={currentTab === "internal_note" ? labels.internalNote : labels.reply}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

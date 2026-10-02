@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   });
 
   const staff = await staffToNotifyForRequests();
-  await notifyMany(staff.map((s) => ({ userId: s.id, type: "new_request" as const, payload: { ref: code, subject }, link: "/ar/admin/inquiries" })));
+  await notifyMany(staff.map((s) => ({ userId: s.id, type: "new_inquiry" as const, payload: { ref: code, subject }, link: `/${locale}/admin/inquiries` })));
 
   return json({ ok: true, ref: code }, 201);
 }

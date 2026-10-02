@@ -4,7 +4,7 @@
  * سجل التدقيق: بحث + تصفية بنوع السجل + تفاصيل JSON قابلة للتوسيع + ترقيم.
  */
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { Search, ScrollText, ChevronDown, ChevronUp, Loader2, RotateCcw } from "lucide-react";
+import { Search, ScrollText, ChevronDown, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -75,10 +75,15 @@ export function AuditClient({ me, locale }: AuditClientProps) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">{ta.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{ta.subtitle}</p>
-      </div>
+      <header className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <ScrollText className="size-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h1 className="text-2xl font-bold text-navy">{ta.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{ta.subtitle}</p>
+        </div>
+      </header>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-56 flex-1 sm:max-w-xs">
@@ -91,11 +96,11 @@ export function AuditClient({ me, locale }: AuditClientProps) {
             }}
             placeholder={ta.action}
             aria-label={t.admin.users.search}
-            className="min-h-11 ps-9"
+            className="min-h-11 ps-9 focus-visible:ring-2 focus-visible:ring-ring/40"
           />
         </div>
         <Select value={entity} onValueChange={(v) => { setEntity(v); setPage(1); }}>
-          <SelectTrigger aria-label={ta.entity} className="min-h-11 w-44">
+          <SelectTrigger aria-label={ta.entity} className="min-h-11 w-44 focus-visible:ring-2 focus-visible:ring-ring/40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -111,7 +116,7 @@ export function AuditClient({ me, locale }: AuditClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-40">{ta.date}</TableHead>
                 <TableHead className="min-w-40">{ta.actor}</TableHead>
                 <TableHead className="min-w-40">{ta.action}</TableHead>
@@ -139,7 +144,7 @@ export function AuditClient({ me, locale }: AuditClientProps) {
               ) : (
                 logs.map((log) => (
                   <Fragment key={log.id}>
-                  <TableRow className="align-top transition-colors hover:bg-muted/40">
+                  <TableRow className="align-top transition-colors hover:bg-muted/50">
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(log.createdAt, locale)}</TableCell>
                     <TableCell>
                       <p className="text-sm font-medium text-navy">{log.actor}</p>
@@ -161,24 +166,26 @@ export function AuditClient({ me, locale }: AuditClientProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-9"
+                          className="size-10 text-muted-foreground transition-colors hover:text-foreground"
                           onClick={() => setExpanded((prev) => (prev === log.id ? null : log.id))}
                           aria-label={ta.details}
                           aria-expanded={expanded === log.id}
                         >
-                          {expanded === log.id ? (
-                            <ChevronUp className="size-4" aria-hidden="true" />
-                          ) : (
-                            <ChevronDown className="size-4" aria-hidden="true" />
-                          )}
+                          <ChevronDown
+                            className={cn("size-4 transition-transform duration-200", expanded === log.id && "rotate-180")}
+                            aria-hidden="true"
+                          />
                         </Button>
                       ) : null}
                     </TableCell>
                   </TableRow>
                   {expanded === log.id ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5} className="bg-muted/30 p-3">
-                        <pre className="max-h-64 overflow-auto rounded-xl bg-navy p-4 text-xs leading-relaxed text-skydrop ltr-isolate" dir="ltr">
+                      <TableCell colSpan={5} className="rounded-b-xl bg-muted/30 p-3">
+                        <pre
+                          className="max-h-64 overflow-auto rounded-xl border border-border/60 bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground ltr-isolate [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent"
+                          dir="ltr"
+                        >
                           {JSON.stringify(log.details, null, 2)}
                         </pre>
                       </TableCell>

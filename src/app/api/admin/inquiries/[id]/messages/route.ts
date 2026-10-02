@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   });
 
   if (kind === "message" && inquiry.clientId) {
-    await notify({ userId: inquiry.clientId, type: "reply_received", payload: { ref: inquiry.refCode }, link: "/ar/account" });
+    await notify({ userId: inquiry.clientId, type: "reply_received", payload: { ref: inquiry.refCode }, link: `/${inquiry.locale}/account/inquiries/${id}` });
   }
 
   return json({ ok: true, message }, 201);

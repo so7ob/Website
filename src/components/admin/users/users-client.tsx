@@ -18,9 +18,9 @@ import {
   CircleX,
   UserPlus,
   KeyRound,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
   Users,
   Loader2,
   RotateCcw,
@@ -69,16 +69,18 @@ interface UsersClientProps {
   me: Me;
   locale: Locale;
   initialQ: string;
+  /** حالة مبدئية من رابط الصفحة (مثل ?status=pending_verification من اللوحة) */
+  initialStatus?: string;
 }
 
-export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
+export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClientProps) {
   const t = getPortalContent(locale);
   const tu = t.admin.users;
 
   const [q, setQ] = useState(initialQ);
   const debouncedQ = useDebounced(q);
   const [role, setRole] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState(initialStatus ?? "all");
   const [sort, setSort] = useState<SortCol>("createdAt");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
@@ -237,17 +239,22 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-navy">{tu.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{tu.subtitle}</p>
-        </div>
+        <header className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+            <Users className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold text-navy">{tu.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{tu.subtitle}</p>
+          </div>
+        </header>
         {mayInvite ? (
           <Button
             onClick={() => {
               setInviteUrl(null);
               setInviteOpen(true);
             }}
-            className="min-h-11 rounded-full"
+            className="min-h-11 rounded-full shadow-md shadow-brand/20 hover:bg-brand-strong"
           >
             <UserPlus className="size-4" aria-hidden="true" />
             {tu.invite}
@@ -267,11 +274,11 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
             }}
             placeholder={tu.searchPlaceholder}
             aria-label={tu.search}
-            className="min-h-11 ps-9"
+            className="min-h-11 ps-9 focus-visible:ring-2 focus-visible:ring-ring/40"
           />
         </div>
         <Select value={role} onValueChange={(v) => { setRole(v); setPage(1); }}>
-          <SelectTrigger aria-label={tu.role} className="min-h-11 w-40">
+          <SelectTrigger aria-label={tu.role} className="min-h-11 w-40 focus-visible:ring-2 focus-visible:ring-ring/40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -284,7 +291,7 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-          <SelectTrigger aria-label={tu.status} className="min-h-11 w-44">
+          <SelectTrigger aria-label={tu.status} className="min-h-11 w-44 focus-visible:ring-2 focus-visible:ring-ring/40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -301,7 +308,7 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                 <TableHead className="min-w-52">
                   <SortHeader label={t.account.profile.name} col="name" sort={sort} dir={dir} onSort={onSort} />
                 </TableHead>
@@ -339,7 +346,7 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id} className="transition-colors hover:bg-muted/40">
+                  <TableRow key={user.id} className="transition-colors hover:bg-muted/50">
                     <TableCell>
                       <div className="min-w-0">
                         <Link
@@ -468,9 +475,9 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
 
       {/* حوارية الدعوة */}
       <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) setInviteUrl(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-navy">{tu.inviteTitle}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{tu.inviteTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -481,14 +488,14 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
                 dir="ltr"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                className="min-h-11"
+                className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
                 autoComplete="off"
               />
             </div>
             <div className="space-y-2">
               <Label>{tu.inviteRole}</Label>
               <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger className="min-h-11">
+                <SelectTrigger className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -536,22 +543,22 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
 
       {/* حوارية تعديل البيانات */}
       <Dialog open={editTarget !== null} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-navy">{tu.edit} — {editTarget?.name}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{tu.edit} — {editTarget?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">{t.account.profile.name}</Label>
-              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="min-h-11" maxLength={100} />
+              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40" maxLength={100} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-phone">{t.account.profile.phone}</Label>
-              <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="min-h-11" maxLength={20} />
+              <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40" maxLength={20} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-company">{t.account.profile.company}</Label>
-              <Input id="edit-company" value={editCompany} onChange={(e) => setEditCompany(e.target.value)} className="min-h-11" maxLength={120} />
+              <Input id="edit-company" value={editCompany} onChange={(e) => setEditCompany(e.target.value)} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40" maxLength={120} />
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -568,14 +575,14 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
 
       {/* حوارية تغيير الدور */}
       <Dialog open={roleTarget !== null} onOpenChange={(open) => { if (!open) setRoleTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-navy">{tu.changeRole} — {roleTarget?.name}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{tu.changeRole} — {roleTarget?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
             <Label>{tu.role}</Label>
             <Select value={roleValue} onValueChange={setRoleValue}>
-              <SelectTrigger className="min-h-11">
+              <SelectTrigger className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -602,9 +609,9 @@ export function UsersClient({ me, locale, initialQ }: UsersClientProps) {
 
       {/* تأكيد الإيقاف/التفعيل */}
       <AlertDialog open={confirmTarget !== null} onOpenChange={(open) => { if (!open) setConfirmTarget(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-navy">
+            <AlertDialogTitle className="text-lg font-bold text-navy">
               {confirmTarget?.status === "suspended" ? tu.activate : tu.suspend} — {confirmTarget?.name}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -638,18 +645,18 @@ function SortHeader({
   onSort: (col: SortCol) => void;
 }) {
   const active = sort === col;
-  const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  const Icon = !active ? ChevronsUpDown : dir === "asc" ? ChevronUp : ChevronDown;
   return (
     <button
       type="button"
       onClick={() => onSort(col)}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md text-xs font-medium transition-colors hover:text-navy",
+        "inline-flex items-center gap-1 rounded-md text-xs font-medium transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40",
         active ? "text-navy" : "text-muted-foreground"
       )}
     >
       {label}
-      <Icon className="size-3.5" aria-hidden="true" />
+      <Icon className={cn("size-3.5 shrink-0", !active && "opacity-60")} aria-hidden="true" />
     </button>
   );
 }

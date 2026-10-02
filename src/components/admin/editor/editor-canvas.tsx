@@ -210,8 +210,8 @@ function SortableBlock({
     >
       <div
         className={cn(
-          "relative ring-1 ring-transparent transition-shadow",
-          selected ? "ring-2 ring-brand" : "group-hover:ring-2 group-hover:ring-brand/40"
+          "relative border border-dashed border-transparent transition-[border-color,box-shadow]",
+          selected ? "ring-2 ring-brand/50" : "group-hover:border-border"
         )}
       >
         {/* العرض الحي للمحتوى */}

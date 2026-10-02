@@ -57,6 +57,7 @@ export interface PortalContent {
       dashboard: string;
       requests: string;
       newRequest: string;
+      inquiries: string;
       notifications: string;
       profile: string;
       security: string;
@@ -66,15 +67,70 @@ export interface PortalContent {
     dashboard: {
       title: string;
       welcome: string;
+      welcomeWithName: string;
       openRequests: string;
       awaitingReply: string;
       unreadNotifications: string;
       totalRequests: string;
+      openInquiries: string;
+      totalInquiries: string;
       recentUpdates: string;
       emptyTitle: string;
       emptyBody: string;
       createRequest: string;
       viewAll: string;
+    };
+    inquiries: {
+      title: string;
+      subtitle: string;
+      create: string;
+      refCode: string;
+      subject: string;
+      category: string;
+      categories: Record<string, string>;
+      status: string;
+      statuses: Record<string, string>;
+      all: string;
+      openShortcut: string;
+      messages: string;
+      created: string;
+      lastActivity: string;
+      empty: string;
+      emptyBody: string;
+      noResults: string;
+      viewDetails: string;
+      back: string;
+      notFound: string;
+      conversation: string;
+      meta: string;
+      assignedTo: string;
+      unassigned: string;
+      you: string;
+      team: string;
+      system: string;
+      noMessages: string;
+      statusTimeline: string;
+      replyPlaceholder: string;
+      send: string;
+      sending: string;
+      replySuccess: string;
+      replyEmpty: string;
+      closedNote: string;
+      formTitle: string;
+      formIntro: string;
+      formSubject: string;
+      formSubjectPlaceholder: string;
+      formCategory: string;
+      formMessage: string;
+      formMessagePlaceholder: string;
+      formSubmit: string;
+      formCancel: string;
+      createdOk: string;
+      createdOkBody: string;
+      createdOkOpen: string;
+      attachments: string;
+      download: string;
+      print: string;
     };
     requests: {
       title: string;
@@ -106,6 +162,9 @@ export interface PortalContent {
       searchPlaceholder: string;
       noResults: string;
       clearSearch: string;
+      awaitingYou: string;
+      awaitingHours: string;
+      awaitingDays: string;
     };
     detail: {
       conversation: string;
@@ -136,6 +195,7 @@ export interface PortalContent {
       currency: string;
       contactPref: string;
       reference: string;
+      print: string;
     };
     notifications: {
       title: string;
@@ -180,6 +240,7 @@ export interface PortalContent {
       users: string;
       requests: string;
       inquiries: string;
+      notifications: string;
       pages: string;
       media: string;
       menus: string;
@@ -188,6 +249,16 @@ export interface PortalContent {
       outbox: string;
       backSite: string;
       logout: string;
+    };
+    search: {
+      trigger: string;
+      placeholder: string;
+      quickNav: string;
+      results: string;
+      searching: string;
+      noResults: string;
+      noResultsHint: string;
+      openHint: string;
     };
     dashboard: {
       title: string;
@@ -207,6 +278,12 @@ export interface PortalContent {
       viewAll: string;
       noData: string;
       last7days: string;
+      rangeLabel: string;
+      range7: string;
+      range30: string;
+      range90: string;
+      overdueReplies: string;
+      overdueHint: string;
     };
     users: {
       title: string;
@@ -269,6 +346,7 @@ export interface PortalContent {
       filterPriority: string;
       filterService: string;
       filterAssignee: string;
+      filterOverdue: string;
       filterAll: string;
       unassigned: string;
       assign: string;
@@ -316,6 +394,17 @@ export interface PortalContent {
       clientView: string;
       export: string;
       exportOk: string;
+      awaitingTeam: string;
+      overdueReply: string;
+      agingHours: string;
+      agingDays: string;
+      presetSave: string;
+      presetName: string;
+      presetSaved: string;
+      presetRemoved: string;
+      presetApply: string;
+      presetDelete: string;
+      print: string;
     };
     inquiries: {
       title: string;
@@ -329,12 +418,29 @@ export interface PortalContent {
       conversation: string;
       empty: string;
       statuses: Record<string, string>;
+      export: string;
+      exportOk: string;
+      archive: string;
+      restore: string;
+      archived: string;
+      bulkArchive: string;
+      selected: string;
+      print: string;
+    };
+    notifications: {
+      title: string;
+      subtitle: string;
+      markRead: string;
+      markAllRead: string;
+      empty: string;
+      types: Record<string, string>;
     };
     pages: {
       title: string;
       subtitle: string;
       createPage: string;
       pageTitle: string;
+      rowActions: string;
       slug: string;
       slugHint: string;
       status: string;
@@ -393,6 +499,9 @@ export interface PortalContent {
       deviceDesktop: string;
       deviceTablet: string;
       deviceMobile: string;
+      quickAdd: string;
+      searchBlocks: string;
+      noBlocks: string;
       selectedBlock: string;
       noSelection: string;
       noSelectionBody: string;
@@ -471,6 +580,18 @@ export interface PortalContent {
       github: string;
       save: string;
       saved: string;
+      announcement: string;
+      announcementSubtitle: string;
+      announcementMessageAr: string;
+      announcementMessageEn: string;
+      announcementCtaLabelAr: string;
+      announcementCtaLabelEn: string;
+      announcementCtaUrl: string;
+      announcementVariant: string;
+      announcementVariants: Record<string, string>;
+      announcementEnabled: string;
+      announcementStart: string;
+      announcementEnd: string;
     };
     audit: {
       title: string;
@@ -515,5 +636,9 @@ export interface PortalContent {
       empty: string;
       emptyBody: string;
     };
+  };
+  announce: {
+    ariaLabel: string;
+    dismiss: string;
   };
 }

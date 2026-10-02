@@ -11,6 +11,7 @@ import "@fontsource/ibm-plex-sans/700.css";
 import "../globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { AnnouncementBar } from "@/components/site/announcement-bar";
 import { ar } from "@/content/ar";
 import { en } from "@/content/en";
 import { getPortalContent } from "@/content/portal";
@@ -69,6 +70,11 @@ export default async function LocaleRootLayout({
   return (
     <html lang={locale} dir={dir} data-scroll-behavior="smooth">
       <body className="flex min-h-screen flex-col">
+        <AnnouncementBar
+          announcement={settings.announcement}
+          locale={locale}
+          labels={{ ariaLabel: portal.announce.ariaLabel, dismiss: portal.announce.dismiss }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-navy focus:px-4 focus:py-2 focus:text-white"

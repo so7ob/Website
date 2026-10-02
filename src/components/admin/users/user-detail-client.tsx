@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   CircleX,
   Clock,
+  FileClock,
   FileText,
   Globe,
   Inbox,
@@ -84,9 +85,9 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
       <div className="space-y-4">
         <Skeleton className="h-10 w-64 rounded-xl" />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Skeleton className="h-24 rounded-2xl" />
-          <Skeleton className="h-24 rounded-2xl" />
-          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
         </div>
         <Skeleton className="h-64 rounded-2xl" />
       </div>
@@ -96,7 +97,7 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
   if (notFound || !data) {
     return (
       <div className="space-y-4">
-        <Button asChild variant="ghost" size="sm" className="min-h-11 rounded-full">
+        <Button asChild variant="ghost" size="sm" className="min-h-11 rounded-full text-muted-foreground transition-colors hover:text-navy">
           <Link href={`/${locale}/admin/users`}>
             <BackIcon className="size-4" aria-hidden="true" />
             {tud.back}
@@ -124,7 +125,7 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
     <div className="space-y-5">
       {/* الترويسة */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="min-h-11 rounded-full">
+        <Button asChild variant="ghost" size="sm" className="min-h-11 rounded-full text-muted-foreground transition-colors hover:text-navy">
           <Link href={`/${locale}/admin/users`}>
             <BackIcon className="size-4" aria-hidden="true" />
             <span className="sr-only">{t.admin.users.title}</span>
@@ -143,9 +144,27 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
 
       {/* بطاقات الإحصاءات */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={FileText} label={tud.totalRequests} value={String(stats.totalRequests)} />
-        <StatCard icon={Inbox} label={tud.openRequests} value={String(stats.openRequests)} />
-        <StatCard icon={MonitorSmartphone} label={tud.sessionsCount} value={String(sessions.activeCount)} />
+        <StatCard
+          icon={FileText}
+          label={tud.totalRequests}
+          value={String(stats.totalRequests)}
+          chip="bg-emerald-100 text-emerald-800"
+          bar="bg-gradient-to-r from-emerald-400 to-emerald-300"
+        />
+        <StatCard
+          icon={FileClock}
+          label={tud.openRequests}
+          value={String(stats.openRequests)}
+          chip="bg-amber-100 text-amber-800"
+          bar="bg-gradient-to-r from-amber-400 to-amber-300"
+        />
+        <StatCard
+          icon={MonitorSmartphone}
+          label={tud.sessionsCount}
+          value={String(sessions.activeCount)}
+          chip="bg-skydrop/20 text-brand-strong"
+          bar="bg-gradient-to-r from-navy to-skydrop"
+        />
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -157,7 +176,7 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableRow className="bg-muted/50 hover:bg-muted/50 [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
                   <TableHead className="min-w-28">{t.account.requests.refCode}</TableHead>
                   <TableHead className="min-w-28">{t.admin.users.status}</TableHead>
                   <TableHead className="min-w-32">{t.account.requests.service}</TableHead>
@@ -174,7 +193,7 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
                   </TableRow>
                 ) : (
                   requests.map((r) => (
-                    <TableRow key={r.id} className="transition-colors hover:bg-muted/40">
+                    <TableRow key={r.id} className="transition-colors hover:bg-muted/50">
                       <TableCell>
                         <Link
                           href={`/${locale}/admin/requests/${r.id}`}
@@ -219,7 +238,7 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
                   )}
                   {t.admin.users.emailVerified}
                 </dt>
-                <dd className="text-sm font-medium text-navy">
+                <dd className="border-s-2 border-border/60 ps-3 text-sm font-medium text-navy">
                   {user.emailVerified ? t.account.profile.verified : t.account.profile.notVerified}
                 </dd>
               </div>
@@ -244,15 +263,18 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
             {auditLog.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">{t.admin.audit.empty}</p>
             ) : (
-              <ol className="space-y-2.5">
+              <ol className="space-y-1">
                 {auditLog.map((entry, i) => (
-                  <li key={`${entry.createdAt}-${i}`} className="flex items-center justify-between gap-2">
+                  <li
+                    key={`${entry.createdAt}-${i}`}
+                    className="flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-muted/50"
+                  >
                     <ActionBadge action={entry.action} />
                     <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground ltr-isolate">
                       {entry.entityType}
                       {entry.entityId ? ` · ${entry.entityId}` : ""}
                     </span>
-                    <time className="shrink-0 text-[11px] text-muted-foreground">{fmtRelative(entry.createdAt, locale)}</time>
+                    <time className="shrink-0 text-xs text-muted-foreground">{fmtRelative(entry.createdAt, locale)}</time>
                   </li>
                 ))}
               </ol>
@@ -265,15 +287,30 @@ export function UserDetailClient({ locale, userId }: UserDetailClientProps) {
 }
 
 /** بطاقة إحصاء رقمية */
-function StatCard({ icon: Icon, label, value }: { icon: typeof FileText; label: string; value: string }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  chip,
+  bar,
+}: {
+  icon: typeof FileText;
+  label: string;
+  value: string;
+  chip: string;
+  bar: string;
+}) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-brand-strong">
-        <Icon className="size-5" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="text-2xl font-bold tabular-nums text-navy">{value}</p>
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10">
+      <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-1 rounded-t-2xl", bar)} />
+      <div className="flex items-center gap-4">
+        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", chip)}>
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold tabular-nums text-navy">{value}</p>
+        </div>
       </div>
     </div>
   );
@@ -287,7 +324,13 @@ function InfoRow({ icon: Icon, label, value, dir }: { icon: typeof Mail; label: 
         <Icon className="size-3.5" aria-hidden="true" />
         {label}
       </dt>
-      <dd className={cn("min-w-0 truncate text-sm font-medium text-navy", dir === "ltr" && "ltr-isolate")} dir={dir}>
+      <dd
+        className={cn(
+          "min-w-0 truncate border-s-2 border-border/60 ps-3 text-sm font-medium text-navy",
+          dir === "ltr" && "ltr-isolate"
+        )}
+        dir={dir}
+      >
         {value}
       </dd>
     </div>

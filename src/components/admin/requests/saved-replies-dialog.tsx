@@ -144,15 +144,15 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-navy">{ts.title}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{ts.title}</DialogTitle>
             <DialogDescription>{ts.subtitle}</DialogDescription>
           </DialogHeader>
 
           <div className="max-h-[50vh] space-y-3 overflow-y-auto pe-1">
             {loading ? (
-              Array.from({ length: 3 }).map((_, i) => <Skeleton key={`sk-${i}`} className="h-20 w-full rounded-2xl" />)
+              Array.from({ length: 3 }).map((_, i) => <Skeleton key={`sk-${i}`} className="h-20 w-full rounded-xl" />)
             ) : replies.length === 0 ? (
               <EmptyState icon={BookMarked} title={ts.empty} body={ts.emptyBody} />
             ) : (
@@ -168,7 +168,7 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                         value={editName}
                         maxLength={80}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="min-h-11"
+                        className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -181,25 +181,25 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                         maxLength={2000}
                         rows={4}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="min-h-24 resize-y"
+                        className="min-h-24 resize-y focus-visible:ring-2 focus-visible:ring-ring/40"
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="min-h-10 rounded-full" onClick={() => setEditId(null)}>
+                      <Button variant="outline" className="min-h-11 rounded-full" onClick={() => setEditId(null)}>
                         <X className="size-4" aria-hidden="true" />
                         {t.admin.users.cancel}
                       </Button>
-                      <Button size="sm" className="min-h-10 rounded-full" onClick={() => void saveEdit()} disabled={saving}>
+                      <Button className="min-h-11 rounded-full" onClick={() => void saveEdit()} disabled={saving}>
                         {saving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
                         {ts.save}
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div key={reply.id} className="rounded-2xl border border-border bg-white p-3">
+                  <div key={reply.id} className="rounded-xl border border-border/70 bg-white p-3 transition-colors hover:bg-muted/50">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-navy">{reply.name}</p>
+                        <p className="truncate text-sm font-medium text-navy">{reply.name}</p>
                         <p className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
                           {reply.content}
                         </p>
@@ -208,7 +208,7 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-9"
+                          className="size-10"
                           aria-label={`${ts.edit} — ${reply.name}`}
                           onClick={() => startEdit(reply)}
                         >
@@ -217,7 +217,7 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-9 text-destructive hover:text-destructive"
+                          className="size-10 text-destructive hover:text-destructive"
                           aria-label={`${ts.delete} — ${reply.name}`}
                           onClick={() => setDeleteTarget(reply)}
                         >
@@ -243,7 +243,7 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                 maxLength={80}
                 placeholder={ts.namePlaceholder}
                 onChange={(e) => setNewName(e.target.value)}
-                className="min-h-11"
+                className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             </div>
             <div className="space-y-1.5">
@@ -257,13 +257,13 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
                 rows={3}
                 placeholder={ts.contentPlaceholder}
                 onChange={(e) => setNewContent(e.target.value)}
-                className="min-h-20 resize-y"
+                className="min-h-20 resize-y focus-visible:ring-2 focus-visible:ring-ring/40"
               />
             </div>
             <Button
               onClick={() => void addReply()}
               disabled={adding || !newName.trim() || !newContent.trim()}
-              className="min-h-10 rounded-full"
+              className="min-h-11 rounded-full"
             >
               {adding ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Plus className="size-4" aria-hidden="true" />}
               {ts.add}
@@ -274,9 +274,9 @@ export function SavedRepliesDialog({ locale, open, onOpenChange }: SavedRepliesD
 
       {/* تأكيد الحذف */}
       <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-navy">
+            <AlertDialogTitle className="text-lg font-bold text-navy">
               {ts.delete} — {deleteTarget?.name}
             </AlertDialogTitle>
             <AlertDialogDescription>{ts.confirmDelete}</AlertDialogDescription>
