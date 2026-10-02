@@ -48,3 +48,14 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# بيئة التطوير المحلية للمنصة التفاعلية
+.env
+*.log
+db/*.db
+db/uploads/
+prisma/*.db
+sandbox-local/
+.zscripts/
+download/
+upload/

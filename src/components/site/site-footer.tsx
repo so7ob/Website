@@ -2,21 +2,34 @@ import Link from "next/link";
 import { Github } from "lucide-react";
 import { Logo } from "./logo";
 import { localePath, type Locale, type RouteName } from "@/lib/i18n";
-import { siteConfig } from "@/config/site";
 import type { SiteContent } from "@/content/types";
+import type { NavLink, SiteSettings } from "@/lib/site-data";
 
-const NAV_ROUTES: RouteName[] = ["about", "works", "process", "faq", "contact"];
 const SERVICE_ROUTES = ["web", "mobile", "systems", "ux", "automation", "maintenance"] as const;
 
 /** التذييل: خلفية كحلية بنسخة الشعار البيضاء — يلتصق بأسفل الشاشة دائمًا */
-export function SiteFooter({ locale, content }: { locale: Locale; content: SiteContent }) {
+export function SiteFooter({
+  locale,
+  content,
+  settings,
+  items,
+}: {
+  locale: Locale;
+  content: SiteContent;
+  settings: SiteSettings;
+  items: NavLink[];
+}) {
   const year = new Date().getFullYear();
   const channels: { label: string; value: string; href: string }[] = [];
-  if (siteConfig.contact.email) {
-    channels.push({ label: content.form.emailLabel, value: siteConfig.contact.email, href: `mailto:${siteConfig.contact.email}` });
+  if (settings.contactEmail) {
+    channels.push({ label: content.form.emailLabel, value: settings.contactEmail, href: `mailto:${settings.contactEmail}` });
   }
-  if (siteConfig.contact.phone) {
-    channels.push({ label: content.form.phoneLabel, value: siteConfig.contact.phone, href: `tel:${siteConfig.contact.phone.replace(/\s+/g, "")}` });
+  if (settings.contactPhone) {
+    channels.push({
+      label: content.form.phoneLabel,
+      value: settings.contactPhone,
+      href: `tel:${settings.contactPhone.replace(/\s+/g, "")}`,
+    });
   }
 
   return (
@@ -43,10 +56,10 @@ export function SiteFooter({ locale, content }: { locale: Locale; content: SiteC
           <nav aria-label={content.footer.pagesTitle}>
             <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">{content.footer.pagesTitle}</h2>
             <ul className="mt-4 space-y-2.5">
-              {NAV_ROUTES.map((route) => (
-                <li key={route}>
-                  <Link href={localePath(locale, route)} className="text-sm text-white/80 transition-colors hover:text-skydrop">
-                    {content.nav[route]}
+              {items.map((item) => (
+                <li key={item.href + item.label}>
+                  <Link href={item.href} className="text-sm text-white/80 transition-colors hover:text-skydrop">
+                    {item.label}
                   </Link>
                 </li>
               ))}
@@ -80,7 +93,7 @@ export function SiteFooter({ locale, content }: { locale: Locale; content: SiteC
           <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-5">
             <span>{content.footer.illustrativeNote}</span>
             <a
-              href={siteConfig.github}
+              href={settings.socialGithub}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-white/70 transition-colors hover:text-skydrop"

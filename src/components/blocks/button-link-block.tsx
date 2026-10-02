@@ -1,0 +1,31 @@
+"use client";
+
+import { BlockContainer } from "./block-container";
+import { type z } from "zod";
+import type { blockSchemas } from "@/lib/blocks/types";
+import type { Locale } from "@/lib/i18n";
+import { BlockLink } from "./block-link";
+
+export type ButtonLinkBlockProps = z.input<typeof blockSchemas.buttonLink>["props"];
+
+/** أنماط الأزرار — نفس هوية أزرار الواجهة الافتتاحية */
+const VARIANT_CLASSES: Record<string, string> = {
+  primary:
+    "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-md shadow-brand/20 transition-all hover:bg-brand-strong hover:shadow-lg",
+  outline:
+    "inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-navy/15 bg-white px-7 text-base font-semibold text-navy transition-colors hover:border-brand hover:text-brand",
+  navy: "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-navy px-7 text-base font-semibold text-white transition-colors hover:bg-navy-soft",
+};
+
+/** زر/رابط واحد بثلاثة أنماط من هوية الموقع */
+export function ButtonLinkBlock({ props, locale }: { props: ButtonLinkBlockProps; locale: Locale }) {
+  const variant = props.variant ?? "primary";
+
+  return (
+    <BlockContainer>
+      <BlockLink href={props.href} locale={locale} className={VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.primary}>
+        {props.label}
+      </BlockLink>
+    </BlockContainer>
+  );
+}
