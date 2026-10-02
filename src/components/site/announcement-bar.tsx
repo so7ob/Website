@@ -117,13 +117,15 @@ export function AnnouncementBar({ announcement, locale, labels }: AnnouncementBa
     <div id="site-announcement" role="region" aria-label={labels.ariaLabel} className={cn("w-full", variant.strip)}>
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-2.5 text-sm font-medium sm:px-6 lg:px-8">
         <Icon className="size-4 shrink-0" aria-hidden="true" />
-        <p className="min-w-0 flex-1 break-words">{message}</p>
+        <p className="min-w-0 flex-1 break-words line-clamp-1 sm:line-clamp-none" title={message}>
+          {message}
+        </p>
         {cta}
         <button
           type="button"
           onClick={dismiss}
           aria-label={labels.dismiss}
-          className="grid size-9 shrink-0 place-items-center self-center rounded-full transition-colors hover:bg-black/5"
+          className="grid size-11 shrink-0 place-items-center self-center rounded-full transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
         >
           <X className="size-4" aria-hidden="true" />
         </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Link2, Loader2, MessageCircle, Plus, Search, Send, X } from "lucide-react";
@@ -21,6 +21,18 @@ import { useDebounced } from "./use-debounced";
 import type { RequestListResponse } from "./types";
 
 const STATUS_KEYS = ["new", "in_review", "awaiting_info", "in_progress", "responded", "closed", "cancelled"] as const;
+
+/** قيمة وسمية لتبويب «بانتظار ردك» — عرضٌ حصري (awaiting=you) وليس حالة طلب */
+const AWAITING_YOU = "awaiting_you";
+
+/** لغة حبوب التبويب — مشتركة بين «الكل» وحالات الطلب (كحلي عند التفعيل) */
+const TAB_PILL_CLASS =
+  "min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none";
+
+/** تبويب «بانتظار ردك» — تفعيل كهرماني بدل الكحلي ليُقرأ عرضًا خاصًّا لا حالة،
+ *  بنفس لغة شارة الانتظار ومؤشر لوحة الحساب (amber-300 على amber-100) */
+const AWAITING_TAB_PILL_CLASS =
+  "min-h-9 rounded-full border border-transparent px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:border-amber-300 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 data-[state=active]:shadow-none";
 
 type ClaimBanner = { kind: "ok" | "invalid" | "login_required"; ref?: string };
 
@@ -78,9 +90,11 @@ export function RequestsView({
 }) {
   const params = useSearchParams();
 
-  // الحالة المبدئية من الرابط (?status=responded من بطاقة «بانتظار ردك» في لوحة
-  // الحساب) — قيمة غير معروفة أو غياب المعامل يسقط إلى «الكل»
+  // الحالة المبدئية من الرابط — ?awaiting=you (بطاقة «بانتظار ردك» في لوحة الحساب)
+  // تتقدم على ?status= تمامًا كالواجهة الخادمية؛ قيمة غير معروفة أو غياب المعاملين
+  // يسقط إلى «الكل»
   const [status, setStatus] = useState<string>(() => {
+    if (params.get("awaiting") === "you") return AWAITING_YOU;
     const value = params.get("status") ?? "";
     return (STATUS_KEYS as readonly string[]).includes(value) ? value : "all";
   });
@@ -112,7 +126,9 @@ export function RequestsView({
     const seq = ++seqRef.current;
     setLoading(true);
     const query = new URLSearchParams({ page: String(pageNumber) });
-    if (filterStatus !== "all") query.set("status", filterStatus);
+    // تبويب «بانتظار ردك» عرضٌ حصري: يرسل awaiting=you بلا تصفية حالة
+    if (filterStatus === AWAITING_YOU) query.set("awaiting", "you");
+    else if (filterStatus !== "all") query.set("status", filterStatus);
     if (search) query.set("q", search);
     const result = await apiFetch<RequestListResponse>(`/api/account/requests?${query.toString()}`);
     if (seq !== seqRef.current) return; // استجابة متأخرة عن طلب أحدث
@@ -233,20 +249,21 @@ export function RequestsView({
       <Tabs value={status} onValueChange={onStatusChange}>
         <div className="overflow-x-auto pb-1">
           <TabsList className="h-auto w-max flex-wrap gap-1 rounded-full bg-muted/60 p-1">
-            <TabsTrigger
-              value="all"
-              className="min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none"
-            >
+            <TabsTrigger value="all" className={TAB_PILL_CLASS}>
               {allLabel}
             </TabsTrigger>
             {STATUS_KEYS.map((key) => (
-              <TabsTrigger
-                key={key}
-                value={key}
-                className="min-h-9 rounded-full px-4 text-sm font-medium transition-colors data-[state=inactive]:hover:bg-muted data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:shadow-none"
-              >
-                {t.statuses[key] ?? key}
-              </TabsTrigger>
+              <Fragment key={key}>
+                <TabsTrigger value={key} className={TAB_PILL_CLASS}>
+                  {t.statuses[key] ?? key}
+                </TabsTrigger>
+                {/* «بانتظار ردك» — عرضٌ حصري بعد «تم الرد» وقبل الحالات الختامية */}
+                {key === "responded" && (
+                  <TabsTrigger value={AWAITING_YOU} className={AWAITING_TAB_PILL_CLASS}>
+                    {t.awaitingYou}
+                  </TabsTrigger>
+                )}
+              </Fragment>
             ))}
           </TabsList>
         </div>

@@ -76,7 +76,8 @@ export default async function AccountDashboardPage({ params }: { params: Promise
 
   const stats: StatDef[] = [
     { label: t.openRequests, value: openRequests, icon: FolderOpen, tone: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop", href: `/${locale}/account/requests` },
-    { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300", href: `/${locale}/account/requests?status=responded` },
+    // «بانتظار ردك» — التصفية الدقيقة (آخر ردٍّ من الطاقم) عبر معامل awaiting=you
+    { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300", href: `/${locale}/account/requests?awaiting=you` },
     { label: t.unreadNotifications, value: unreadNotifications, icon: Bell, tone: "bg-violet-100 text-violet-800", bar: "bg-gradient-to-r from-violet-400 to-purple-400", href: `/${locale}/account/notifications` },
     { label: t.totalRequests, value: requests.length, icon: Layers, tone: "bg-muted text-muted-foreground", bar: "bg-gradient-to-r from-navy/60 to-slate-400", href: `/${locale}/account/requests` },
   ];

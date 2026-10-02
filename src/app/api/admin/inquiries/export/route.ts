@@ -11,6 +11,8 @@ import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
 
 const MAX_ROWS = 5000;
 const INQUIRY_STATUSES = ["new", "in_review", "awaiting_info", "responded", "closed"];
+// «open» مرشّح مركّب يطابق مؤشر اللوحة (نفس مجموعة واجهة القائمة)
+const OPEN_INQUIRY_STATUSES = ["new", "in_review", "awaiting_info", "responded"];
 
 /** تهريب قيمة CSV: تُقتبس الحقول التي تحتوي فاصلة/اقتباس/سطرًا جديدًا */
 function csvEscape(value: string): string {
@@ -48,8 +50,13 @@ export async function GET(req: NextRequest) {
   const category = url.searchParams.get("category") ?? "";
 
   // نفس بناء شروط القائمة /api/admin/inquiries — بلا ترقيم صفحات
+  // (status=open → المرشّح المركّب: الحالات غير المغلقة وغير المؤرشفة)
   const where = {
-    ...(status && INQUIRY_STATUSES.includes(status) ? { status } : {}),
+    ...(status === "open"
+      ? { status: { in: OPEN_INQUIRY_STATUSES }, archivedAt: null }
+      : status && INQUIRY_STATUSES.includes(status)
+        ? { status }
+        : {}),
     ...(category ? { category } : {}),
     ...(query
       ? {

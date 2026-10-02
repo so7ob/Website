@@ -102,9 +102,9 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-navy">
               <History className="size-5 text-brand" aria-hidden="true" />
               {tp.versionHistory}
             </DialogTitle>
@@ -144,7 +144,7 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
                 <li
                   key={version.id}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl border border-border bg-white p-3",
+                    "flex items-center gap-3 rounded-xl border border-border/70 bg-white p-3 transition-colors hover:bg-muted/50",
                     version.version === Math.max(...versions.map((v) => v.version)) && "border-brand/40"
                   )}
                 >
@@ -155,7 +155,7 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
                     <p className="truncate text-sm font-semibold text-navy">
                       {tp.currentVersion} #{version.version} · {version.blockCount} {te.blocks}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="truncate text-xs tabular-nums text-muted-foreground">
                       {version.author} · {fmtDateTime(version.createdAt, locale)}
                     </p>
                   </div>
@@ -163,8 +163,7 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className="min-h-9 shrink-0"
+                      className="min-h-11 shrink-0 rounded-full px-4"
                       onClick={() => setConfirmVersion(version.version)}
                     >
                       <RotateCcw className="size-3.5" aria-hidden="true" />
@@ -179,9 +178,9 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, onResto
       </Dialog>
 
       <AlertDialog open={confirmVersion !== null} onOpenChange={(o) => !o && setConfirmVersion(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>{tp.restoreVersion}</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg font-bold text-navy">{tp.restoreVersion}</AlertDialogTitle>
             <AlertDialogDescription>
               #{confirmVersion} — {te.leaveWarning}
             </AlertDialogDescription>

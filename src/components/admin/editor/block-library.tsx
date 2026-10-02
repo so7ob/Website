@@ -39,7 +39,8 @@ import { BLOCK_LIBRARY, type BlockType } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const TYPE_ICONS: Record<BlockType, LucideIcon> = {
+/** أيقونة كل نوع من الكتل — مشتركة بين المكتبة ولوحة الإضافة السريعة */
+export const TYPE_ICONS: Record<BlockType, LucideIcon> = {
   hero: Rocket,
   servicesGrid: LayoutGrid,
   featureGrid: Grid3x3,

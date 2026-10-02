@@ -419,6 +419,9 @@ export interface PortalContent {
       deviceDesktop: string;
       deviceTablet: string;
       deviceMobile: string;
+      quickAdd: string;
+      searchBlocks: string;
+      noBlocks: string;
       selectedBlock: string;
       noSelection: string;
       noSelectionBody: string;
