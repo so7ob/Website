@@ -18,6 +18,20 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 const OPEN_STATUSES = ["new", "in_review", "awaiting_info", "in_progress", "responded"];
 
+/** شكل بطاقة مؤشر — href اختياري يجعل البطاقة رابطًا عميقًا لقائمة مفلترة */
+interface StatDef {
+  label: string;
+  value: number;
+  icon: typeof FolderOpen;
+  tone: string;
+  bar: string;
+  href?: string;
+}
+
+/** فئات بطاقة المؤشر — البطاقة نفسها بلا تغيير بصري، والرابط يضيف حلقة تركيز فقط */
+const STAT_CARD_CLASS =
+  "relative overflow-hidden rounded-2xl border border-border bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10 sm:p-6";
+
 /** لوحة حساب العميل — مؤشرات وآخر التحديثات من قاعدة البيانات مباشرة */
 export default async function AccountDashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -60,11 +74,11 @@ export default async function AccountDashboardPage({ params }: { params: Promise
   const recent = requests.slice(0, 5);
   const isEmpty = requests.length === 0;
 
-  const stats = [
-    { label: t.openRequests, value: openRequests, icon: FolderOpen, tone: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop" },
-    { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300" },
-    { label: t.unreadNotifications, value: unreadNotifications, icon: Bell, tone: "bg-violet-100 text-violet-800", bar: "bg-gradient-to-r from-violet-400 to-purple-400" },
-    { label: t.totalRequests, value: requests.length, icon: Layers, tone: "bg-muted text-muted-foreground", bar: "bg-gradient-to-r from-navy/60 to-slate-400" },
+  const stats: StatDef[] = [
+    { label: t.openRequests, value: openRequests, icon: FolderOpen, tone: "bg-brand-soft text-brand-strong", bar: "bg-gradient-to-r from-brand to-skydrop", href: `/${locale}/account/requests` },
+    { label: t.awaitingReply, value: awaitingReply, icon: MessageCircle, tone: "bg-amber-100 text-amber-800", bar: "bg-gradient-to-r from-amber-400 to-amber-300", href: `/${locale}/account/requests?status=responded` },
+    { label: t.unreadNotifications, value: unreadNotifications, icon: Bell, tone: "bg-violet-100 text-violet-800", bar: "bg-gradient-to-r from-violet-400 to-purple-400", href: `/${locale}/account/notifications` },
+    { label: t.totalRequests, value: requests.length, icon: Layers, tone: "bg-muted text-muted-foreground", bar: "bg-gradient-to-r from-navy/60 to-slate-400", href: `/${locale}/account/requests` },
   ];
 
   return (
@@ -87,20 +101,32 @@ export default async function AccountDashboardPage({ params }: { params: Promise
         </Button>
       </header>
 
+      {/* بطاقات المؤشرات — ذات الرابط تفتح القائمة المقابلة (روابط عميقة بلغة لوحة الإدارة) */}
       <section aria-label={t.title} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s) => {
           const Icon = s.icon;
-          return (
-            <div
-              key={s.label}
-              className="relative overflow-hidden rounded-2xl border border-border bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy/10 sm:p-6"
-            >
+          const card = (
+            <>
               <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${s.bar}`} />
               <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${s.tone}`}>
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <p className="mt-3 text-2xl font-bold text-navy tabular-nums">{s.value}</p>
               <p className="mt-1 text-xs font-medium text-muted-foreground sm:text-sm">{s.label}</p>
+            </>
+          );
+          return s.href ? (
+            <Link
+              key={s.label}
+              href={s.href}
+              aria-label={`${s.label}: ${s.value}`}
+              className={`${STAT_CARD_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40`}
+            >
+              {card}
+            </Link>
+          ) : (
+            <div key={s.label} className={STAT_CARD_CLASS}>
+              {card}
             </div>
           );
         })}

@@ -45,25 +45,55 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
+  // ——— بانتظار رد الفريق ———
+  // آخر رسالة ظاهرة (kind=message) لكل استفسار في الصفحة الحالية، بترتيب
+  // تصاعدي فيفوز آخر سجل لكل استفسار داخل الخريطة — استعلام واحد للصفحة
+  // كاملة (نفس دلالات قائمة الطلبات، دون عمود lastStaffReplyAt هنا).
+  const ids = rows.map((i) => i.id);
+  const lastMessages = ids.length
+    ? await db.inquiryMessage.findMany({
+        where: { inquiryId: { in: ids }, kind: "message" },
+        orderBy: { createdAt: "asc" },
+        select: { inquiryId: true, authorType: true, createdAt: true },
+      })
+    : [];
+  const lastByInquiry = new Map<string, { authorType: string; createdAt: Date }>();
+  for (const message of lastMessages) lastByInquiry.set(message.inquiryId, message);
+
   return json({
     ok: true,
     total,
     page,
     pageSize,
-    inquiries: rows.map((i) => ({
-      id: i.id,
-      refCode: i.refCode,
-      subject: i.subject,
-      category: i.category,
-      status: i.status,
-      name: i.name,
-      email: i.email,
-      clientId: i.clientId,
-      assigneeId: i.assigneeId,
-      assigneeName: i.assignee?.name ?? null,
-      messageCount: i._count.messages,
-      createdAt: i.createdAt,
-      lastActivityAt: i.lastActivityAt,
-    })),
+    inquiries: rows.map((i) => {
+      // بانتظار الطاقم: آخر رسالة ظاهرة من العميل، أو استفسار بلا أي رسائل
+      // بعد (الافتتاحية نفسها تواصل من العميل) — والمغلق/المؤرشف بلا شارة.
+      // لا عمود lastStaffReplyAt هنا: آخر رسالة من الطاقم تعني «لا انتظار».
+      const last = lastByInquiry.get(i.id) ?? null;
+      const awaitingSince =
+        i.status !== "closed" && i.archivedAt === null
+          ? last
+            ? last.authorType === "client"
+              ? last.createdAt.toISOString()
+              : null
+            : i.createdAt.toISOString()
+          : null;
+      return {
+        id: i.id,
+        refCode: i.refCode,
+        subject: i.subject,
+        category: i.category,
+        status: i.status,
+        name: i.name,
+        email: i.email,
+        clientId: i.clientId,
+        assigneeId: i.assigneeId,
+        assigneeName: i.assignee?.name ?? null,
+        messageCount: i._count.messages,
+        createdAt: i.createdAt,
+        lastActivityAt: i.lastActivityAt,
+        awaitingSince,
+      };
+    }),
   });
 }

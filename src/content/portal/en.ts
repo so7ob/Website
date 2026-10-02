@@ -426,6 +426,7 @@ export const portalEn: PortalContent = {
       subtitle: "Site content — edit, publish and version",
       createPage: "New page",
       pageTitle: "Page",
+      rowActions: "Actions — {title}",
       slug: "Slug",
       slugHint: "lowercase latin letters, digits and dashes — empty only for home",
       status: "Status",

@@ -95,7 +95,7 @@ export function LoginForm({ locale, t, next }: { locale: Locale; t: PortalConten
     >
       <form onSubmit={onSubmit} noValidate className="mt-6 space-y-5">
         {error && (
-          <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+          <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {error}
           </div>
         )}

@@ -360,6 +360,7 @@ export interface PortalContent {
       subtitle: string;
       createPage: string;
       pageTitle: string;
+      rowActions: string;
       slug: string;
       slugHint: string;
       status: string;

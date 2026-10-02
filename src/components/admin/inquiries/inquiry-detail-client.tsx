@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
+import type { PortalContent } from "@/content/portal/types";
 import { can } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n";
 import { StatusBadge } from "@/components/admin/badges";
@@ -22,6 +23,26 @@ import { apiGet, apiSend, ApiError, apiErrorMessage, fmtDateTime } from "@/compo
 import type { InquiryDetail, InquiryDetailResponse, Me, MessageRow, RequestsResponse, StaffOption } from "../types";
 
 const INQUIRY_STATUS_KEYS = ["new", "in_review", "awaiting_info", "responded", "closed"];
+
+/** شارة عمر الانتظار — منذ آخر رسالة عميل: محايدة تحت 24 ساعة، تحذير
+ *  كهرماني بعدها (نسخة مطابقة لشارة قائمة الطلبات، مفاتيح الترجمة نفسها) */
+function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["requests"] }) {
+  const ageMs = Date.now() - new Date(since).getTime();
+  const hours = Math.max(0, Math.floor(ageMs / 3_600_000));
+  const days = Math.max(0, Math.floor(ageMs / 86_400_000));
+  if (days >= 1) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+        {tr.overdueReply} · {tr.agingDays.replace("{n}", String(days))}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      {tr.awaitingTeam} · {tr.agingHours.replace("{n}", String(hours))}
+    </span>
+  );
+}
 
 interface InquiryDetailClientProps {
   me: Me;
@@ -168,6 +189,19 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
   }
 
   const BackIcon = locale === "ar" ? ArrowRight : ArrowLeft;
+  // شارة عمر الانتظار في الترويسة — تُحسب من المحادثة المحمّلة نفسها بنفس
+  // دلالات القائمة: آخر رسالة ظاهرة (kind=message) من العميل، أو تاريخ
+  // الإنشاء إن لم توجد رسائل بعد؛ المغلق/المؤرشف بلا شارة (بلا تغيير API).
+  const visibleMessages = detail.messages.filter((m) => m.kind === "message");
+  const lastVisible = visibleMessages.length > 0 ? visibleMessages[visibleMessages.length - 1] : null;
+  const awaitingSince =
+    detail.status !== "closed" && detail.archivedAt === null
+      ? lastVisible
+        ? lastVisible.authorType === "client"
+          ? lastVisible.createdAt
+          : null
+        : detail.createdAt
+      : null;
   const bubbleLabels = {
     client: t.admin.requests.client,
     staff: td.staff,
@@ -192,6 +226,7 @@ export function InquiryDetailClient({ me, locale, inquiryId }: InquiryDetailClie
           <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-brand-strong">
             {ti.categories[detail.category] ?? detail.category}
           </span>
+          {awaitingSince ? <AgingBadge since={awaitingSince} tr={t.admin.requests} /> : null}
         </div>
       </div>
 

@@ -360,11 +360,17 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
       } else if ((key === "z" && e.shiftKey) || key === "y") {
         e.preventDefault();
         redo();
+      } else if (key === "s") {
+        // حفظ فوري للمسودة — مثل محررات المستندات (يعمل حتى داخل حقول التحرير)
+        e.preventDefault();
+        void performSaveRef.current().then((ok) => {
+          if (ok) toast.success(te.saved);
+        });
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [undo, redo]);
+  }, [undo, redo, te.saved]);
 
   // ——— حارس المغادرة ———
   useEffect(() => {

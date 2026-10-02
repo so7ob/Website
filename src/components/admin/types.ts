@@ -244,6 +244,8 @@ export interface InquiryRow {
   messageCount: number;
   createdAt: string;
   lastActivityAt: string;
+  /** وقت آخر رسالة عميل ظاهرة والاستفسار ينتظر رد الفريق (null إن لم يكن بانتظار) */
+  awaitingSince: string | null;
 }
 export interface InquiriesResponse {
   ok: boolean;

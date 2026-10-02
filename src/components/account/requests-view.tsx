@@ -78,7 +78,12 @@ export function RequestsView({
 }) {
   const params = useSearchParams();
 
-  const [status, setStatus] = useState<string>("all");
+  // الحالة المبدئية من الرابط (?status=responded من بطاقة «بانتظار ردك» في لوحة
+  // الحساب) — قيمة غير معروفة أو غياب المعامل يسقط إلى «الكل»
+  const [status, setStatus] = useState<string>(() => {
+    const value = params.get("status") ?? "";
+    return (STATUS_KEYS as readonly string[]).includes(value) ? value : "all";
+  });
   const [q, setQ] = useState("");
   const debouncedQ = useDebounced(q);
   const [page, setPage] = useState(1);

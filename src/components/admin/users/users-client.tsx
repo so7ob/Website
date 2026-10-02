@@ -239,17 +239,22 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-navy">{tu.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{tu.subtitle}</p>
-        </div>
+        <header className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+            <Users className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold text-navy">{tu.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{tu.subtitle}</p>
+          </div>
+        </header>
         {mayInvite ? (
           <Button
             onClick={() => {
               setInviteUrl(null);
               setInviteOpen(true);
             }}
-            className="min-h-11 rounded-full"
+            className="min-h-11 rounded-full shadow-md shadow-brand/20 hover:bg-brand-strong"
           >
             <UserPlus className="size-4" aria-hidden="true" />
             {tu.invite}
@@ -269,11 +274,11 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
             }}
             placeholder={tu.searchPlaceholder}
             aria-label={tu.search}
-            className="min-h-11 ps-9"
+            className="min-h-11 ps-9 focus-visible:ring-2 focus-visible:ring-ring/40"
           />
         </div>
         <Select value={role} onValueChange={(v) => { setRole(v); setPage(1); }}>
-          <SelectTrigger aria-label={tu.role} className="min-h-11 w-40">
+          <SelectTrigger aria-label={tu.role} className="min-h-11 w-40 focus-visible:ring-2 focus-visible:ring-ring/40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -286,7 +291,7 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-          <SelectTrigger aria-label={tu.status} className="min-h-11 w-44">
+          <SelectTrigger aria-label={tu.status} className="min-h-11 w-44 focus-visible:ring-2 focus-visible:ring-ring/40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -470,9 +475,9 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
 
       {/* حوارية الدعوة */}
       <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) setInviteUrl(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-navy">{tu.inviteTitle}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{tu.inviteTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -483,14 +488,14 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
                 dir="ltr"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                className="min-h-11"
+                className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40"
                 autoComplete="off"
               />
             </div>
             <div className="space-y-2">
               <Label>{tu.inviteRole}</Label>
               <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger className="min-h-11">
+                <SelectTrigger className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -538,22 +543,22 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
 
       {/* حوارية تعديل البيانات */}
       <Dialog open={editTarget !== null} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-navy">{tu.edit} — {editTarget?.name}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{tu.edit} — {editTarget?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">{t.account.profile.name}</Label>
-              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="min-h-11" maxLength={100} />
+              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40" maxLength={100} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-phone">{t.account.profile.phone}</Label>
-              <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="min-h-11" maxLength={20} />
+              <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40" maxLength={20} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-company">{t.account.profile.company}</Label>
-              <Input id="edit-company" value={editCompany} onChange={(e) => setEditCompany(e.target.value)} className="min-h-11" maxLength={120} />
+              <Input id="edit-company" value={editCompany} onChange={(e) => setEditCompany(e.target.value)} className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40" maxLength={120} />
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -570,14 +575,14 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
 
       {/* حوارية تغيير الدور */}
       <Dialog open={roleTarget !== null} onOpenChange={(open) => { if (!open) setRoleTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-navy">{tu.changeRole} — {roleTarget?.name}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-navy">{tu.changeRole} — {roleTarget?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
             <Label>{tu.role}</Label>
             <Select value={roleValue} onValueChange={setRoleValue}>
-              <SelectTrigger className="min-h-11">
+              <SelectTrigger className="min-h-11 focus-visible:ring-2 focus-visible:ring-ring/40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -604,9 +609,9 @@ export function UsersClient({ me, locale, initialQ, initialStatus }: UsersClient
 
       {/* تأكيد الإيقاف/التفعيل */}
       <AlertDialog open={confirmTarget !== null} onOpenChange={(open) => { if (!open) setConfirmTarget(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-navy">
+            <AlertDialogTitle className="text-lg font-bold text-navy">
               {confirmTarget?.status === "suspended" ? tu.activate : tu.suspend} — {confirmTarget?.name}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -646,7 +651,7 @@ function SortHeader({
       type="button"
       onClick={() => onSort(col)}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md text-xs font-medium transition-colors hover:text-foreground",
+        "inline-flex items-center gap-1 rounded-md text-xs font-medium transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40",
         active ? "text-navy" : "text-muted-foreground"
       )}
     >

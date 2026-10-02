@@ -88,7 +88,7 @@ export function RegisterForm({ locale, t, nameLabel }: { locale: Locale; t: Port
     return (
       <AuthCard title={t.registerSuccessTitle}>
         <div className="mt-2 flex flex-col items-center text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
             <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
           </span>
           <p className="mt-4 max-w-md leading-8 text-muted-foreground">{t.registerSuccessBody}</p>
@@ -103,6 +103,11 @@ export function RegisterForm({ locale, t, nameLabel }: { locale: Locale; t: Port
 
   return (
     <AuthCard
+      icon={
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-strong">
+          <UserPlus className="size-5" aria-hidden="true" />
+        </span>
+      }
       title={t.registerTitle}
       subtitle={t.registerSubtitle}
       footer={
@@ -119,7 +124,7 @@ export function RegisterForm({ locale, t, nameLabel }: { locale: Locale; t: Port
     >
       <form onSubmit={onSubmit} noValidate className="mt-6 space-y-5">
         {formError && (
-          <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+          <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {formError}
           </div>
         )}

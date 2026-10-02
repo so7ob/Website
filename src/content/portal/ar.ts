@@ -426,6 +426,7 @@ export const portalAr: PortalContent = {
       subtitle: "محتوى الموقع — تحرير ونشر وإصدارات",
       createPage: "صفحة جديدة",
       pageTitle: "الصفحة",
+      rowActions: "إجراءات — {title}",
       slug: "المسار",
       slugHint: "أحرف لاتينية صغيرة وأرقام وشرطات — يترك فارغًا للرئيسية فقط",
       status: "الحالة",

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalContent } from "@/content/portal";
+import type { PortalContent } from "@/content/portal/types";
 import { can } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n";
 import { StatusBadge } from "@/components/admin/badges";
@@ -27,6 +28,26 @@ interface InquiriesClientProps {
   locale: Locale;
   /** حالة مبدئية من رابط الصفحة (مثل ?status=new من اللوحة) */
   initialStatus?: string;
+}
+
+/** شارة عمر الانتظار — منذ آخر رسالة عميل: محايدة تحت 24 ساعة، تحذير كهرماني
+ *  بعدها (نسخة مطابقة لشارة قائمة الطلبات، مفاتيح الترجمة نفسها) */
+function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["requests"] }) {
+  const ageMs = Date.now() - new Date(since).getTime();
+  const hours = Math.max(0, Math.floor(ageMs / 3_600_000));
+  const days = Math.max(0, Math.floor(ageMs / 86_400_000));
+  if (days >= 1) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+        {tr.overdueReply} · {tr.agingDays.replace("{n}", String(days))}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      {tr.awaitingTeam} · {tr.agingHours.replace("{n}", String(hours))}
+    </span>
+  );
 }
 
 export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientProps) {
@@ -195,7 +216,12 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
                         {ti.categories[row.category] ?? row.category}
                       </span>
                     </TableCell>
-                    <TableCell><StatusBadge status={row.status} label={ti.statuses[row.status] ?? row.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={row.status} label={ti.statuses[row.status] ?? row.status} />
+                        {row.awaitingSince ? <AgingBadge since={row.awaitingSince} tr={t.admin.requests} /> : null}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <p className="truncate text-sm font-medium text-navy">{row.name}</p>
                       <p className="truncate text-xs text-muted-foreground ltr-isolate">{row.email}</p>

@@ -362,7 +362,12 @@ export function PagesClient({ me, locale }: PagesClientProps) {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-10 text-muted-foreground transition-colors group-hover/row:text-foreground" aria-label={tp.pageTitle}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-10 text-muted-foreground transition-colors group-hover/row:text-foreground"
+                            aria-label={tp.rowActions.replace("{title}", locale === "en" ? row.titleEn || row.titleAr : row.titleAr || row.titleEn)}
+                          >
                             <MoreHorizontal className="size-4" aria-hidden="true" />
                           </Button>
                         </DropdownMenuTrigger>
