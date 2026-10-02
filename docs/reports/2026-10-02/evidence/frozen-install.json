@@ -1,0 +1,11 @@
+{
+  "check": "frozen-install",
+  "exit_code": 0,
+  "seconds": 0.037,
+  "command": [
+    "bun",
+    "install",
+    "--frozen-lockfile",
+    "--ignore-scripts"
+  ]
+}

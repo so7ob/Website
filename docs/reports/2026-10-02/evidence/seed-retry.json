@@ -1,0 +1,10 @@
+{
+  "check": "seed-retry",
+  "exit_code": 0,
+  "seconds": 0.291,
+  "command": [
+    "bun",
+    "run",
+    "db:seed"
+  ]
+}

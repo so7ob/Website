@@ -1,0 +1,227 @@
+[
+  {
+    "name": "public-home",
+    "method": "get",
+    "path": "/ar",
+    "concurrency": 1,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 19.59,
+    "p95Ms": 27.53,
+    "maxMs": 45.77,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 133049
+  },
+  {
+    "name": "public-home",
+    "method": "get",
+    "path": "/ar",
+    "concurrency": 5,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 67.1,
+    "p95Ms": 91.28,
+    "maxMs": 365.04,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 133011
+  },
+  {
+    "name": "request-list",
+    "method": "get",
+    "path": "/api/admin/requests",
+    "concurrency": 1,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 9,
+    "p95Ms": 13.23,
+    "maxMs": 28.05,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 10070
+  },
+  {
+    "name": "request-list",
+    "method": "get",
+    "path": "/api/admin/requests",
+    "concurrency": 5,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 20.28,
+    "p95Ms": 27.29,
+    "maxMs": 30.55,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 10070
+  },
+  {
+    "name": "overdue-list",
+    "method": "get",
+    "path": "/api/admin/requests?overdue=1",
+    "concurrency": 1,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 16.03,
+    "p95Ms": 19.47,
+    "maxMs": 24.99,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 10564
+  },
+  {
+    "name": "overdue-list",
+    "method": "get",
+    "path": "/api/admin/requests?overdue=1",
+    "concurrency": 5,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 32.06,
+    "p95Ms": 44.21,
+    "maxMs": 51.63,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 10564
+  },
+  {
+    "name": "request-detail",
+    "method": "get",
+    "path": "/api/account/requests/auditrequest",
+    "concurrency": 1,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 18.41,
+    "p95Ms": 23.26,
+    "maxMs": 33.92,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 238780
+  },
+  {
+    "name": "request-detail",
+    "method": "get",
+    "path": "/api/account/requests/auditrequest",
+    "concurrency": 5,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 40.33,
+    "p95Ms": 63.16,
+    "maxMs": 80.54,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 238780
+  },
+  {
+    "name": "dashboard",
+    "method": "get",
+    "path": "/api/admin/dashboard",
+    "concurrency": 1,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 10.87,
+    "p95Ms": 14.48,
+    "maxMs": 17.99,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 3718
+  },
+  {
+    "name": "dashboard",
+    "method": "get",
+    "path": "/api/admin/dashboard",
+    "concurrency": 5,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 29.78,
+    "p95Ms": 45.42,
+    "maxMs": 60.31,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 3718
+  },
+  {
+    "name": "editor-read",
+    "method": "get",
+    "path": "/api/admin/pages/cmur63q4d000eg9ls92c88ek4",
+    "concurrency": 1,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 5.65,
+    "p95Ms": 8.48,
+    "maxMs": 11.02,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 1746
+  },
+  {
+    "name": "editor-read",
+    "method": "get",
+    "path": "/api/admin/pages/cmur63q4d000eg9ls92c88ek4",
+    "concurrency": 5,
+    "samples": 100,
+    "warmups": 10,
+    "p50Ms": 13.15,
+    "p95Ms": 20.68,
+    "maxMs": 25.3,
+    "statuses": {
+      "200": 100
+    },
+    "meanBodyBytes": 1746
+  },
+  {
+    "name": "save",
+    "method": "patch",
+    "path": "/api/admin/pages/cmur63q4d000eg9ls92c88ek4",
+    "concurrency": 1,
+    "samples": 30,
+    "warmups": 10,
+    "p50Ms": 11.51,
+    "p95Ms": 14.85,
+    "maxMs": 25.63,
+    "statuses": {
+      "200": 30
+    },
+    "meanBodyBytes": 138
+  },
+  {
+    "name": "publish",
+    "method": "post",
+    "path": "/api/admin/pages/cmur63q4d000eg9ls92c88ek4/publish",
+    "concurrency": 1,
+    "samples": 30,
+    "warmups": 10,
+    "p50Ms": 15.65,
+    "p95Ms": 19.65,
+    "maxMs": 20.82,
+    "statuses": {
+      "200": 30
+    },
+    "meanBodyBytes": 52
+  },
+  {
+    "name": "restore",
+    "method": "post",
+    "path": "/api/admin/pages/cmur63q4d000eg9ls92c88ek4/versions/1/restore",
+    "concurrency": 1,
+    "samples": 30,
+    "warmups": 10,
+    "p50Ms": 11.98,
+    "p95Ms": 13.3,
+    "maxMs": 14.1,
+    "statuses": {
+      "200": 30
+    },
+    "meanBodyBytes": 31
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "check": "migrate-retry",
+  "exit_code": 0,
+  "seconds": 1.403,
+  "command": [
+    "bunx",
+    "--no-install",
+    "prisma",
+    "migrate",
+    "deploy"
+  ]
+}

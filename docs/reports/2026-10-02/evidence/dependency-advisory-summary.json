@@ -1,0 +1,11 @@
+{
+  "packages": 25,
+  "records": 96,
+  "severityCounts": {
+    "low": 5,
+    "moderate": 36,
+    "high": 52,
+    "critical": 3
+  },
+  "uniqueAdvisoryIds": 96
+}

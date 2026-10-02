@@ -1,0 +1,12 @@
+{
+  "check": "migrate",
+  "exit_code": 1,
+  "seconds": 1.595,
+  "command": [
+    "bunx",
+    "--no-install",
+    "prisma",
+    "migrate",
+    "deploy"
+  ]
+}

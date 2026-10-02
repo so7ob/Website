@@ -1,0 +1,4 @@
+import {PrismaClient} from '@prisma/client';
+const db=new PrismaClient();
+for (const [id,email] of [['claimvictim','owner@audit.example'],['claimowned','other@audit.example']])await db.projectRequest.create({data:{id,refCode:'S7-'+id.toUpperCase(),requestType:'discussion',serviceType:'web',description:'Synthetic claim isolation probe',budget:'unspecified',timeline:'flexible',name:'Synthetic request owner',email,preferredContact:'email',descriptionHash:id}});
+console.log('synthetic claim targets ready');await db.$disconnect();

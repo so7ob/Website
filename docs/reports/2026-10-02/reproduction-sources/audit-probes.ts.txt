@@ -1,0 +1,14 @@
+import { PrismaClient } from '@prisma/client';
+import { consumeToken, issueToken } from './src/lib/auth/tokens';
+import { validateBlocks } from './src/lib/blocks/types';
+import { writeFileSync } from 'fs';
+const db=new PrismaClient();
+const t=await issueToken('other','password_reset');
+const outcomes=await Promise.all(Array.from({length:10},()=>consumeToken(t.raw,'password_reset')));
+const prototype:any[]=[];
+for(const type of ['__proto__','constructor','toString']){try{const r=validateBlocks(JSON.stringify([{id:'probe',type,props:{}}]));prototype.push({type,result:r.ok?'accepted':'rejected'})}catch(e){prototype.push({type,result:'exception'})}}
+const sqlite=await db.$queryRawUnsafe('SELECT sqlite_version() AS version');
+const tables=await db.$queryRawUnsafe('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "sqlite_%"');
+const result={tokenConcurrentUses:outcomes.filter(Boolean).length,attempts:10,prototype,sqlite,tables:(tables as any[]).length};
+writeFileSync('/tmp/so7ob-audit-20261002/artifacts/probe-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+await db.$disconnect();

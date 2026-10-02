@@ -1,0 +1,6 @@
+import { PrismaClient } from '@prisma/client';
+const db=new PrismaClient();
+const data=Array.from({length:1000},(_,i)=>({id:`loadrequest${i}`,refCode:`S7-LOAD${i}`,requestType:'discussion',serviceType:'web',description:'Synthetic load dataset '.repeat(5),budget:'unspecified',timeline:'flexible',name:`Synthetic user ${i}`,email:`load${i}@audit.example`,preferredContact:'email',descriptionHash:`synthetic${i}`,clientId:'owner',assigneeId:'support',createdAt:new Date(Date.now()-1000*60*60*48),status:i%2?'new':'in_review'}));
+await db.projectRequest.createMany({data});
+await db.requestMessage.createMany({data:Array.from({length:500},(_,i)=>({requestId:'auditrequest',authorId:i%2?'owner':'support',authorType:i%2?'client':'staff',kind:'message',body:`Synthetic message ${i} `.repeat(10)}))});
+console.log(JSON.stringify({requests:await db.projectRequest.count(),messages:await db.requestMessage.count(),pages:await db.page.count()}));await db.$disconnect();

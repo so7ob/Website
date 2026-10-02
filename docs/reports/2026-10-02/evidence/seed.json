@@ -1,0 +1,10 @@
+{
+  "check": "seed",
+  "exit_code": 1,
+  "seconds": 0.102,
+  "command": [
+    "bun",
+    "run",
+    "db:seed"
+  ]
+}

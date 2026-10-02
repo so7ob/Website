@@ -1,0 +1,7 @@
+{
+  "journal_mode": "delete",
+  "integrity_check": "ok",
+  "foreign_key_violations": [],
+  "plain_copy_WAL_error": "no such table: audit_wal",
+  "online_backup_WAL_rows": 1
+}
