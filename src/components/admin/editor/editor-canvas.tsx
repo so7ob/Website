@@ -67,6 +67,7 @@ import { PageRenderer } from "@/components/blocks/page-renderer";
 import type { RenderMode } from "@/components/blocks/nested-context";
 import { cn } from "@/lib/utils";
 import { TYPE_ICONS } from "./block-library";
+import { CopyToClipboardButton } from "./clipboard-menu";
 
 export type PreviewDevice = "desktop" | "tablet" | "mobile";
 
@@ -217,6 +218,7 @@ interface EditorCanvasProps {
   /** إعادة ترتيب قائمة أبناء والد معين (null = الجذر) */
   onReorder: (parentId: string | null, ids: string[]) => void;
   onDuplicate: (id: string) => void;
+  onCopy: (id: string) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string, type: BlockType) => void;
   /** جلسة التحرير النصي المباشر — معرف العقدة أو null */
@@ -237,6 +239,7 @@ export function EditorCanvas({
   onMove,
   onReorder,
   onDuplicate,
+  onCopy,
   onDelete,
   onAddChild,
   inlineEditId,
@@ -315,6 +318,7 @@ export function EditorCanvas({
                       onSelect={onSelect}
                       onMove={onMove}
                       onDuplicate={onDuplicate}
+                      onCopy={onCopy}
                       onDelete={onDelete}
                       onAddChild={onAddChild}
                       inlineEditId={inlineEditId}
@@ -360,6 +364,7 @@ interface NodeWrapperProps {
   onSelect: (id: string | null) => void;
   onMove: (id: string, dir: -1 | 1) => void;
   onDuplicate: (id: string) => void;
+  onCopy: (id: string) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string, type: BlockType) => void;
   inlineEditId: string | null;
@@ -381,6 +386,7 @@ function NodeWrapper({
   onSelect,
   onMove,
   onDuplicate,
+  onCopy,
   onDelete,
   onAddChild,
   inlineEditId,
@@ -464,6 +470,7 @@ function NodeWrapper({
               onSelect={onSelect}
               onMove={onMove}
               onDuplicate={onDuplicate}
+              onCopy={onCopy}
               onDelete={onDelete}
               onAddChild={onAddChild}
               inlineEditId={inlineEditId}
@@ -580,6 +587,7 @@ function NodeWrapper({
         >
           <ArrowDown className="size-4" aria-hidden="true" />
         </button>
+        <CopyToClipboardButton node={node} uiLocale={uiLocale} onCopy={onCopy} />
         <button
           type="button"
           onClick={() => onDuplicate(node.id)}
@@ -615,6 +623,7 @@ interface ContainerBodyProps {
   onSelect: (id: string | null) => void;
   onMove: (id: string, dir: -1 | 1) => void;
   onDuplicate: (id: string) => void;
+  onCopy: (id: string) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string, type: BlockType) => void;
   inlineEditId: string | null;
@@ -633,6 +642,7 @@ function ContainerBody({
   onSelect,
   onMove,
   onDuplicate,
+  onCopy,
   onDelete,
   onAddChild,
   inlineEditId,
@@ -686,6 +696,7 @@ function ContainerBody({
             onSelect={onSelect}
             onMove={onMove}
             onDuplicate={onDuplicate}
+            onCopy={onCopy}
             onDelete={onDelete}
             onAddChild={onAddChild}
             inlineEditId={inlineEditId}

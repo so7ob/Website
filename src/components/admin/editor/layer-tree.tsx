@@ -35,6 +35,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { TYPE_ICONS } from "./block-library";
+import { CopyToClipboardButton } from "./clipboard-menu";
 
 interface LayerTreeProps {
   nodes: ContentNode[];
@@ -42,6 +43,7 @@ interface LayerTreeProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onCopy: (id: string) => void;
   onDelete: (id: string) => void;
   onVisibilityChange: (id: string, key: "mobile" | "tablet" | "desktop", value: boolean) => void;
 }
@@ -86,6 +88,7 @@ export function LayerTree({
   selectedId,
   onSelect,
   onDuplicate,
+  onCopy,
   onDelete,
   onVisibilityChange,
 }: LayerTreeProps) {
@@ -156,6 +159,7 @@ export function LayerTree({
                   onToggle={toggle}
                   onSelect={onSelect}
                   onDuplicate={onDuplicate}
+                  onCopy={onCopy}
                   onDelete={onDelete}
                   onVisibilityChange={onVisibilityChange}
                 />
@@ -179,6 +183,7 @@ interface LayerRowProps {
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onCopy: (id: string) => void;
   onDelete: (id: string) => void;
   onVisibilityChange: (id: string, key: "mobile" | "tablet" | "desktop", value: boolean) => void;
 }
@@ -194,6 +199,7 @@ function LayerRow({
   onToggle,
   onSelect,
   onDuplicate,
+  onCopy,
   onDelete,
   onVisibilityChange,
 }: LayerRowProps) {
@@ -308,6 +314,7 @@ function LayerRow({
               </Tooltip>
             );
           })}
+          <CopyToClipboardButton node={node} uiLocale={uiLocale} onCopy={onCopy} size="sm" />
           <button
             type="button"
             onClick={() => onDuplicate(node.id)}
@@ -345,6 +352,7 @@ function LayerRow({
               onToggle={onToggle}
               onSelect={onSelect}
               onDuplicate={onDuplicate}
+              onCopy={onCopy}
               onDelete={onDelete}
               onVisibilityChange={onVisibilityChange}
             />

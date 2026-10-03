@@ -9,7 +9,7 @@
  *   وأنماط جاهزة (STYLE_PRESETS) تطبق على العقدة المحددة فقط.
  * - للكتل الورقية: خلفية/حشوة على الأساس (سلوك التوافق مع الكتل في الجذر).
  */
-import { Copy, RotateCcw, Trash2 } from "lucide-react";
+import { ClipboardCopy, Copy, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,7 @@ interface PropertiesPanelProps {
   onAnchorChange: (id: string, anchorId: string | undefined) => void;
   onSelectNode: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onCopy: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
@@ -411,6 +412,7 @@ export function PropertiesPanel({
   onAnchorChange,
   onSelectNode,
   onDuplicate,
+  onCopy,
   onDelete,
 }: PropertiesPanelProps) {
   const t = getPortalContent(locale);
@@ -453,6 +455,17 @@ export function PropertiesPanel({
           <p className="min-w-0 flex-1 truncate text-sm font-bold text-navy" title={nodeLabel(node.type, locale)}>
             {te.selectedBlock}: {nodeLabel(node.type, locale)}
           </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0"
+            onClick={() => onCopy(node.id)}
+            title={te.copyToClipboard}
+            aria-label={te.copyToClipboard}
+          >
+            <ClipboardCopy className="size-4" aria-hidden="true" />
+          </Button>
           <Button
             type="button"
             variant="ghost"

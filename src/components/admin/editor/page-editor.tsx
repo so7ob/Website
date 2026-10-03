@@ -79,9 +79,17 @@ import {
   defaultNode,
   findNode,
   isContainerType,
+  maxDepth,
   removeNode,
   type ContentNode,
 } from "@/lib/blocks/tree";
+import {
+  type ClipboardEntry,
+  clearClipboardStorage,
+  copyToClipboard,
+  pasteEntryNode,
+  readClipboard,
+} from "@/lib/blocks/clipboard";
 import type { NodeStyle } from "@/lib/blocks/style";
 import { validateContent } from "@/lib/blocks/validate";
 import { applyInlineField, isInlineEditableType } from "@/lib/blocks/inline-fields";
@@ -92,6 +100,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { cn } from "@/lib/utils";
 import { BlockLibrary } from "./block-library";
 import { BlockPalette } from "./block-palette";
+import { ClipboardMenu } from "./clipboard-menu";
 import { EditorCanvas, DEVICE_PX, type PreviewDevice } from "./editor-canvas";
 import { EditorGuide } from "./editor-guide";
 import { LayerTree } from "./layer-tree";
@@ -209,6 +218,11 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   // جلسة التحرير النصي المباشر في الرسم — معرف العقدة الورقية قيد التحرير
   const [inlineEditId, setInlineEditId] = useState<string | null>(null);
   const inlineEditIdRef = useRef<string | null>(null);
+  // حافظة الكتل عبر الصفحات — تُقرأ بعد التركيب (localStorage غير متاح أثناء التهيئة الأولى)
+  const [clipboardEntries, setClipboardEntries] = useState<ClipboardEntry[]>([]);
+  useEffect(() => {
+    setClipboardEntries(readClipboard());
+  }, []);
   // مرجع التحديد لاستخدامه داخل مستمعي النافذة بلا إعادة تسجيل
   const selectedIdRef = useRef<string | null>(null);
 
@@ -762,6 +776,83 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     [applyDiscrete, draftLocale, te.nodeLimit]
   );
 
+  /** نسخ عقدة (بشجرتها) إلى الحافظة عبر الصفحات — بند 1.1 (G1) */
+  const copyNode = useCallback(
+    (id: string) => {
+      const s = stateRef.current;
+      if (!s) return;
+      const found = findNode(s.draft[draftLocale], id);
+      if (!found) return;
+      setClipboardEntries(copyToClipboard(found.node));
+      toast.success(te.copiedToClipboard);
+    },
+    [draftLocale, te.copiedToClipboard]
+  );
+
+  /**
+   * لصق من الحافظة: بعد العنصر المحدد أو بنهاية الجذر — بمعرفات جديدة.
+   * فحوص قبل الإدراج: حد العقد، حد العمق من موضع الإدراج، وقاعدة أبناء
+   * الحاوية الأم (الجذر يقبل كل الأنواع). الإخفاق يعني رسالة صريحة لا كسر تحقق لاحقًا.
+   */
+  const pasteNode = useCallback(
+    (entry: ClipboardEntry) => {
+      const s = stateRef.current;
+      if (!s) return;
+      const tree = s.draft[draftLocale];
+      if (countNodes(tree) + countNodes([entry.node]) > MAX_TREE_NODES) {
+        toast.error(te.nodeLimit);
+        return;
+      }
+      const path = selectedId ? findPath(tree, selectedId) : null;
+      // موضع الإدراج: عمق المحدد (إخوة) أو الجذر — الجذر بالعمق 1
+      const insertDepth = path ? path.length : 1;
+      if (insertDepth + maxDepth([entry.node]) - 1 > MAX_TREE_DEPTH) {
+        toast.error(te.maxDepthHint);
+        return;
+      }
+      if (path && path.length >= 2) {
+        const parent = path[path.length - 2];
+        const rule = BLOCK_REGISTRY[parent.type].children;
+        if (rule) {
+          const siblingCount = parent.children?.length ?? 0;
+          if (!rule.allowed.includes(entry.node.type)) {
+            toast.error(te.pasteNotAllowedHere);
+            return;
+          }
+          if (siblingCount >= rule.max) {
+            toast.error(te.containerFull.replace("{max}", String(rule.max)));
+            return;
+          }
+        }
+      }
+      const taken = collectIds(tree);
+      const clone = pasteEntryNode(entry, taken, () => Math.random().toString(36).slice(2, 8));
+      applyDiscrete((draft) => {
+        const treeClone = structuredClone(draft[draftLocale]);
+        if (selectedId) {
+          const f = findNode(treeClone, selectedId);
+          if (f) {
+            const idx = f.siblings.findIndex((n) => n.id === selectedId);
+            f.siblings.splice(idx >= 0 ? idx + 1 : f.siblings.length, 0, clone);
+            return { ...draft, [draftLocale]: treeClone };
+          }
+        }
+        treeClone.push(clone);
+        return { ...draft, [draftLocale]: treeClone };
+      });
+      setSelectedId(clone.id);
+      toast.success(te.pastedFromClipboard);
+    },
+    [applyDiscrete, draftLocale, selectedId, te.containerFull, te.maxDepthHint, te.nodeLimit, te.pasteNotAllowedHere, te.pastedFromClipboard]
+  );
+
+  /** إفراغ حافظة الكتل */
+  const clearClipboardEntries = useCallback(() => {
+    clearClipboardStorage();
+    setClipboardEntries([]);
+    toast(te.clipboardCleared);
+  }, [te.clipboardCleared]);
+
   /** نقل داخل الإخوة (أعلى/أسفل) */
   const moveNode = useCallback(
     (id: string, dir: -1 | 1) => {
@@ -1215,6 +1306,14 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                 <Redo2 className="size-4" aria-hidden="true" />
               </Button>
 
+              {/* لصق من الحافظة عبر الصفحات — آخر النسخ بأي صفحة */}
+              <ClipboardMenu
+                entries={clipboardEntries}
+                uiLocale={locale}
+                onPaste={pasteNode}
+                onClear={clearClipboardEntries}
+ />
+
               {/* أجهزة المعاينة */}
               <div className="flex items-center" role="group" aria-label={te.preview}>
                 {(
@@ -1464,6 +1563,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                   selectedId={selectedId}
                   onSelect={setSelectedId}
                   onDuplicate={duplicateNode}
+                  onCopy={copyNode}
                   onDelete={requestDelete}
                   onVisibilityChange={updateVisibility}
                 />
@@ -1507,6 +1607,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                   onReorder={reorderNodes}
                   onMove={moveNode}
                   onDuplicate={duplicateNode}
+                  onCopy={copyNode}
                   onDelete={requestDelete}
                   onAddChild={addChildTo}
                   inlineEditId={inlineEditId}
@@ -1532,6 +1633,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                 onAnchorChange={updateAnchor}
                 onSelectNode={setSelectedId}
                 onDuplicate={duplicateNode}
+                onCopy={copyNode}
                 onDelete={requestDelete}
               />
             ) : (
@@ -1572,6 +1674,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                 selectedId={selectedId}
                 onSelect={setSelectedId}
                 onDuplicate={duplicateNode}
+                onCopy={copyNode}
                 onDelete={requestDelete}
                 onVisibilityChange={updateVisibility}
               />
@@ -1607,6 +1710,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                 onAnchorChange={updateAnchor}
                 onSelectNode={setSelectedId}
                 onDuplicate={duplicateNode}
+                onCopy={copyNode}
                 onDelete={requestDelete}
               />
             )}
