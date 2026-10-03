@@ -690,6 +690,15 @@ export const portalEn: PortalContent = {
       insertHere: "Insert here",
       delete: "Delete",
       duplicate: "Duplicate",
+      copyToClipboard: "Copy to clipboard",
+      copiedToClipboard: "Copied to clipboard — paste it on any page",
+      paste: "Paste",
+      pasteFromClipboard: "Paste from clipboard",
+      pastedFromClipboard: "Pasted — you can undo",
+      clipboardEmpty: "Clipboard is empty — copy an element from any page first",
+      clipboardCleared: "Clipboard cleared",
+      clearClipboard: "Clear clipboard",
+      pasteNotAllowedHere: "This type can't be pasted inside this parent — try a higher level",
       moveUp: "Up",
       moveDown: "Down",
       undo: "Undo",
@@ -732,6 +741,14 @@ export const portalEn: PortalContent = {
             body: [
               "Double-click any heading, paragraph or button-link — or select it and press Enter — to edit the text in place with the same typography and size.",
               "Enter commits the text and keeps the session open for other elements, Esc reverts the field and closes the session, and paste is stripped to plain text.",
+            ],
+          },
+          {
+            title: "Cross-page clipboard",
+            body: [
+              "Copy any block with its subtree (clipboard button on the floating toolbar, layer tree or properties panel) — the snapshot stays in your browser even after you leave the page.",
+              "From the «Paste from clipboard» button in the top bar pick one of your latest copies from any page: it is inserted after the selected block or at the end of the page with fresh IDs, keeping device styles and visibility exactly as copied.",
+              "The clipboard holds the last 8 items and can be cleared entirely from the bottom of the paste menu — undo (Ctrl+Z) covers pasting like any other action.",
             ],
           },
           {

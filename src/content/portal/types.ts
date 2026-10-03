@@ -608,6 +608,15 @@ export interface PortalContent {
       insertHere: string;
       delete: string;
       duplicate: string;
+      copyToClipboard: string;
+      copiedToClipboard: string;
+      paste: string;
+      pasteFromClipboard: string;
+      pastedFromClipboard: string;
+      clipboardEmpty: string;
+      clipboardCleared: string;
+      clearClipboard: string;
+      pasteNotAllowedHere: string;
       moveUp: string;
       moveDown: string;
       undo: string;
