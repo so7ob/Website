@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "createdAt": "2026-10-03T15:21:08.846Z",
+  "database": {
+    "name": "database.db",
+    "size": 602112,
+    "sha256": "7c260eb5a2c4ac35066e02eb091abe3c16d93f4aba8567fceeee2c4c2dc3869b"
+  },
+  "uploads": [],
+  "tables": {
+    "Attachment": 0,
+    "AuditLog": 0,
+    "AuthSession": 1,
+    "AuthToken": 0,
+    "EmailLog": 0,
+    "Inquiry": 0,
+    "InquiryMessage": 0,
+    "MediaItem": 0,
+    "MenuItem": 12,
+    "Notification": 0,
+    "Page": 7,
+    "PageRedirect": 0,
+    "PageTemplate": 0,
+    "PageVersion": 0,
+    "ProjectRequest": 0,
+    "RequestClaim": 0,
+    "RequestDraft": 0,
+    "RequestMessage": 0,
+    "RequestStatusEvent": 0,
+    "Role": 5,
+    "SavedReply": 0,
+    "SiteSetting": 6,
+    "TrackLink": 0,
+    "User": 3,
+    "UserInvite": 0
+  }
+}

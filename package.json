@@ -17,7 +17,8 @@
     "db:seed": "bun run src/db/seed-roles.ts && bun run src/db/seed-content.ts",
     "admin:create": "bun run scripts/create-admin.ts",
     "db:backup": "bun run scripts/backup-db.ts",
-    "db:restore": "bun run scripts/restore-backup.ts"
+    "db:restore": "bun run scripts/restore-backup.ts",
+    "db:recover": "bash scripts/sandbox-recovery.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

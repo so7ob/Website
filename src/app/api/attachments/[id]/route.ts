@@ -58,6 +58,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   if (!/^[a-zA-Z0-9]{1,40}$/.test(id)) return deny(404);
 
+  // فحص الجلسة أولًا — الحساب الموقوف يُرفض 401 قبل أي استعلام مرفق (إصلاح #16)
+  const user = await getAuthUser();
+  if (user && user.status === "suspended") return deny(401);
+
   const attachment = await db.attachment.findUnique({
     where: { id },
     include: {
@@ -72,7 +76,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const cardClientId = attachment.request?.clientId ?? attachment.inquiry?.clientId ?? null;
 
   // ——— القناة 1: جلسة حساب ———
-  const user = await getAuthUser();
   if (user) {
     let allowed = false;
     if (scope === "request" && attachment.request) {

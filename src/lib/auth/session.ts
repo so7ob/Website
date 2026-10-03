@@ -59,14 +59,29 @@ export async function guardApi(req: NextRequest, permission?: Permission): Promi
   return { ok: true, user };
 }
 
-/** تحقق أصل الطلب — يمنع تنفيذ التعديلات من أصول أخرى */
+/** تحقق أصل الطلب — يمنع تنفيذ التعديلات من أصول أخرى (واعٍ بالبروكسي) */
 export function assertSameOrigin(req: NextRequest): boolean {
+  // 1) إشارة المتصفح غير القابلة للتزوير: تصف اللاقة الحقيقية بين مصدر الطلب وهدفه
+  //    بغضّ النظر عن أي إعادة كتابة Host/X-Forwarded-* في سلسلة البروكسي
+  const fetchSite = req.headers.get("sec-fetch-site");
+  if (fetchSite) return fetchSite !== "cross-site";
+
+  // 2) بلا sec-fetch-site (متصفح قديم أو عميل خارجي): مقارنة Origin مع مضيفاتنا المعروفة
   const origin = req.headers.get("origin");
   if (!origin) return true; // عملاء غير متصفح (curl) — الكوكيات ستظل محمية بـ SameSite
   try {
     const originHost = new URL(origin).host;
-    const requestHost = req.headers.get("host") ?? new URL(req.url).host;
-    return originHost === requestHost;
+    const candidates = [
+      req.headers.get("x-forwarded-host")?.split(",")[0]?.trim(),
+      req.headers.get("host"),
+      new URL(req.url).host,
+    ].filter((h): h is string => Boolean(h));
+    const ok = candidates.includes(originHost);
+    if (!ok) {
+      // تشخيص: تعارض أصل خلف البروكسي — يظهر في dev.log مع القيم الفعلية
+      console.warn(`[origin-mismatch] origin=${originHost} candidates=${candidates.join(" | ")}`);
+    }
+    return ok;
   } catch {
     return false;
   }
