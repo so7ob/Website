@@ -70,10 +70,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!locales.includes(raw as Locale)) return {};
   const locale = raw as Locale;
   const page = await getPage(resolveSlug(slug));
-  if (!page || !localePublished(page, locale)) return {};
-  // إصلاح #16: الصفحات المقيدة لا تُفهرس — فحص وصول مستقل عن المحتوى
+  if (!page) return {};
+  // إصلاح #16: الصفحات المقيدة لا تُفهرس — فحص الوصول يسبق فحص نشر اللغة
   const metaViewer = page.visibility === "public" ? null : await getAuthUser();
   if (!canAccessPage(metaViewer, page)) return { robots: { index: false, follow: false } };
+  if (!localePublished(page, locale)) return {};
 
   const settings = parsePageSettings(page.publishedSettings, page, { ar: page.titleAr, en: page.titleEn });
   const isAr = locale === "ar";
