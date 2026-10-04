@@ -90,6 +90,7 @@ import {
   pasteEntryNode,
   readClipboard,
 } from "@/lib/blocks/clipboard";
+import { applyNodeMove, validateNodeMove } from "@/lib/blocks/tree-move";
 import type { NodeStyle } from "@/lib/blocks/style";
 import { validateContent } from "@/lib/blocks/validate";
 import { applyInlineField, isInlineEditableType } from "@/lib/blocks/inline-fields";
@@ -893,6 +894,40 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     [insertNode]
   );
 
+  /**
+   * نقل عقدة (بشجرتها) من شجرة الطبقات — بند 1.2 (G2): قيود اللصق نفسها تُفحص
+   * قبل التطبيق وسبب الرفض يُعرض صراحةً (حد العقد، العمق من موضع الهدف،
+   * قواعد الحاوية، منع الإفلات داخل أنفاس العقدة). النقل يحفظ المعرفات كما هي.
+   */
+  const moveNodeTo = useCallback(
+    (id: string, targetParentId: string | null, insertIndex: number) => {
+      const s = stateRef.current;
+      if (!s) return;
+      const check = validateNodeMove(s.draft[draftLocale], id, targetParentId, insertIndex);
+      if (!check.ok) {
+        if (check.error === "notFound") return;
+        const msg =
+          check.error === "selfDrop" || check.error === "descendantDrop"
+            ? te.moveIntoOwnChild
+            : check.error === "nodesLimit"
+              ? te.nodeLimit
+              : check.error === "depthLimit"
+                ? te.maxDepthHint
+                : check.error === "containerFull"
+                  ? te.containerFull.replace("{max}", String(check.max ?? 0))
+                  : te.moveNotAllowedHere;
+        toast.error(msg);
+        return;
+      }
+      applyDiscrete((draft) => {
+        const treeClone = structuredClone(draft[draftLocale]);
+        const next = applyNodeMove(treeClone, id, targetParentId, insertIndex);
+        return next === treeClone ? draft : { ...draft, [draftLocale]: next };
+      });
+    },
+    [applyDiscrete, draftLocale, te.containerFull, te.maxDepthHint, te.moveIntoOwnChild, te.moveNotAllowedHere, te.nodeLimit]
+  );
+
   const updateProps = useCallback(
     (id: string, props: Record<string, unknown>) => {
       applyContinuous((draft) => {
@@ -1115,7 +1150,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-12 w-full rounded-xl" />
-        <div className="grid gap-4 lg:grid-cols-[13rem_1fr] xl:grid-cols-[13rem_1fr_20rem]">
+        <div className="grid gap-4 lg:grid-cols-[14rem_1fr] xl:grid-cols-[14rem_1fr_20rem]">
           <Skeleton className="hidden h-96 rounded-xl lg:block" />
           <Skeleton className="h-96 rounded-xl" />
           <Skeleton className="hidden h-96 rounded-xl xl:block" />
@@ -1517,7 +1552,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
         </div>
 
         {/* ——— اللوحات الثلاث ——— */}
-        <div className="grid min-h-0 gap-3 lg:grid-cols-[13rem_1fr] xl:grid-cols-[13rem_1fr_20rem]">
+        <div className="grid min-h-0 gap-3 lg:grid-cols-[14rem_1fr] xl:grid-cols-[14rem_1fr_20rem]">
           {/* المكتبة */}
           <aside className="hidden min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm lg:flex">
             <header className="flex items-start justify-between gap-2 border-b border-border px-3 py-2.5">
@@ -1562,6 +1597,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                   uiLocale={locale}
                   selectedId={selectedId}
                   onSelect={setSelectedId}
+                  onMoveTo={moveNodeTo}
                   onDuplicate={duplicateNode}
                   onCopy={copyNode}
                   onDelete={requestDelete}
@@ -1673,6 +1709,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                 uiLocale={locale}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
+                onMoveTo={moveNodeTo}
                 onDuplicate={duplicateNode}
                 onCopy={copyNode}
                 onDelete={requestDelete}
