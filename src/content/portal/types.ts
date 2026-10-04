@@ -320,6 +320,11 @@ export interface PortalContent {
         link_view_login_reply: string;
       };
       forceLoginActive: string;
+      policyExceptionLabel: string;
+      policyExceptionHint: string;
+      policyInherit: string;
+      policyChanged: string;
+      policyInherited: string;
     };
     nav: {
       dashboard: string;
@@ -519,6 +524,23 @@ export interface PortalContent {
       markRead: string;
       markAllRead: string;
       empty: string;
+      sendEmail: string;
+      sendEmailTitle: string;
+      sendEmailDesc: string;
+      recipientEmail: string;
+      recipientEmailHint: string;
+      subjectLabel: string;
+      messageLabel: string;
+      sending: string;
+      sendSubmit: string;
+      sendCancel: string;
+      emailSent: string;
+      emailSentDev: string;
+      invalidEmail: string;
+      subjectRange: string;
+      messageRange: string;
+      userNotFound: string;
+      userSuspended: string;
       types: Record<string, string>;
     };
     pages: {
