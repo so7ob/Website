@@ -3,15 +3,19 @@
 /**
  * لوحة رابط المتابعة (طاقم) — قسم مشترك يُركّب في تفاصيل الطلب والاستفسار:
  * تعرض السياسة الفعلية للبطاقة ومصدرها وحالة الرابط الحالي (فعّال/منتهي/ملغى)،
- * وتتيح التجديد (الرمز الجديد يُعرض مرة واحدة فقط) والإلغاء بتأكيد.
+ * وتتيح التجديد (الرمز الجديد يُعرض مرة واحدة فقط) والإلغاء بتأكيد،
+ * واستثناء سياسة الوصول لهذه البطاقة تحديدًا (G6) بوراثة النوع أو وضع صريح.
  * البيانات من /api/admin/track — الأذونات تُفرض خادميًا (العرض view.all،
  * والإجراءات reply)، لذا يُركَّب المكوّن دائمًا دون بوابات محلية.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Ban, Check, Copy, Link2, MailCheck, RefreshCw, TriangleAlert } from "lucide-react";
+import { Ban, Check, Copy, Link2, MailCheck, RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TRACK_MODES, type TrackMode } from "@/lib/track/policy";
 import { getPortalContent } from "@/content/portal";
 import type { PortalContent } from "@/content/portal/types";
 import { apiGet, apiSend, apiErrorMessage } from "@/components/admin/helpers";
@@ -31,6 +35,8 @@ interface TrackGetResponse {
   ok: boolean;
   link: TrackLinkState | null;
   policy: { mode: string; source: string; canReplyViaLink: boolean };
+  /** الاستثناء الخاص بهذه البطاقة — null يعني الوراثة من نوع البطاقة */
+  exception: TrackMode | null;
   settings: { forceLogin: boolean };
 }
 
@@ -64,6 +70,7 @@ export function TrackPanel({ scope, cardId, locale, t }: TrackPanelProps) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState<"renew" | "revoke" | null>(null);
+  const [policyPending, setPolicyPending] = useState(false);
   const [renewedPath, setRenewedPath] = useState<string | null>(null);
   const [renewedEmailedTo, setRenewedEmailedTo] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -182,6 +189,30 @@ export function TrackPanel({ scope, cardId, locale, t }: TrackPanelProps) {
     }
   };
 
+  /** تعيين/إزالة استثناء سياسة هذه البطاقة — الخادم يفرض صلاحية الرد (G6) */
+  const setPolicyException = async (mode: string) => {
+    setPolicyPending(true);
+    try {
+      const res = await apiSend<{ ok: boolean; code?: string }>("/api/admin/track", "POST", {
+        action: "policy",
+        scope,
+        id: cardId,
+        mode,
+      });
+      if (res.ok) {
+        toast.success(mode === "inherit" ? t.policyInherited : t.policyChanged);
+        refresh(); // يعيد جلب السياسة الفعلية ومصدرها بالحالة الجديدة
+      } else {
+        toast.error(authErrors.generic);
+      }
+    } catch (err) {
+      toast.error(apiErrorMessage(err, authErrors));
+      refresh(); // إرجاع القيمة المعروضة إلى الحالة الفعلية بعد الفشل
+    } finally {
+      setPolicyPending(false);
+    }
+  };
+
   if (failed && !data) return null;
 
   // الرابط المعروض فقط إن وُجد بحالة معروفة (missing يعادل لا رابط)
@@ -207,6 +238,41 @@ export function TrackPanel({ scope, cardId, locale, t }: TrackPanelProps) {
               {modeLabel}
             </span>
             <span className="text-xs text-muted-foreground">{sourceLabel}</span>
+          </div>
+
+          {/* استثناء هذه البطاقة (G6) — فوق API الجاهز: يعرض القيمة الحالية ويحدّث فورًا */}
+          <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
+            <Label
+              htmlFor="track-policy-exception"
+              className="flex items-center gap-1.5 text-sm font-semibold text-navy"
+            >
+              <ShieldCheck className="size-4 text-brand" aria-hidden="true" />
+              {t.policyExceptionLabel}
+            </Label>
+            <Select
+              value={data.exception ?? "inherit"}
+              onValueChange={(value) => void setPolicyException(value)}
+              disabled={policyPending}
+            >
+              <SelectTrigger
+                id="track-policy-exception"
+                className="mt-2 min-h-11 w-full rounded-xl bg-white font-medium"
+                aria-label={t.policyExceptionLabel}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inherit" className="min-h-11">
+                  {t.policyInherit}
+                </SelectItem>
+                {TRACK_MODES.map((mode) => (
+                  <SelectItem key={mode} value={mode} className="min-h-11">
+                    {t.mode[mode] ?? mode}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t.policyExceptionHint}</p>
           </div>
 
           {/* فرض تسجيل الدخول يتغلب على أي استثناء — تحذير كهرماني مستقل */}

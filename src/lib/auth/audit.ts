@@ -102,4 +102,6 @@ export const AUDIT_ACTIONS = {
   mediaUpdated: "media.updated",
   mediaDeleted: "media.deleted",
   mediaDeleteBlocked: "media.delete_blocked",
+  // الإشعارات الإدارية (G7)
+  notificationSent: "notification.sent",
 } as const;

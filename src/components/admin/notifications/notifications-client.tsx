@@ -18,6 +18,7 @@ import {
   FileText,
   Info,
   Loader2,
+  MailPlus,
   MessageSquare,
   RotateCcw,
   User,
@@ -27,6 +28,16 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ADMIN_NOTIFICATION_LIMITS,
+  normalizeRecipientEmail,
+  normalizeAdminNotificationSubject,
+  normalizeAdminNotificationMessage,
+} from "@/lib/notifications/admin-send";
 import { getPortalContent } from "@/content/portal";
 import type { Locale } from "@/lib/i18n";
 import { ApiError, apiErrorMessage, apiGet, apiSend, fmtDateTime } from "@/components/admin/helpers";
@@ -71,6 +82,14 @@ export function NotificationsClient({ me, locale }: { me: Me; locale: Locale }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
+
+  // ——— الإشعار البريدي الإداري (G7) — صلاحية notifications.send تُفرض خادميًا ———
+  const canSend = me.permissions.includes("notifications.send");
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [sndEmail, setSndEmail] = useState("");
+  const [sndSubject, setSndSubject] = useState("");
+  const [sndMessage, setSndMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   const isStaff = me.roleKey !== "client";
 
@@ -136,6 +155,49 @@ export function NotificationsClient({ me, locale }: { me: Me; locale: Locale }) 
     }
   }
 
+  /** إرسال الإشعار البريدي الإداري — تحقق مشترك مع الخادم ثم POST (G7) */
+  async function sendAdminEmail() {
+    if (sending) return;
+    const email = normalizeRecipientEmail(sndEmail);
+    if (!email) {
+      toast.error(tn.invalidEmail);
+      return;
+    }
+    const subject = normalizeAdminNotificationSubject(sndSubject);
+    const message = normalizeAdminNotificationMessage(sndMessage);
+    if (!subject || !message) {
+      toast.error(
+        !subject
+          ? tn.subjectRange
+              .replace("{min}", String(ADMIN_NOTIFICATION_LIMITS.subjectMin))
+              .replace("{max}", String(ADMIN_NOTIFICATION_LIMITS.subjectMax))
+          : tn.messageRange
+              .replace("{min}", String(ADMIN_NOTIFICATION_LIMITS.messageMin))
+              .replace("{max}", String(ADMIN_NOTIFICATION_LIMITS.messageMax))
+      );
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await apiSend<{ ok: boolean; delivery: "sent" | "dev_logged" }>(
+        "/api/admin/notifications/send",
+        "POST",
+        { email, subject, message }
+      );
+      toast.success(res.delivery === "dev_logged" ? tn.emailSentDev : tn.emailSent);
+      setComposerOpen(false);
+      setSndEmail("");
+      setSndSubject("");
+      setSndMessage("");
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "user_not_found") toast.error(tn.userNotFound);
+      else if (err instanceof ApiError && err.code === "user_suspended") toast.error(tn.userSuspended);
+      else toast.error(apiErrorMessage(err, t.auth.errors));
+    } finally {
+      setSending(false);
+    }
+  }
+
   const chevron =
     locale === "ar" ? (
       <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -150,6 +212,15 @@ export function NotificationsClient({ me, locale }: { me: Me; locale: Locale }) 
           <h1 className="text-2xl font-bold text-navy">{tn.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{tn.subtitle}</p>
         </div>
+        {canSend ? (
+          <Button
+            onClick={() => setComposerOpen(true)}
+            className="min-h-11 rounded-full bg-brand px-5 font-semibold text-white hover:bg-brand-strong focus-visible:ring-2 focus-visible:ring-ring/40"
+          >
+            <MailPlus className="size-4" aria-hidden="true" />
+            {tn.sendEmail}
+          </Button>
+        ) : null}
         {unread > 0 && (
           <Button
             variant="outline"
@@ -280,6 +351,90 @@ export function NotificationsClient({ me, locale }: { me: Me; locale: Locale }) 
           <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
         </div>
       ) : null}
+
+      {/* ——— حوار الإشعار البريدي الإداري (G7) ——— */}
+      <Dialog open={composerOpen} onOpenChange={setComposerOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-navy">
+              <MailPlus className="size-5 text-brand" aria-hidden="true" />
+              {tn.sendEmailTitle}
+            </DialogTitle>
+            <DialogDescription>{tn.sendEmailDesc}</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void sendAdminEmail();
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="snd-email" className="text-sm font-semibold text-navy">
+                {tn.recipientEmail}
+              </Label>
+              <Input
+                id="snd-email"
+                type="email"
+                dir="ltr"
+                value={sndEmail}
+                onChange={(e) => setSndEmail(e.target.value)}
+                placeholder="name@example.com"
+                autoComplete="off"
+                required
+                className="min-h-11 rounded-xl ltr-isolate"
+              />
+              <p className="text-xs text-muted-foreground">{tn.recipientEmailHint}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="snd-subject" className="text-sm font-semibold text-navy">
+                {tn.subjectLabel}
+              </Label>
+              <Input
+                id="snd-subject"
+                value={sndSubject}
+                onChange={(e) => setSndSubject(e.target.value)}
+                maxLength={ADMIN_NOTIFICATION_LIMITS.subjectMax + 1}
+                required
+                className="min-h-11 rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="snd-message" className="text-sm font-semibold text-navy">
+                {tn.messageLabel}
+              </Label>
+              <Textarea
+                id="snd-message"
+                value={sndMessage}
+                onChange={(e) => setSndMessage(e.target.value)}
+                maxLength={ADMIN_NOTIFICATION_LIMITS.messageMax + 1}
+                rows={6}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setComposerOpen(false)}
+                disabled={sending}
+                className="min-h-11 rounded-full px-5 font-semibold"
+              >
+                {tn.sendCancel}
+              </Button>
+              <Button
+                type="submit"
+                disabled={sending}
+                className="min-h-11 rounded-full bg-brand px-6 font-semibold text-white hover:bg-brand-strong focus-visible:ring-2 focus-visible:ring-ring/40"
+              >
+                {sending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <MailPlus className="size-4" aria-hidden="true" />}
+                {sending ? tn.sending : tn.sendSubmit}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   getTrackPolicySettings,
   isTrackMode,
   resolveTrackPolicy,
+  type TrackMode,
   type TrackScope,
 } from "@/lib/track/policy";
 import { renewTrackLink, revokeTrackLink } from "@/lib/track/service";
@@ -57,16 +58,21 @@ export async function GET(req: NextRequest) {
   const card = await resolveCard(scope as TrackScope, id);
   if (!card) return noStore(NextResponse.json({ ok: false, code: "not_found" }, { status: 404 }));
 
-  const [settings, links] = await Promise.all([
+  // استثناء البطاقة يُقرأ هنا حتى تعرض اللوحة السياسة الفعلية الصحيحة
+  // (كان يُحسب بـ null دائمًا فتختفي أثر الاستثناء من العرض) — G6
+  const exceptionKey = `track.exception.${scope}.${id}`;
+  const [settings, links, exceptionRows] = await Promise.all([
     getTrackPolicySettings(),
     db.trackLink.findMany({
       where: { scope, ...(scope === "request" ? { requestId: id } : { inquiryId: id }) },
       orderBy: { createdAt: "desc" },
       take: 1,
     }),
+    db.siteSetting.findMany({ where: { key: exceptionKey }, select: { key: true, value: true } }),
   ]);
   const link = links[0] ?? null;
-  const policy = resolveTrackPolicy(scope as TrackScope, settings, null);
+  const exception = isTrackMode(exceptionRows[0]?.value) ? (exceptionRows[0]!.value as TrackMode) : null;
+  const policy = resolveTrackPolicy(scope as TrackScope, settings, exception);
   const state = !link ? "missing" : link.revokedAt ? "revoked" : link.expiresAt.getTime() <= Date.now() ? "expired" : "valid";
 
   return noStore(
@@ -83,6 +89,7 @@ export async function GET(req: NextRequest) {
           }
         : null,
       policy: { mode: policy.mode, source: policy.source, canReplyViaLink: policy.canReplyViaLink },
+      exception,
       settings: { forceLogin: settings.forceLogin },
     })
   );
