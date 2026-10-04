@@ -71,3 +71,9 @@ backups/
 *.sqlite-wal
 *.sqlite-shm
 .qa/
+
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

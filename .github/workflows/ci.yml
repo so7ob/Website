@@ -50,3 +50,55 @@ jobs:
 
       - name: Whitespace / conflict markers check
         run: git diff --check
+
+  # الطور 3.2 (G8): حزمة القبول E2E — على PR فقط (لا على كل push إلى main)
+  e2e:
+    name: e2e • 21 acceptance (chromium)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: "file:./ci-e2e.db"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      EMAIL_DEV_MODE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (Vitest/jsdom require Node 24)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.21.0"
+
+      - name: Setup Bun (مطابق لملف القفل bun.lock)
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: bun run db:generate
+
+      - name: Push schema + seed content + demo accounts
+        run: |
+          bun run db:push
+          bun run db:seed
+          bun run scripts/restore-demo-users.ts --reset-passwords
+
+      - name: Install Playwright browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run acceptance tests (webServer يُشغَّل تلقائيًا في CI)
+        run: bun run test:e2e
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
