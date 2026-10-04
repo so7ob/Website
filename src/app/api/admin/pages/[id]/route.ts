@@ -17,7 +17,9 @@ import { guardApi, json } from "@/lib/auth/session";
 import { validateContent } from "@/lib/blocks/validate";
 import { isValidSlug } from "@/lib/blocks/types";
 import { audit, AUDIT_ACTIONS } from "@/lib/auth/audit";
+import { notifyMany, publishersToNotify } from "@/lib/auth/notifications";
 import { parsePageSettings, serializePageSettings, settingsFromInput, hasUnpublishedChanges, type PageSettings } from "@/lib/page-settings";
+import { canSubmitForReview, normalizeReviewNote } from "@/lib/pages/review";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await guardApi(req, "pages.view");
@@ -114,6 +116,46 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       entityType: "page", entityId: id, details: { slug: page.slug, unarchived: true },
     });
     return json({ ok: true, page: { id, slug: page.slug, draftUpdatedAt: page.draftUpdatedAt, status: "draft", draftRevision: page.draftRevision } });
+  }
+
+  // ——— إرسال للمراجعة (صلاحية التحرير) → in_review: يُقفل الحفظ الآلي حتى القرار ———
+  if (body.action === "submit_review") {
+    if (!canSubmitForReview(page.status)) {
+      return json({ ok: false, code: page.status === "in_review" ? "already_in_review" : "archived" }, 409);
+    }
+    // ربط الإرسال بمراجعة محفوظة — ما يُراجع هو المحفوظ لا شاشة أحد
+    if (typeof body.baseRevision !== "number" || !Number.isInteger(body.baseRevision)) {
+      return json({ ok: false, code: "revision_required" }, 409);
+    }
+    if (body.baseRevision !== page.draftRevision) {
+      return json({ ok: false, code: "conflict", serverRevision: page.draftRevision }, 409);
+    }
+    const note = normalizeReviewNote(body.note);
+    await db.page.update({ where: { id }, data: { status: "in_review" } });
+    await audit({
+      actorId: guard.user.id, actorEmail: guard.user.email, action: AUDIT_ACTIONS.pageReviewSubmitted,
+      entityType: "page", entityId: id,
+      details: { slug: page.slug, revision: page.draftRevision, ...(note ? { note } : {}) },
+    });
+    // إشعار الناشرين (عدا الفاعل) — برابط بلغة كل مستخدم
+    const publishers = await publishersToNotify();
+    await notifyMany(
+      publishers
+        .filter((p) => p.id !== guard.user.id)
+        .map((p) => ({
+          userId: p.id,
+          type: "status_changed" as const,
+          payload: {
+            pageTitle: page.titleAr || page.titleEn || page.slug || "home",
+            slug: page.slug || "home",
+            decision: "submitted",
+            by: guard.user.name || guard.user.email,
+            ...(note ? { note } : {}),
+          },
+          link: `/${p.locale === "en" ? "en" : "ar"}/admin/pages/${id}/edit`,
+        }))
+    );
+    return json({ ok: true, page: { id, slug: page.slug, status: "in_review", draftRevision: page.draftRevision } });
   }
 
   const currentSettings = parsePageSettings(page.draftSettings, page, { ar: page.titleAr, en: page.titleEn });

@@ -68,3 +68,25 @@ export async function staffToNotifyForRequests(): Promise<{ id: string }[]> {
     select: { id: true },
   });
 }
+
+/**
+ * الناشرون المؤهلون للمراجعة — كل مستخدم نشط تصادف أدواره صلاحية pages.publish
+ * (تُقرأ من أدوار قاعدة البيانات الفعلية لا من قائمة ثابتة — الأدوار قابلة للتحرير من الإدارة).
+ * super_admin يُدرج دائمًا بوصفه صاحب كل الصلاحيات.
+ */
+export async function publishersToNotify(): Promise<{ id: string; locale: string }[]> {
+  const roles = await db.role.findMany({ select: { key: true, permissions: true } });
+  const publisherKeys = new Set<string>(["super_admin"]);
+  for (const role of roles) {
+    try {
+      const parsed: unknown = JSON.parse(role.permissions);
+      if (Array.isArray(parsed) && parsed.includes("pages.publish")) publisherKeys.add(role.key);
+    } catch {
+      // أدوار بصلاحيات فاسدة تُتجاهل بصمت — لا تعطل الإشعارات
+    }
+  }
+  return db.user.findMany({
+    where: { status: "active", roleKey: { in: [...publisherKeys] } },
+    select: { id: true, locale: true },
+  });
+}

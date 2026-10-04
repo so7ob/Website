@@ -24,6 +24,7 @@ export interface PageRow {
   sourceKey: string | null;
   editorTouchedAt: string | null;
   scheduledPublishAt: string | null;
+  draftRevision: number;
 }
 
 export interface PagesResponse {
@@ -131,6 +132,31 @@ export interface PublishResponse {
     draftRevision: number;
     publishedRevision: number | null;
     hasUnpublishedChanges: boolean;
+  };
+}
+
+/** إرسال للمراجعة — نفس شكل استجابة الحفظ (الحالة تصير in_review) */
+export interface SubmitReviewResponse {
+  ok: boolean;
+  page: {
+    id: string;
+    slug: string;
+    status: string;
+    draftRevision: number;
+  };
+}
+
+/** قرار المراجعة — موافقة (نشر عبر نواة publishPageCore) أو رفض (عودة لمسودة) */
+export interface ReviewDecisionResponse {
+  ok: boolean;
+  decision: "approved" | "rejected";
+  publishedAt?: string;
+  page: {
+    slug: string;
+    status: string;
+    draftRevision: number;
+    publishedRevision?: number | null;
+    hasUnpublishedChanges?: boolean;
   };
 }
 

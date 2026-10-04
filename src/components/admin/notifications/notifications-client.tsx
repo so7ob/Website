@@ -45,6 +45,13 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   account: User,
 };
 
+/** درجات شارات قرار المراجعة — تتطابق مع دلالات الحالة في المحرر وقائمة الصفحات */
+const DECISION_TONES: Record<string, string> = {
+  submitted: "bg-amber-50 text-amber-700 border-amber-200",
+  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  rejected: "bg-red-50 text-red-700 border-red-200",
+};
+
 /**
  * روابط الإشعارات مخزنة بمسارات مطلقة ببادئة لغة ثابتة (مثل /ar/account/requests/..) —
  * للطاقم تُعاد كتابة مسار الطلب إلى مسار الإدارة، وبادئة اللغة إلى لغة العرض.
@@ -239,7 +246,26 @@ export function NotificationsClient({ me, locale }: { me: Me; locale: Locale }) 
                         {notification.payload.name && (
                           <span className="text-xs text-muted-foreground">{notification.payload.name}</span>
                         )}
+                        {notification.payload.decision && t.admin.notifications.decisions[notification.payload.decision] && (
+                          <span
+                            className={cn(
+                              "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                              DECISION_TONES[notification.payload.decision] ?? "bg-muted text-muted-foreground border-border"
+                            )}
+                          >
+                            {t.admin.notifications.decisions[notification.payload.decision]}
+                          </span>
+                        )}
                       </span>
+                      {notification.payload.pageTitle && (
+                        <span className="mt-1 block text-xs font-medium text-navy">{notification.payload.pageTitle}</span>
+                      )}
+                      {notification.payload.note && (
+                        <span className="mt-1 block rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs leading-5 text-muted-foreground">
+                          <span className="font-semibold text-foreground">{t.admin.notifications.reviewNoteLabel}: </span>
+                          {notification.payload.note}
+                        </span>
+                      )}
                       <span className="mt-1 block text-xs text-muted-foreground">
                         {fmtDateTime(notification.createdAt, locale)}
                         {!notification.readAt && (
