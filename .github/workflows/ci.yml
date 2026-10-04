@@ -86,6 +86,7 @@ jobs:
           bun run db:push
           bun run db:seed
           bun run scripts/restore-demo-users.ts --reset-passwords
+          mkdir -p db/uploads # /api/health/ready يفحص قابلية كتابة التخزين
 
       - name: Install Playwright browser
         run: bunx playwright install --with-deps chromium
