@@ -23,7 +23,9 @@ import {
   Plus,
   RotateCw,
   Search,
+  ShieldCheck,
   Star,
+  XCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { getPortalContent } from "@/content/portal";
 import { can } from "@/lib/auth/permissions";
 import { isValidSlug, type Block } from "@/lib/blocks/types";
@@ -67,7 +70,7 @@ import { useDebounced } from "@/components/admin/use-debounced";
 import type { Me } from "@/components/admin/types";
 import { cn } from "@/lib/utils";
 import { PAGE_TEMPLATE_OPTIONS, defaultProps } from "@/components/admin/editor/prop-fields";
-import { newBlockId, type CreatePageResponse, type PageRow, type PagesResponse } from "@/components/admin/editor/types";
+import { newBlockId, type CreatePageResponse, type PageRow, type PagesResponse, type ReviewDecisionResponse } from "@/components/admin/editor/types";
 
 interface PagesClientProps {
   me: Me;
@@ -242,6 +245,43 @@ export function PagesClient({ me, locale }: PagesClientProps) {
     }
   };
 
+  // ——— قرار مراجعة سريع من القائمة (الناشر — صف قيد المراجعة فقط) ———
+  const canPublish = can(me, "pages.publish");
+  const [reviewRowBusy, setReviewRowBusy] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<PageRow | null>(null);
+  const [rejectNote, setRejectNote] = useState("");
+
+  const quickReview = async (row: PageRow, decision: "approve" | "reject", note?: string) => {
+    if (reviewRowBusy) return;
+    setReviewRowBusy(row.id);
+    try {
+      const res = await apiSend<ReviewDecisionResponse>(`/api/admin/pages/${row.id}/review`, "POST", {
+        decision,
+        baseRevision: row.draftRevision,
+        ...(decision === "reject" && note ? { note } : {}),
+      });
+      if (decision === "approve") toast.success(te.reviewApproved);
+      else toast.success(te.reviewRejected);
+      setRejectTarget(null);
+      setRejectNote("");
+      reload();
+      void res;
+    } catch (err) {
+      if (err instanceof ApiError && (err.code === "conflict" || err.code === "revision_required")) {
+        toast.error(t.admin.editor.conflictTitle);
+      } else if (err instanceof ApiError && err.code === "not_in_review") {
+        toast.error(te.reviewNotInReview);
+        setRejectTarget(null);
+      } else if (err instanceof ApiError && err.code === "empty_page") {
+        toast.error(te.emptyPageError);
+      } else {
+        toast.error(apiErrorMessage(err, t.auth.errors));
+      }
+    } finally {
+      setReviewRowBusy(null);
+    }
+  };
+
   const rows = data?.pages ?? [];
 
   return (
@@ -313,8 +353,16 @@ export function PagesClient({ me, locale }: PagesClientProps) {
             <TableBody>
               {rows.map((row) => {
                 const archived = row.status === "archived";
+                const inReview = row.status === "in_review";
                 return (
-                  <TableRow key={row.id} className={cn("group/row transition-colors hover:bg-muted/50", archived && "opacity-60")}>
+                  <TableRow
+                    key={row.id}
+                    className={cn(
+                      "group/row transition-colors hover:bg-muted/50",
+                      archived && "opacity-60",
+                      inReview && "border-s-2 border-s-amber-400 bg-amber-50/40 hover:bg-amber-50/60"
+                    )}
+                  >
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <span
@@ -389,6 +437,30 @@ export function PagesClient({ me, locale }: PagesClientProps) {
                                 {tp.edit}
                               </Link>
                             </DropdownMenuItem>
+                          )}
+                          {canPublish && inReview && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => void quickReview(row, "approve")}
+                                disabled={reviewRowBusy === row.id}
+                                className="text-emerald-700 focus:text-emerald-800"
+                              >
+                                <ShieldCheck className="size-4" aria-hidden="true" />
+                                {te.reviewApprove}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => {
+                                  setRejectTarget(row);
+                                  setRejectNote("");
+                                }}
+                                disabled={reviewRowBusy === row.id}
+                              >
+                                <XCircle className="size-4" aria-hidden="true" />
+                                {te.reviewReject}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
                           )}
                           <DropdownMenuItem asChild>
                             <Link href={`/${locale}/admin/pages/${row.id}/preview`} target="_blank" rel="noopener noreferrer">
@@ -490,6 +562,52 @@ export function PagesClient({ me, locale }: PagesClientProps) {
             <Button type="button" onClick={() => void create()} disabled={creating || !slugOk || !titleOk}>
               {creating ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Plus className="size-4" aria-hidden="true" />}
               {tp.createPage}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ——— رفض مراجعة سريع من القائمة — ملاحظة اختيارية ——— */}
+      <Dialog open={rejectTarget !== null} onOpenChange={(o) => !o && setRejectTarget(null)}>
+        <DialogContent className="sm:max-w-md" dir={locale === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-full bg-red-50 text-red-600" aria-hidden="true">
+                <XCircle className="size-4" />
+              </span>
+              {te.rejectTitle}
+            </DialogTitle>
+            <DialogDescription>
+              {te.rejectBody}{" "}
+              <span className="font-semibold text-foreground">
+                {rejectTarget ? (locale === "en" ? rejectTarget.titleEn || rejectTarget.titleAr : rejectTarget.titleAr || rejectTarget.titleEn) : ""}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              placeholder={te.rejectNotePlaceholder}
+              rows={3}
+              maxLength={500}
+              className="min-h-20 resize-none"
+              aria-label={te.reviewNote}
+            />
+            <p className="text-[11px] text-muted-foreground">{te.reviewNoteOptional}</p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={() => setRejectTarget(null)} disabled={reviewRowBusy !== null}>
+              {t.admin.editor.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => rejectTarget && void quickReview(rejectTarget, "reject", rejectNote)}
+              disabled={reviewRowBusy !== null}
+            >
+              {reviewRowBusy === rejectTarget?.id ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <XCircle className="size-4" aria-hidden="true" />}
+              {te.reviewReject}
             </Button>
           </DialogFooter>
         </DialogContent>

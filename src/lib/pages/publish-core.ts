@@ -53,6 +53,8 @@ export async function publishPageCore(input: {
   locales: PublishLocales;
   actor: PublishActor;
   via: PublishVia;
+  /** ملاحظة اختيارية تُخزن على الإصدارات المنشأة (تُستخدم لموافقة المراجعة — «approved») */
+  versionNote?: string | null;
 }): Promise<PublishCoreResult> {
   const { pageId, locales, actor, via } = input;
 
@@ -141,7 +143,7 @@ export async function publishPageCore(input: {
           version: (last?.version ?? 0) + 1,
           blocks: locale === "ar" ? page.draftBlocksAr : page.draftBlocksEn,
           authorId: actor.id,
-          note: via === "scheduled" ? "scheduled" : null,
+          note: via === "scheduled" ? "scheduled" : input.versionNote ?? null,
         },
       });
     });

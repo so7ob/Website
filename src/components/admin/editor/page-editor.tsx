@@ -19,7 +19,9 @@ import {
   ArrowLeft,
   BookOpen,
   CalendarClock,
+  CheckCircle2,
   ChevronDown,
+  Clock3,
   ExternalLink,
   FileWarning,
   FlaskConical,
@@ -28,6 +30,7 @@ import {
   Eraser,
   LayoutTemplate,
   Loader2,
+  Lock,
   Monitor,
   Pencil,
   PlusCircle,
@@ -35,10 +38,13 @@ import {
   Redo2,
   RotateCw,
   Search,
+  Send,
   Settings2,
+  ShieldCheck,
   Smartphone,
   Tablet,
   Undo2,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +69,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getPortalContent } from "@/content/portal";
@@ -94,6 +101,7 @@ import { applyNodeMove, validateNodeMove } from "@/lib/blocks/tree-move";
 import type { NodeStyle } from "@/lib/blocks/style";
 import { validateContent } from "@/lib/blocks/validate";
 import { applyInlineField, isInlineEditableType } from "@/lib/blocks/inline-fields";
+import { canReviewDecision, canSubmitForReview, isSaveLocked } from "@/lib/pages/review";
 import type { Locale } from "@/lib/i18n";
 import { apiErrorMessage, apiGet, apiSend, ApiError } from "@/components/admin/helpers";
 import type { Me } from "@/components/admin/types";
@@ -118,11 +126,13 @@ import {
   type PageDetail,
   type PageDetailResponse,
   type PatchPageResponse,
+  type SubmitReviewResponse,
+  type ReviewDecisionResponse,
   type PublishResponse,
   type DiscardResponse,
 } from "./types";
 
-type SaveStatus = "saved" | "saving" | "dirty" | "error" | "conflict";
+type SaveStatus = "saved" | "saving" | "dirty" | "locked" | "error" | "conflict";
 type LoadStatus = "loading" | "ready" | "notFound" | "error" | "invalid";
 
 /** مسار العقدة من الجذر حتى المطلوبة (شاملًا إياها) — null إن لم توجد */
@@ -165,6 +175,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   const te = t.admin.editor;
   const tp = t.admin.pages;
   const canPublish = can(me, "pages.publish");
+  const canEdit = can(me, "pages.edit");
 
   // ——— الحالة ———
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
@@ -219,6 +230,16 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   // جلسة التحرير النصي المباشر في الرسم — معرف العقدة الورقية قيد التحرير
   const [inlineEditId, setInlineEditId] = useState<string | null>(null);
   const inlineEditIdRef = useRef<string | null>(null);
+  // ——— دورة المراجعة (الطور 2) ———
+  // مرآة حالة الصفحة لمستمعي النافذة والمؤقتات (تعمل خارج دورة التصيير)
+  const pageStatusRef = useRef<string>("draft");
+  useEffect(() => {
+    pageStatusRef.current = page?.status ?? "draft";
+  }, [page?.status]);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
   // حافظة الكتل عبر الصفحات — تُقرأ بعد التركيب (localStorage غير متاح أثناء التهيئة الأولى)
   const [clipboardEntries, setClipboardEntries] = useState<ClipboardEntry[]>([]);
   useEffect(() => {
@@ -254,15 +275,22 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   const historyTimerRef = useRef<number | null>(null);
   const pendingBaselineRef = useRef<DraftState | null>(null);
   const performSaveRef = useRef<() => Promise<SaveOutcome>>(async () => "failed");
+  // مرجع قرار المراجعة — يُستخدم في مستمعي النافذة المعرّفة قبل تعريف الدالة نفسها
+  const decideReviewRef = useRef<(decision: "approve" | "reject", note?: string) => Promise<void>>(async () => {});
 
-  // ——— جدولة الحفظ التلقائي — يتوقف عند التعارض أو خطأ تحقق يحتاج تدخل المستخدم ———
+  // ——— جدولة الحفظ التلقائي — يتوقف عند التعارض أو خطأ تحقق يحتاج تدخل المستخدم،
+  // وأثناء المراجعة (in_review) يُقفل الحفظ كله حتى لا يتغير ما يُراجَع ———
   const scheduleAutosave = useCallback(() => {
+    if (isSaveLocked(pageStatusRef.current)) {
+      if (saveStatusRef.current !== "conflict") setSaveStatusSync("locked");
+      return;
+    }
     if (autosaveTimerRef.current !== null) return;
     autosaveTimerRef.current = window.setTimeout(() => {
       autosaveTimerRef.current = null;
       void performSaveRef.current();
     }, AUTOSAVE_DELAY);
-  }, []);
+  }, [setSaveStatusSync]);
 
   // ——— الالتزام بالحالة (مرجع متزامن + حالة React + جدولة الحفظ) ———
   const commit = useCallback(
@@ -277,6 +305,11 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
         setSaveStatusSync("saved");
         return;
       }
+      // أثناء المراجعة التعديلات المحلية تبقى محلية — المؤشر «مقفول» لا «غير محفوظة»
+      if (isSaveLocked(pageStatusRef.current)) {
+        setSaveStatusSync("locked");
+        return;
+      }
       setSaveStatusSync("dirty");
       scheduleAutosave();
     },
@@ -288,6 +321,11 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
   const performSave = useCallback(async (): Promise<SaveOutcome> => {
     const s = stateRef.current;
     if (!s) return "failed";
+    // قفل المراجعة: لا يُرسل PATCH أبدًا خلال in_review — المؤشر يقول ذلك للمستخدم
+    if (isSaveLocked(pageStatusRef.current)) {
+      if (saveStatusRef.current !== "conflict") setSaveStatusSync("locked");
+      return "failed";
+    }
     // الحفظ دائمًا بمغلف v1: { schemaVersion: 1, blocks: شجرة } — ولا يُرسل شيء غير صالح
     const blocksAr = envelopeJson(s.draft.ar);
     const blocksEn = envelopeJson(s.draft.en);
@@ -351,6 +389,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
       const conflicted = saveStatusRef.current === "conflict";
       if (
         !conflicted &&
+        !isSaveLocked(pageStatusRef.current) &&
         cur &&
         last &&
         (envelopeJson(cur.draft.ar) !== last.ar || envelopeJson(cur.draft.en) !== last.en)
@@ -535,7 +574,8 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
           guideOpen ||
           confirmDelete !== null ||
           mobileLibraryOpen ||
-          mobilePropsOpen
+          mobilePropsOpen ||
+          rejectOpen
         ) {
           return;
         }
@@ -602,9 +642,33 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
       } else if (key === "s") {
         // حفظ فوري للمسودة — مثل محررات المستندات (يعمل حتى داخل حقول التحرير)
         e.preventDefault();
+        if (isSaveLocked(pageStatusRef.current)) {
+          toast.info(te.reviewLockedToast);
+          return;
+        }
         void performSaveRef.current().then((outcome) => {
           if (outcome === "saved") toast.success(te.saved);
         });
+      } else if (key === "enter" && e.altKey && canPublish && !reviewBusy && !submittingReview) {
+        // موافقة المراجعة ونشرها — اختصار الناشر أثناء in_review (G5)
+        if (inTextField) return;
+        if (
+          rejectOpen || paletteOpen || settingsOpen || versionsOpen || conflictOpen || guideOpen ||
+          confirmDelete !== null || mobileLibraryOpen || mobilePropsOpen
+        ) return;
+        if (!canReviewDecision(pageStatusRef.current)) return;
+        e.preventDefault();
+        void decideReviewRef.current("approve");
+      } else if (key === "r" && e.altKey && canPublish && !reviewBusy && !submittingReview) {
+        // رفض المراجعة — يفتح حوار الملاحظة (لا تعارض مع reload لأنه بدون Alt)
+        if (inTextField) return;
+        if (
+          rejectOpen || paletteOpen || settingsOpen || versionsOpen || conflictOpen || guideOpen ||
+          confirmDelete !== null || mobileLibraryOpen || mobilePropsOpen
+        ) return;
+        if (!canReviewDecision(pageStatusRef.current)) return;
+        e.preventDefault();
+        setRejectOpen(true);
       } else if (key === "/") {
         // لوحة الإضافة السريعة — تعمل من أي موضع داخل المحرر (تبديل)
         e.preventDefault();
@@ -617,6 +681,11 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     undo,
     redo,
     te.saved,
+    te.reviewLockedToast,
+    canPublish,
+    reviewBusy,
+    submittingReview,
+    rejectOpen,
     paletteOpen,
     settingsOpen,
     versionsOpen,
@@ -628,22 +697,40 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     testMode,
   ]);
 
+  // ——— هل توجد تعديلات محلية لم تصل الخادم؟ — يُستخدم في حراسي المغادرة وقفل المراجعة ———
+  const hasUnsavedLocalChanges = useCallback((): boolean => {
+    const cur = stateRef.current;
+    const last = lastSavedRef.current;
+    if (!cur || !last) return false;
+    return envelopeJson(cur.draft.ar) !== last.ar || envelopeJson(cur.draft.en) !== last.en;
+  }, []);
+
   // ——— حارس المغادرة ———
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
-      if (saveStatus === "dirty" || saveStatus === "saving" || saveStatus === "error" || saveStatus === "conflict") {
+      const guarded =
+        saveStatus === "dirty" ||
+        saveStatus === "saving" ||
+        saveStatus === "error" ||
+        saveStatus === "conflict" ||
+        // أثناء المراجعة: التعديلات المحلية مقفولة لكنها تغييرات حقيقية تُفقد بالمغادرة
+        (saveStatus === "locked" && hasUnsavedLocalChanges());
+      if (guarded) {
         e.preventDefault();
         e.returnValue = te.leaveWarning;
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [saveStatus, te.leaveWarning]);
+  }, [saveStatus, te.leaveWarning, hasUnsavedLocalChanges]);
 
   // ——— حارس التنقل الداخلي: روابط التطبيق لا تسرق تغييرات معلقة ———
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (saveStatusRef.current !== "dirty" && saveStatusRef.current !== "saving" && saveStatusRef.current !== "conflict") return;
+      const st = saveStatusRef.current;
+      const pending =
+        st === "dirty" || st === "saving" || st === "conflict" || (st === "locked" && hasUnsavedLocalChanges());
+      if (!pending) return;
       const anchor = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
       if (!anchor) return;
       const href = anchor.getAttribute("href") ?? "";
@@ -655,7 +742,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, []);
+  }, [hasUnsavedLocalChanges]);
 
   // ——— عمليات الشجرة ———
   // كل عملية تستنسخ شجرة اللغة الحالية (structuredClone) ثم تعدّل النسخة —
@@ -1087,6 +1174,115 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
     }
   }, [pageId, performSave, publishing, t.auth.errors, te.publishedOk, te.emptyPageError, te.archivedError, setSaveStatusSync]);
 
+  // ——— إرسال للمراجعة: حفظ فوري أولًا ثم in_review — يقفل الحفظ حتى قرار الناشر ———
+  const submitForReview = useCallback(async () => {
+    if (submittingReview || reviewBusy) return;
+    setSubmittingReview(true);
+    try {
+      // حفظ حتى النجاح — ما يُراجع هو المحفوظ لا شاشة أحد (نفس فلسفة النشر)
+      let outcome = await performSave();
+      for (let attempt = 0; attempt < 3 && outcome === "failed" && stateRef.current; attempt++) {
+        await new Promise((r) => setTimeout(r, 300));
+        outcome = await performSave();
+      }
+      if (outcome === "conflict") return; // حوار التعارض مفتوح — القرار للمستخدم
+      if (outcome === "failed") {
+        toast.error(apiErrorMessage(new Error("save_failed"), t.auth.errors));
+        return;
+      }
+      const res = await apiSend<SubmitReviewResponse>(`/api/admin/pages/${pageId}`, "PATCH", {
+        action: "submit_review",
+        baseRevision: revisionRef.current,
+      });
+      pageStatusRef.current = res.page.status;
+      revisionRef.current = res.page.draftRevision;
+      setPage((prev) =>
+        prev ? { ...prev, status: res.page.status, draftRevision: res.page.draftRevision } : prev
+      );
+      setSaveStatusSync("locked");
+      toast.success(te.reviewSubmitted);
+    } catch (err) {
+      if (err instanceof ApiError && (err.code === "conflict" || err.code === "revision_required")) {
+        setSaveStatusSync("conflict");
+        setConflictOpen(true);
+      } else if (err instanceof ApiError && err.code === "already_in_review") {
+        toast.error(te.alreadyInReview);
+      } else if (err instanceof ApiError && err.code === "archived") {
+        toast.error(te.archivedError);
+      } else {
+        toast.error(apiErrorMessage(err, t.auth.errors));
+      }
+    } finally {
+      setSubmittingReview(false);
+    }
+  }, [pageId, performSave, submittingReview, reviewBusy, t.auth.errors, te.reviewSubmitted, te.alreadyInReview, te.archivedError, setSaveStatusSync]);
+
+  // ——— قرار المراجعة: موافقة (نشر عبر نواة publishPageCore) أو رفض (عودة لمسودة) ———
+  const decideReview = useCallback(
+    async (decision: "approve" | "reject", note?: string) => {
+      if (reviewBusy || submittingReview) return;
+      setReviewBusy(true);
+      try {
+        const res = await apiSend<ReviewDecisionResponse>(`/api/admin/pages/${pageId}/review`, "POST", {
+          decision,
+          baseRevision: revisionRef.current,
+          ...(decision === "reject" && note ? { note } : {}),
+        });
+        pageStatusRef.current = res.page.status;
+        revisionRef.current = res.page.draftRevision;
+        setPage((prev) =>
+          prev
+            ? {
+                ...prev,
+                slug: res.page.slug,
+                status: res.page.status,
+                draftRevision: res.page.draftRevision,
+                publishedRevision: res.page.publishedRevision ?? prev.publishedRevision,
+                publishedAt: res.publishedAt ?? prev.publishedAt,
+                hasUnpublishedChanges: res.page.hasUnpublishedChanges ?? prev.hasUnpublishedChanges,
+              }
+            : prev
+        );
+        setRejectOpen(false);
+        setRejectNote("");
+        if (decision === "approve") {
+          toast.success(te.reviewApproved);
+        } else {
+          toast.success(te.reviewRejected);
+        }
+        // بعد القرار يستأنف الحفظ الآلي إن وُجدت تعديلات محلية لم تُرسل بعد (كانت مقفولة)
+        const cur = stateRef.current;
+        const last = lastSavedRef.current;
+        if (cur && last && (envelopeJson(cur.draft.ar) !== last.ar || envelopeJson(cur.draft.en) !== last.en)) {
+          setSaveStatusSync("dirty");
+          scheduleAutosave();
+        } else {
+          setSaveStatusSync("saved");
+        }
+      } catch (err) {
+        if (err instanceof ApiError && (err.code === "conflict" || err.code === "revision_required")) {
+          setRejectOpen(false);
+          setSaveStatusSync("conflict");
+          setConflictOpen(true);
+        } else if (err instanceof ApiError && err.code === "not_in_review") {
+          toast.error(te.reviewNotInReview);
+          setRejectOpen(false);
+        } else if (err instanceof ApiError && err.code === "empty_page") {
+          toast.error(te.emptyPageError);
+        } else {
+          toast.error(apiErrorMessage(err, t.auth.errors));
+        }
+      } finally {
+        setReviewBusy(false);
+      }
+    },
+    [pageId, reviewBusy, submittingReview, scheduleAutosave, t.auth.errors, te.reviewApproved, te.reviewRejected, te.reviewNotInReview, te.emptyPageError, setSaveStatusSync]
+  );
+
+  useEffect(() => {
+    decideReviewRef.current = decideReview;
+  }, [decideReview]);
+
   // ——— استبعاد التعديلات غير المنشورة: المسودة تعود حرفيًا لآخر نسخة منشورة ———
   const discardDraft = useCallback(async () => {
     if (discarding) return;
@@ -1202,6 +1398,14 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
         <span className="size-1.5 rounded-full bg-destructive" aria-hidden="true" />
         {te.saveFailed}
       </span>
+    ) : saveStatus === "locked" ? (
+      <span
+        className="flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700"
+        title={te.reviewLockBody}
+      >
+        <Lock className="size-3" aria-hidden="true" />
+        {te.reviewLockedShort}
+      </span>
     ) : (
       <span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
         <span className="size-1.5 rounded-full bg-amber-500" aria-hidden="true" />
@@ -1258,6 +1462,37 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
           </Tabs>
 
           {statusIndicator}
+
+          {/* شارة حالة الصفحة الحالية — تظهر مرحلة دورة الحياة (مسودة/قيد المراجعة/منشورة/مؤرشفة) */}
+          {page && (
+            <span
+              className={cn(
+                "hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold sm:inline-flex",
+                page.status === "published" && "border-transparent bg-emerald-50 text-emerald-700",
+                page.status === "in_review" && "border-amber-200 bg-amber-50 text-amber-700",
+                page.status === "draft" && "border-transparent bg-secondary text-secondary-foreground",
+                page.status === "archived" && "border-transparent bg-slate-100 text-slate-500"
+              )}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  page.status === "published" && "bg-emerald-500",
+                  page.status === "in_review" && "animate-pulse bg-amber-500",
+                  page.status === "draft" && "bg-muted-foreground/60",
+                  page.status === "archived" && "bg-slate-400"
+                )}
+                aria-hidden="true"
+              />
+              {page.status === "published"
+                ? tp.published
+                : page.status === "in_review"
+                  ? tp.inReview
+                  : page.status === "archived"
+                    ? tp.archivedStatus
+                    : tp.draft}
+            </span>
+          )}
 
           {/* شريط معلومات الجلسة: آخر حفظ + آخر محرر + لغة التحرير + تعديلات غير منشورة */}
           <div className="hidden items-center gap-2 text-[11px] text-muted-foreground xl:flex">
@@ -1497,7 +1732,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                 <Settings2 className="size-4" aria-hidden="true" />
               </Button>
 
-            {/* استبعاد التعديلات غير المنشورة — صفحة منشورة فيها تعديلات مسودة */}
+          {/* استبعاد التعديلات غير المنشورة — صفحة منشورة فيها تعديلات مسودة */}
             {page?.status === "published" && page?.hasUnpublishedChanges && (
               <Button
                 type="button"
@@ -1514,8 +1749,25 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
               </Button>
             )}
 
-            {/* النشر */}
-            {canPublish ? (
+            {/* إرسال للمراجعة — محرر على صفحة مسودة/منشورة بتعديلات (الطور 2) */}
+            {canEdit && page && canSubmitForReview(page.status) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-9 rounded-full border-brand/40 text-brand-strong hover:bg-accent hover:text-navy"
+                onClick={() => void submitForReview()}
+                disabled={submittingReview || reviewBusy}
+                title={te.submitForReviewHint}
+                aria-label={te.submitForReview}
+              >
+                {submittingReview ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Send className="size-4" aria-hidden="true" />}
+                <span className="hidden sm:inline">{te.submitForReview}</span>
+              </Button>
+            )}
+
+            {/* النشر — يُقفل أثناء المراجعة (الموافقة هي مسار النشر حينها) */}
+            {canPublish && page?.status !== "in_review" ? (
               <Button type="button" className="min-h-9 rounded-full px-5" onClick={() => void publish()} disabled={publishing}>
                 {publishing ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
                 {te.publish}
@@ -1529,7 +1781,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
                     </Button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>{te.publishDisabled}</TooltipContent>
+                <TooltipContent>{page?.status === "in_review" ? te.publishDuringReview : te.publishDisabled}</TooltipContent>
               </Tooltip>
             )}
 
@@ -1550,6 +1802,60 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
             )}
           </div>
         </div>
+
+        {/* ——— شريط قفل المراجعة — الصفحة قيد المراجعة: الحفظ مقفول وقرار الناشر يغلق الدورة ——— */}
+        {page?.status === "in_review" && (
+          <div
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-gradient-to-l from-amber-50 via-white to-amber-50 px-4 py-3 shadow-sm"
+            role="status"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700" aria-hidden="true">
+              <Clock3 className="size-4.5" />
+            </span>
+            <div className="min-w-44 flex-1">
+              <p className="flex items-center gap-1.5 text-sm font-bold text-amber-900">
+                <Lock className="size-3.5 shrink-0" aria-hidden="true" />
+                {te.reviewLockTitle}
+              </p>
+              <p className="text-xs leading-5 text-amber-800/90">
+                {te.reviewLockBody}
+                {saveStatus === "locked" && hasUnsavedLocalChanges() ? ` — ${te.reviewLocalPending}` : ""}
+              </p>
+            </div>
+            {canPublish ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="min-h-9 rounded-full px-4"
+                  onClick={() => void decideReview("approve")}
+                  disabled={reviewBusy}
+                  title={te.reviewApproveHint}
+                  aria-keyshortcuts="Control+Alt+Enter"
+                >
+                  {reviewBusy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}
+                  {te.reviewApprove}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-9 rounded-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  onClick={() => setRejectOpen(true)}
+                  disabled={reviewBusy}
+                  title={te.reviewRejectHint}
+                  aria-keyshortcuts="Control+Alt+R"
+                >
+                  <XCircle className="size-4" aria-hidden="true" />
+                  {te.reviewReject}
+                </Button>
+              </div>
+            ) : (
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{te.reviewAwaiting}</span>
+            )}
+          </div>
+        )}
 
         {/* ——— اللوحات الثلاث ——— */}
         <div className="grid min-h-0 gap-3 lg:grid-cols-[14rem_1fr] xl:grid-cols-[14rem_1fr_20rem]">
@@ -1754,6 +2060,47 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ——— رفض المراجعة — ملاحظة اختيارية تصل المحرر وتُدوَّن في التدقيق ——— */}
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogContent className="sm:max-w-md" dir={locale === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-full bg-red-50 text-red-600" aria-hidden="true">
+                <XCircle className="size-4" />
+              </span>
+              {te.rejectTitle}
+            </DialogTitle>
+            <DialogDescription>{te.rejectBody}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              placeholder={te.rejectNotePlaceholder}
+              rows={3}
+              maxLength={500}
+              className="min-h-20 resize-none"
+              aria-label={te.reviewNote}
+            />
+            <p className="text-[11px] text-muted-foreground">{te.reviewNoteOptional}</p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={() => setRejectOpen(false)} disabled={reviewBusy}>
+              {te.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void decideReview("reject", rejectNote)}
+              disabled={reviewBusy}
+            >
+              {reviewBusy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <XCircle className="size-4" aria-hidden="true" />}
+              {te.reviewReject}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ——— تأكيد حذف عقدة — الحاويات تحذف أبناءها معها ——— */}
       <AlertDialog open={confirmDelete !== null} onOpenChange={(o) => !o && setConfirmDelete(null)}>
