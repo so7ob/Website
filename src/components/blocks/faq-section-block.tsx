@@ -8,6 +8,7 @@ import { en } from "@/content/en";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import { BlockLink } from "./block-link";
+import { EditableText } from "./inline-edit-context";
 
 export type FaqSectionBlockProps = z.input<typeof blockSchemas.faqSection>["props"];
 
@@ -22,7 +23,15 @@ export function FaqSectionBlock({ props, locale }: { props: FaqSectionBlockProps
     <Section className="bg-white">
       <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <div>
-          <SectionHeading kicker={props.kicker} title={props.title} description={props.description} />
+          <SectionHeading
+            kickerNode={
+              <EditableText field="kicker" value={props.kicker} as="span" className="rounded-sm outline-none" />
+            }
+            titleNode={
+              <EditableText field="title" value={props.title} as="span" primary className="rounded-sm outline-none" />
+            }
+            description={props.description}
+          />
           <BlockLink
             href={ctaHref}
             locale={locale}

@@ -4,6 +4,7 @@ import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
 import { BlockLink } from "./block-link";
+import { EditableText } from "./inline-edit-context";
 
 export type CtaSectionBlockProps = z.input<typeof blockSchemas.ctaSection>["props"];
 
@@ -31,8 +32,19 @@ export function CtaSectionBlock({ props, locale }: { props: CtaSectionBlockProps
       </div>
 
       <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <h2 className="text-balance text-3xl font-bold leading-snug text-white sm:text-4xl">{props.title}</h2>
-        <p className="mx-auto mt-5 max-w-xl text-pretty text-base leading-8 text-white/70">{props.body}</p>
+        <EditableText
+          field="title"
+          value={props.title}
+          as="h2"
+          primary
+          className="text-balance text-3xl font-bold leading-snug text-white sm:text-4xl"
+        />
+        <EditableText
+          field="body"
+          value={props.body}
+          as="p"
+          className="mx-auto mt-5 max-w-xl text-pretty text-base leading-8 text-white/70"
+        />
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           {(props.links ?? []).map((link, i) => (
             <BlockLink
