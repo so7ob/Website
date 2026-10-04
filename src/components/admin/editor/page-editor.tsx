@@ -1984,6 +1984,7 @@ export function PageEditor({ me, locale, pageId }: PageEditorProps) {
         pageId={pageId}
         locale={locale}
         me={me}
+        draft={state ? state.draft : { ar: [], en: [] }}
         baseRevision={revisionRef.current}
         onRestored={() => void loadPage()}
       />

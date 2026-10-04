@@ -561,6 +561,15 @@ export interface PortalContent {
       restoreBoth: string;
       restoreThisLocale: string;
       versionNotFound: string;
+      diffPanelTitle: string;
+      diffDraftCol: string;
+      diffVersionCol: string;
+      diffComesBack: string;
+      diffGetsRemoved: string;
+      diffUnchanged: string;
+      diffIdentical: string;
+      diffUnavailable: string;
+      diffComparedWith: string;
       slugTaken: string;
       slugInvalid: string;
       homeSlugHint: string;

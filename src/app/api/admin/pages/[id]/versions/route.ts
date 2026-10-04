@@ -1,9 +1,12 @@
 /**
  * GET  /api/admin/pages/[id]/versions — تاريخ إصدارات الصفحة.
+ * كل صف يتضمن بصمة خفيفة (summary) لأنواع الكتل ومستخلصها النصي —
+ * تغذي مقارنة الإصدارات في الواجهة دون نقل محتوى كامل (خارطة الطريق 1.4).
  */
 import { type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { guardApi, json } from "@/lib/auth/session";
+import { versionFingerprint } from "@/lib/blocks/version-diff";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await guardApi(req, "pages.view");
@@ -26,6 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       author: v.author?.name ?? "—",
       createdAt: v.createdAt,
       blockCount: countBlocks(v.blocks),
+      summary: versionFingerprint(v.blocks),
     })),
   });
 }

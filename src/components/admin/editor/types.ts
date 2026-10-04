@@ -4,6 +4,7 @@
  */
 
 import type { ContentNode } from "@/lib/blocks/tree";
+import type { DiffEntry } from "@/lib/blocks/version-diff";
 
 // ——— قائمة الصفحات ———
 
@@ -163,6 +164,8 @@ export interface VersionRow {
   author: string;
   createdAt: string;
   blockCount: number;
+  /** بصمة خفيفة (أنواع + مستخلص نصي) تغذي مقارنة الإصدارات دون محتوى كامل */
+  summary: DiffEntry[];
 }
 
 export interface VersionsResponse {
