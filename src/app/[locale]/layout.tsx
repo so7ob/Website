@@ -19,6 +19,7 @@ import { locales, localeMeta, type Locale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
 import { getMenu, getSettings } from "@/lib/site-data";
 import { getAuthUser, isStaff } from "@/lib/auth/session";
+import { AppDirectionProvider } from "@/components/ui/app-direction-provider";
 
 /** الصفحات تُدار من قاعدة البيانات — لا توليد ساكن للجذر اللغوي */
 export const dynamic = "force-dynamic";
@@ -70,6 +71,7 @@ export default async function LocaleRootLayout({
   return (
     <html lang={locale} dir={dir} data-scroll-behavior="smooth">
       <body className="flex min-h-screen flex-col">
+        <AppDirectionProvider dir={dir}>
         <AnnouncementBar
           announcement={settings.announcement}
           locale={locale}
@@ -97,6 +99,7 @@ export default async function LocaleRootLayout({
           {children}
         </main>
         <SiteFooter locale={locale} content={content} settings={settings} items={footerItems} />
+        </AppDirectionProvider>
       </body>
     </html>
   );

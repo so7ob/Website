@@ -617,6 +617,10 @@ export interface PortalContent {
       clipboardCleared: string;
       clearClipboard: string;
       pasteNotAllowedHere: string;
+      layerDragHandle: string;
+      dropIntoContainer: string;
+      moveIntoOwnChild: string;
+      moveNotAllowedHere: string;
       moveUp: string;
       moveDown: string;
       undo: string;
