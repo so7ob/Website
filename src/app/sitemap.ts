@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       slug: true,
       isHome: true,
       order: true,
+      visibility: true, // احتياط parsePageSettings يعتمد الحقل المباشر عند غياب اللقطة
       publishedAt: true,
       publishedSettings: true,
       publishedBlocksAr: true,

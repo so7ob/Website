@@ -69,8 +69,13 @@ function safeRoles(value: unknown): string[] {
 
 /** تطبيع كائن خام إلى إعدادات صالحة بقيم احتياطية آمنة */
 export function normalizePageSettings(raw: PageSettingsSource, fallbackAdminTitle?: { ar: string; en: string }): PageSettings {
-  const visibility = VISIBILITIES.includes((raw.visibility ?? "public") as (typeof VISIBILITIES)[number])
-    ? (raw.visibility as string)
+  // غياب visibility يعني علنيًا دائمًا — القرار يُؤخذ من القيمة المدققة
+  // لا من الخام (bug تاريخي: الفرع الشرطي كان يرد القيمة الخام undefined).
+  const rawVisibility = raw.visibility;
+  const visibility = (VISIBILITIES as readonly string[]).includes(
+    typeof rawVisibility === "string" ? rawVisibility : "",
+  )
+    ? (rawVisibility as (typeof VISIBILITIES)[number])
     : "public";
   const order = typeof raw.order === "number" && Number.isFinite(raw.order) ? Math.trunc(raw.order) : 0;
   return {
