@@ -739,7 +739,7 @@ export const portalEn: PortalContent = {
           {
             title: "Inline text editing",
             body: [
-              "Double-click any heading, paragraph or button-link — or select it and press Enter — to edit the text in place with the same typography and size.",
+              "Double-click any text inside ten high-usage block types — headings, paragraphs and button links; rich text (heading, lead, paragraphs); the final CTA (title and body); FAQ (kicker and title); numbered list and values (card titles and bodies); the feature grid; and process steps — or select the block and press Enter, to edit the text in place with the same typography and size.",
               "Enter commits the text and keeps the session open for other elements, Esc reverts the field and closes the session, and paste is stripped to plain text.",
             ],
           },

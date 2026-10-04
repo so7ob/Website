@@ -5,6 +5,7 @@ import { Section } from "@/components/site/section";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
+import { EditableText } from "./inline-edit-context";
 
 export type NumberedValuesBlockProps = z.input<typeof blockSchemas.numberedValues>["props"];
 
@@ -15,7 +16,13 @@ export function NumberedValuesBlock({ props }: { props: NumberedValuesBlockProps
   return (
     <Section>
       <div>
-        <h2 className="text-2xl font-bold text-navy sm:text-3xl">{props.title}</h2>
+        <EditableText
+          field="title"
+          value={props.title}
+          as="h2"
+          primary
+          className="text-balance text-2xl font-bold text-navy sm:text-3xl"
+        />
         {props.intro && <p className="mt-3 max-w-2xl leading-8 text-muted-foreground">{props.intro}</p>}
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((v, i) => (
@@ -23,8 +30,20 @@ export function NumberedValuesBlock({ props }: { props: NumberedValuesBlockProps
               <span className="font-mono text-sm font-bold text-brand" aria-hidden="true">
                 0{i + 1}
               </span>
-              <h3 className="mt-2 text-lg font-bold text-navy">{v.title}</h3>
-              <p className="mt-2 text-sm leading-7 text-muted-foreground">{v.body}</p>
+              <h3 className="mt-2 text-lg font-bold text-navy">
+                <EditableText
+                  field={`items:${i}.title`}
+                  value={v.title}
+                  as="span"
+                  className="rounded-sm outline-none"
+                />
+              </h3>
+              <EditableText
+                field={`items:${i}.body`}
+                value={v.body}
+                as="p"
+                className="mt-2 text-sm leading-7 text-muted-foreground"
+              />
             </li>
           ))}
           {props.closingNote && (

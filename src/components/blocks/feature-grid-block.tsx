@@ -3,6 +3,7 @@
 import { Section, SectionHeading } from "@/components/site/section";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
+import { EditableText } from "./inline-edit-context";
 import type { Locale } from "@/lib/i18n";
 
 export type FeatureGridBlockProps = z.input<typeof blockSchemas.featureGrid>["props"];
@@ -14,7 +15,14 @@ export function FeatureGridBlock({ props }: { props: FeatureGridBlockProps; loca
 
   return (
     <Section>
-      <SectionHeading kicker={props.kicker} title={props.title} />
+      <SectionHeading
+        kickerNode={
+          <EditableText field="kicker" value={props.kicker} as="span" className="rounded-sm outline-none" />
+        }
+        titleNode={
+          <EditableText field="title" value={props.title} as="span" primary className="rounded-sm outline-none" />
+        }
+      />
       <ol className={columns === "2" ? "mt-12 grid gap-8 md:grid-cols-2" : "mt-12 space-y-8"}>
         {items.map((item, i) => (
           <li
@@ -32,9 +40,19 @@ export function FeatureGridBlock({ props }: { props: FeatureGridBlockProps; loca
                 <span className="me-2 font-mono text-brand md:hidden" aria-hidden="true">
                   {String(i + 1).padStart(2, "0")} —
                 </span>
-                {item.title}
+                <EditableText
+                  field={`items:${i}.title`}
+                  value={item.title}
+                  as="span"
+                  className="rounded-sm outline-none"
+                />
               </h3>
-              <p className="text-pretty text-[15px] leading-8 text-muted-foreground">{item.body}</p>
+              <EditableText
+                field={`items:${i}.body`}
+                value={item.body}
+                as="p"
+                className="text-pretty text-[15px] leading-8 text-muted-foreground"
+              />
             </div>
           </li>
         ))}

@@ -3,19 +3,24 @@
 import type { ReactNode } from "react";
 import { useIsNestedBlock } from "@/components/blocks/nested-context";
 
-/** ترويسة قسم موحدة: شارة علوية + عنوان + وصف اختياري، بمحاذاة تعتمد الاتجاه */
+/** ترويسة قسم موحدة: شارة علوية + عنوان + وصف اختياري، بمحاذاة تعتمد الاتجاه
+ *  kickerNode/titleNode يسمحان بحقن EditableText (التحرير المباشر) محل النص الثابت */
 export function SectionHeading({
   kicker,
   title,
   description,
   align = "start",
   tone = "light",
+  kickerNode,
+  titleNode,
 }: {
-  kicker: string;
-  title: string;
+  kicker?: string;
+  title?: string;
   description?: string;
   align?: "start" | "center";
   tone?: "light" | "dark";
+  kickerNode?: ReactNode;
+  titleNode?: ReactNode;
 }) {
   const isDark = tone === "dark";
   return (
@@ -26,10 +31,10 @@ export function SectionHeading({
         }`}
       >
         <KickerDot />
-        {kicker}
+        {kickerNode ?? kicker}
       </p>
       <h2 className={`text-balance text-3xl font-bold leading-snug sm:text-4xl ${isDark ? "text-white" : "text-navy"}`}>
-        {title}
+        {titleNode ?? title}
       </h2>
       {description && (
         <p className={`mt-4 text-pretty text-base leading-8 ${isDark ? "text-white/70" : "text-muted-foreground"}`}>

@@ -5,6 +5,7 @@ import { Section } from "@/components/site/section";
 import { type z } from "zod";
 import type { blockSchemas } from "@/lib/blocks/types";
 import type { Locale } from "@/lib/i18n";
+import { EditableText } from "./inline-edit-context";
 
 export type RichTextBlockProps = z.input<typeof blockSchemas.richText>["props"];
 
@@ -15,13 +16,32 @@ export function RichTextBlock({ props }: { props: RichTextBlockProps; locale: Lo
   return (
     <Section>
       <div className={align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
-        {props.heading && <h2 className="text-balance text-2xl font-bold text-navy sm:text-3xl">{props.heading}</h2>}
-        {props.lead && <p className="mt-4 text-pretty text-lg leading-9 text-foreground/80">{props.lead}</p>}
+        {props.heading && (
+          <EditableText
+            field="heading"
+            value={props.heading}
+            as="h2"
+            className="text-balance text-2xl font-bold text-navy sm:text-3xl"
+          />
+        )}
+        {props.lead && (
+          <EditableText
+            field="lead"
+            value={props.lead}
+            as="p"
+            className="mt-4 text-pretty text-lg leading-9 text-foreground/80"
+          />
+        )}
         <div className={props.heading || props.lead ? "mt-5 space-y-5" : "space-y-5"}>
           {(props.paragraphs ?? []).map((p, i) => (
-            <p key={i} className="text-pretty text-base leading-9 text-muted-foreground">
-              {p}
-            </p>
+            <EditableText
+              key={i}
+              field={`paragraphs:${i}`}
+              value={p}
+              as="p"
+              primary={i === 0}
+              className="text-pretty text-base leading-9 text-muted-foreground"
+            />
           ))}
         </div>
         {props.notice && (
