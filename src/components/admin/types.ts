@@ -247,12 +247,29 @@ export interface InquiryRow {
   /** وقت آخر رسالة عميل ظاهرة والاستفسار ينتظر رد الفريق (null إن لم يكن بانتظار) */
   awaitingSince: string | null;
 }
+
+/** العدادات المحورية — كل عدّاد «ما ستراه عند نقر الحبة» تحت بقية الأبعاد */
+export interface InquiriesFacetCounts {
+  /** عدّاد كل حالة تحت بقية الأبعاد (مفاتيح statuses المعروفة) */
+  statuses: Record<string, number>;
+  /** عدّاد المرشّح المركّب «مفتوحة» */
+  open: number;
+  /** عدّاد كل تصنيف تحت بقية الأبعاد */
+  categories: Record<string, number>;
+  /** كم مؤرشفًا موجودًا تحت بقية الأبعاد */
+  archived: number;
+  /** المعيَّنة لي تحت بقية الأبعاد */
+  assignedToMe: number;
+  /** كل التعيينات (مجموعة المسؤولية بلا قيد) تحت بقية الأبعاد */
+  allAssignments: number;
+}
 export interface InquiriesResponse {
   ok: boolean;
   inquiries: InquiryRow[];
   total: number;
   page: number;
   pageSize: number;
+  counts: InquiriesFacetCounts;
 }
 export interface InquiryDetail {
   id: string;

@@ -569,6 +569,13 @@ export const portalEn: PortalContent = {
       assign: "Assign",
       conversation: "Conversation",
       empty: "No inquiries",
+      emptyBody:
+        "Client inquiries from the account portal arrive here directly — try creating one from the client portal to see the full cycle.",
+      noResults: "No matching results",
+      noResultsBody: "No inquiries match these filters — widen the search or reset filters to return to the full list.",
+      resetFilters: "Reset filters",
+      assignedToMe: "Assigned to me",
+      allAssignments: "All assignments",
       statuses: {
         new: "New",
         in_review: "In review",
