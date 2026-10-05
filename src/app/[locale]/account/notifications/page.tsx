@@ -22,6 +22,7 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
       t={portal.account.notifications}
       authErrors={portal.auth.errors}
       statuses={portal.account.requests.statuses}
+      inquiriesHref={`/${locale}/account/inquiries`}
     />
   );
 }

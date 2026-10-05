@@ -1,6 +1,7 @@
 /**
- * GET  /api/account/notifications — إشعارات المستخدم.
- * POST /api/account/notifications — تعليم مقروء {id} أو {all:true}.
+ * GET    /api/account/notifications — إشعارات المستخدم (unreadOnly اختياري).
+ * POST   /api/account/notifications — تعليم مقروء {id} أو {all:true}.
+ * DELETE /api/account/notifications?id=… — حذف إشعار واحد للمستخدم الحالي حصرًا.
  */
 import { type NextRequest } from "next/server";
 import { db } from "@/lib/db";
@@ -70,4 +71,19 @@ export async function POST(req: NextRequest) {
   if (!notification || notification.userId !== guard.user.id) return json({ ok: false, code: "not_found" }, 404);
   await db.notification.update({ where: { id }, data: { readAt: new Date() } });
   return json({ ok: true });
+}
+
+export async function DELETE(req: NextRequest) {
+  const guard = await guardApi(req);
+  if (!guard.ok) return guard.response;
+
+  const url = new URL(req.url);
+  const id = String(url.searchParams.get("id") ?? "");
+  if (!id) return json({ ok: false, code: "invalid" }, 400);
+
+  const notification = await db.notification.findUnique({ where: { id } });
+  if (!notification || notification.userId !== guard.user.id) return json({ ok: false, code: "not_found" }, 404);
+
+  await db.notification.delete({ where: { id } });
+  return json({ ok: true, deleted: id });
 }
