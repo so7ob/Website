@@ -981,6 +981,11 @@ export const portalEn: PortalContent = {
       saved: "Menu saved",
       remove: "Remove",
       pagesPlaceholder: "Pick a page…",
+      dragHandle: "Drag handle — drag or use keyboard to reorder",
+      previewTitle: "Live preview",
+      previewHint: "As it appears on the site — updates instantly with your edits",
+      previewEmpty: "No enabled items to display — add a link or enable one",
+      dragHint: "Drag the handle to reorder, or focus it and press Space then arrows — disabled items stay hidden on the site",
     },
     settings: {
       title: "Site settings",
