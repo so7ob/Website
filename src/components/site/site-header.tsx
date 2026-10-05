@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, UserCircle, LogIn, LayoutDashboard } from "lucide-react";
+import { Menu, X, UserCircle, LogIn, LayoutDashboard, Search } from "lucide-react";
 import { Logo } from "./logo";
 import { LanguageSwitcher } from "./language-switcher";
 import { localePath, type Locale } from "@/lib/i18n";
@@ -85,6 +85,15 @@ export function SiteHeader({ locale, content, items, auth }: SiteHeaderProps) {
         </nav>
 
         <div className="hidden items-center gap-2.5 lg:flex">
+          {/* بحث الموقع — زر أيقونة مدمج مع أزرار الترويسة */}
+          <Link
+            href={`/${locale}/search`}
+            aria-label={content.search.openLabel}
+            title={content.search.openLabel}
+            className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-white text-muted-foreground transition-colors hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          >
+            <Search className="size-4.5" aria-hidden="true" />
+          </Link>
           <LanguageSwitcher locale={locale} common={content.common} />
           {accountLink}
           {auth.loggedIn && auth.isStaff && (
@@ -107,6 +116,13 @@ export function SiteHeader({ locale, content, items, auth }: SiteHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            href={`/${locale}/search`}
+            aria-label={content.search.openLabel}
+            className="inline-flex size-11 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:border-brand hover:text-brand"
+          >
+            <Search className="size-5" aria-hidden="true" />
+          </Link>
           <LanguageSwitcher locale={locale} common={content.common} />
           <button
             type="button"

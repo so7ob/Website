@@ -206,4 +206,23 @@ export interface SiteContent {
     languageSwitched: string;
     brandAria: string;
   };
+  search: {
+    /** زر الترويسة (سطح مكتب وجوال) */
+    openLabel: string;
+    title: string;
+    subtitle: string;
+    placeholder: string;
+    submit: string;
+    /** {count} = عدد النتائج */
+    resultsCount: string;
+    /** نص بديل تحت العنوان إن لم يطابق المتن */
+    describedBy: string;
+    emptyTitle: string;
+    emptyHint: string;
+    suggestionsTitle: string;
+    noResultsTitle: string;
+    noResultsHint: string;
+    snippetStart: string;
+    snippetEnd: string;
+  };
 }
