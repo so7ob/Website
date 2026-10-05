@@ -7,7 +7,8 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { History, Loader2, RotateCcw } from "lucide-react";
+import { Eye, History, Loader2, RotateCcw } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -170,6 +171,23 @@ export function VersionsDialog({ open, onOpenChange, pageId, locale, me, baseRev
                       {version.author} · {fmtDateTime(version.createdAt, locale)}
                     </p>
                   </div>
+                  {/* معاينة مثبتة بالإصدار للغة التبويب — تفتح بتبويب جديد (خارطة الطريق 5.5 — G11) */}
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 shrink-0 rounded-full px-3"
+                  >
+                    <Link
+                      href={`/${locale}/admin/pages/${pageId}/preview?revision=${version.version}&locale=${tab}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={tp.previewVersion}
+                    >
+                      <Eye className="size-3.5" aria-hidden="true" />
+                      {tp.previewVersion}
+                    </Link>
+                  </Button>
                   {canRestore && (
                     <Button
                       type="button"

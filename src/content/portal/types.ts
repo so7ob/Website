@@ -561,6 +561,10 @@ export interface PortalContent {
       restoreBoth: string;
       restoreThisLocale: string;
       versionNotFound: string;
+      versionN: string;
+      previewVersion: string;
+      previewInvalidRevision: string;
+      previewSourceHint: string;
       slugTaken: string;
       slugInvalid: string;
       homeSlugHint: string;
