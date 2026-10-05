@@ -503,6 +503,12 @@ export interface PortalContent {
       assign: string;
       conversation: string;
       empty: string;
+      emptyBody: string;
+      noResults: string;
+      noResultsBody: string;
+      resetFilters: string;
+      assignedToMe: string;
+      allAssignments: string;
       statuses: Record<string, string>;
       export: string;
       exportOk: string;

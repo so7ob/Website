@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * قائمة الاستفسارات: بحث وتصفية (حالة/تصنيف/مؤرشف) + تحديد جماعي
- * للأرشفة + ترقيم صفحات.
+ * قائمة الاستفسارات: بحث وتصفية محورية بعدادات حيّة (حالة/تصنيف/أرشيف/مُعيَّن لي)
+ * + تحديد جماعي للأرشفة + ترقيم صفحات + حالات فراغ أرشدة بزر إعادة تعيين.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Search, MessageCircleQuestion, MessageSquareText, Eye, Loader2, RotateCcw, Download, Archive, ArchiveRestore } from "lucide-react";
+import { Search, MessageCircleQuestion, MessageSquareText, Eye, Loader2, RotateCcw, Download, Archive, ArchiveRestore, SearchX, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,7 +22,7 @@ import { AdminPagination } from "@/components/admin/pagination";
 import { EmptyState } from "@/components/admin/empty-state";
 import { useDebounced } from "@/components/admin/use-debounced";
 import { apiGet, apiSend, ApiError, apiErrorMessage, buildQuery, fmtRelative } from "@/components/admin/helpers";
-import type { InquiriesResponse, Me } from "../types";
+import type { InquiriesResponse, InquiriesFacetCounts, Me } from "../types";
 import { cn } from "@/lib/utils";
 
 interface InquiriesClientProps {
@@ -57,6 +57,45 @@ function AgingBadge({ since, tr }: { since: string; tr: PortalContent["admin"]["
 const FILTER_PILL_CLASS =
   "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
+/** لغة شارة العدّاد داخل الحبة — فاتحة على النشطة ومملوءة خفيفة على غير النشطة،
+ *  tabular-nums لثبات العرض مع تغير الأرقام */
+const COUNT_BADGE_BASE =
+  "ms-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-4 tabular-nums";
+
+/** حبة تصفية بعدّاد محوري اختياري — العدّاد دائمًا بعد النص (اتجاه الكتابة يعالج الموضع) */
+function FilterPill({
+  active,
+  count,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  count?: number;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        FILTER_PILL_CLASS,
+        active
+          ? "border-brand bg-accent text-brand-strong"
+          : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      {children}
+      {typeof count === "number" ? (
+        <span className={cn(COUNT_BADGE_BASE, active ? "bg-brand text-white" : "bg-muted text-muted-foreground")}>
+          {count}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
 export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientProps) {
   const t = getPortalContent(locale);
   const ti = t.admin.inquiries;
@@ -66,6 +105,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
   const [status, setStatus] = useState(initialStatus ?? "all");
   const [category, setCategory] = useState("all");
   const [archived, setArchived] = useState(false);
+  const [mine, setMine] = useState(false);
   const [page, setPage] = useState(1);
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -84,6 +124,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
           status: status !== "all" ? status : "",
           category: category !== "all" ? category : "",
           archived,
+          mine,
           page,
         });
         const res = await apiGet<InquiriesResponse>(`/api/admin/inquiries${query}`);
@@ -97,7 +138,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
         if (!signal.aborted) setLoading(false);
       }
     },
-    [debouncedQ, status, category, archived, page, t.auth.errors]
+    [debouncedQ, status, category, archived, mine, page, t.auth.errors]
   );
 
   useEffect(() => {
@@ -108,8 +149,26 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
 
   const reload = () => setReloadToken((v) => v + 1);
   const inquiries = data?.inquiries ?? [];
+  const counts: InquiriesFacetCounts | undefined = data?.counts;
   const statusKeys = useMemo(() => Object.keys(ti.statuses), [ti.statuses]);
   const categoryKeys = useMemo(() => Object.keys(ti.categories), [ti.categories]);
+
+  // مجاميع مجموعتي الحالة والتصنيف = عدّاد حبة «الكل» في كل مجموعة
+  const statusSum = useMemo(() => Object.values(counts?.statuses ?? {}).reduce((a, b) => a + b, 0), [counts]);
+  const categorySum = useMemo(() => Object.values(counts?.categories ?? {}).reduce((a, b) => a + b, 0), [counts]);
+
+  // تصفية نشطة؟ يحدد فرع حالة الفراغ (إرشاد مقابل إعادة تعيين)
+  const filtersActive = status !== "all" || category !== "all" || archived || mine || debouncedQ.trim().length >= 2;
+
+  /** إعادة تعيين كل المرشحات دفعة واحدة — من حالة فراغ النتائج ومن حبوب التصفية */
+  const resetFilters = () => {
+    setQ("");
+    setStatus("all");
+    setCategory("all");
+    setArchived(false);
+    setMine(false);
+    setPage(1);
+  };
 
   const mayExport = can(me, "inquiries.export");
   const mayArchive = can(me, "inquiries.archive");
@@ -153,6 +212,7 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
       category: category !== "all" ? category : "",
       // تصدير ما يُرى: عرض المؤرشف يصدّر المؤرشف فقط — اتساقًا مع القائمة
       archived,
+      mine,
     });
     window.open(`/api/admin/inquiries/export${query}`, "_blank");
     toast.success(ti.exportOk);
@@ -195,81 +255,115 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
         </div>
       </div>
 
-      {/* حبوب الحالة — «الكل» + المرشّح المركّب «مفتوحة» (رابط عميق ?status=open
-          من اللوحة) + الحالات + حبة عرض «المؤرشف» (تحوّل زر التحديد الجماعي
-          إلى استعادة وتخفي شارات الانتظار) */}
+      {/* حبوب الحالة بعدادات محورية — عدّاد كل حبة = ما ستراه عند نقرها
+          تحت بقية المرشحات (البحث/التصنيف/الأرشيف/التعيين) */}
       <div role="group" aria-label={t.admin.requests.filterStatus} className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground" aria-hidden="true">
           {t.admin.requests.filterStatus}
         </span>
-        {[
-          { value: "all", label: t.admin.requests.filterAll },
-          { value: "open", label: t.admin.dashboard.openInquiries },
-          ...statusKeys.map((s) => ({ value: s, label: ti.statuses[s] })),
-        ].map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={status === value}
+        <FilterPill
+          active={status === "all"}
+          count={counts ? statusSum : undefined}
+          onClick={() => {
+            setStatus("all");
+            setPage(1);
+          }}
+        >
+          {t.admin.requests.filterAll}
+        </FilterPill>
+        <FilterPill
+          active={status === "open"}
+          count={counts?.open}
+          onClick={() => {
+            setStatus("open");
+            setPage(1);
+          }}
+        >
+          {t.admin.dashboard.openInquiries}
+        </FilterPill>
+        {statusKeys.map((s) => (
+          <FilterPill
+            key={s}
+            active={status === s}
+            count={counts?.statuses[s] ?? 0}
             onClick={() => {
-              setStatus(value);
+              setStatus(s);
               setPage(1);
             }}
-            className={cn(
-              FILTER_PILL_CLASS,
-              status === value
-                ? "border-brand bg-accent text-brand-strong"
-                : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            )}
           >
-            {label}
-          </button>
+            {ti.statuses[s]}
+          </FilterPill>
         ))}
-        <button
-          type="button"
-          aria-pressed={archived}
+        <FilterPill
+          active={archived}
+          count={counts?.archived}
           onClick={() => {
             setArchived((v) => !v);
             setPage(1);
           }}
-          className={cn(
-            FILTER_PILL_CLASS,
-            archived
-              ? "border-brand bg-accent text-brand-strong"
-              : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          )}
         >
           <Archive className="size-4" aria-hidden="true" />
           {ti.archived}
-        </button>
+        </FilterPill>
       </div>
 
-      {/* حبوب التصنيف */}
+      {/* حبوب التصنيف بعدادات محورية — نفس دلالات مجموعة الحالة */}
       <div role="group" aria-label={ti.category} className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground" aria-hidden="true">
           {ti.category}
         </span>
-        {[{ value: "all", label: t.admin.requests.filterAll }, ...categoryKeys.map((c) => ({ value: c, label: ti.categories[c] }))].map(
-          ({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={category === value}
-              onClick={() => {
-                setCategory(value);
-                setPage(1);
-              }}
-              className={cn(
-                FILTER_PILL_CLASS,
-                category === value
-                  ? "border-brand bg-accent text-brand-strong"
-                  : "border-border bg-white text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              {label}
-            </button>
-          )
-        )}
+        <FilterPill
+          active={category === "all"}
+          count={counts ? categorySum : undefined}
+          onClick={() => {
+            setCategory("all");
+            setPage(1);
+          }}
+        >
+          {t.admin.requests.filterAll}
+        </FilterPill>
+        {categoryKeys.map((c) => (
+          <FilterPill
+            key={c}
+            active={category === c}
+            count={counts?.categories[c] ?? 0}
+            onClick={() => {
+              setCategory(c);
+              setPage(1);
+            }}
+          >
+            {ti.categories[c]}
+          </FilterPill>
+        ))}
+      </div>
+
+      {/* مجموعة المسؤولية — «مُعيَّن لي» بعدّادها حتى بلا تفعيل فيرى الطاقم حجم
+          حصتهم فورًا، والعدادات تبقى محترمة لبقية الأبعاد */}
+      <div role="group" aria-label={t.admin.requests.filterAssignee} className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground" aria-hidden="true">
+          {t.admin.requests.filterAssignee}
+        </span>
+        <FilterPill
+          active={!mine}
+          count={counts?.allAssignments}
+          onClick={() => {
+            setMine(false);
+            setPage(1);
+          }}
+        >
+          {ti.allAssignments}
+        </FilterPill>
+        <FilterPill
+          active={mine}
+          count={counts?.assignedToMe ?? 0}
+          onClick={() => {
+            setMine((v) => !v);
+            setPage(1);
+          }}
+        >
+          <UserCheck className="size-4" aria-hidden="true" />
+          {ti.assignedToMe}
+        </FilterPill>
       </div>
 
       {/* شريط التحديد الجماعي — زر أرشفة، أو استعادة في عرض «المؤرشف» */}
@@ -333,7 +427,21 @@ export function InquiriesClient({ me, locale, initialStatus }: InquiriesClientPr
               ) : inquiries.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={mayArchive ? 10 : 9} className="p-0">
-                    <EmptyState icon={MessageSquareText} title={ti.empty} />
+                    <div className="p-4">
+                      {filtersActive ? (
+                        <>
+                          <EmptyState icon={SearchX} title={ti.noResults} body={ti.noResultsBody} />
+                          <div className="mt-4 flex justify-center">
+                            <Button variant="outline" onClick={resetFilters} className="min-h-11 rounded-full">
+                              <RotateCcw className="size-4" aria-hidden="true" />
+                              {ti.resetFilters}
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <EmptyState icon={MessageCircleQuestion} title={ti.empty} body={ti.emptyBody} />
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
