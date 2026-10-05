@@ -829,6 +829,11 @@ export interface PortalContent {
       saved: string;
       remove: string;
       pagesPlaceholder: string;
+      dragHandle: string;
+      previewTitle: string;
+      previewHint: string;
+      previewEmpty: string;
+      dragHint: string;
     };
     settings: {
       title: string;
