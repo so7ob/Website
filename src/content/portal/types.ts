@@ -259,6 +259,20 @@ export interface PortalContent {
       markRead: string;
       markAllRead: string;
       empty: string;
+      emptyBody: string;
+      emptyCta: string;
+      summaryUnreadOf: string;
+      filterAll: string;
+      filterUnread: string;
+      allReadTitle: string;
+      allReadBody: string;
+      today: string;
+      yesterday: string;
+      older: string;
+      refresh: string;
+      deleteNotification: string;
+      deletedToast: string;
+      deleteError: string;
       types: Record<string, string>;
     };
     profile: {
